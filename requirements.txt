@@ -1,0 +1,9 @@
+torch
+numpy
+transformers
+datasets
+tiktoken
+wandb
+tqdm
+gridsearcher
+simple_parsing
