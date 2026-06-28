@@ -169,4 +169,10 @@ class GPT(nn.Module):
         #     loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), ignore_index=-1)
         #
         # return logits, loss
-        #
+
+    def get_num_params(self):
+        embed_params_count = self.tok_embed.weight.numel()
+        non_embed_params_count = sum(p.numel() for p in self.blocks.parameters())
+        if not self.cfg.model.weight_tying:
+            embed_params_count *= 2
+        return embed_params_count, non_embed_params_count
