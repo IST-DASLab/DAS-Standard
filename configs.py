@@ -14,7 +14,8 @@ class ModelConfig:
     seq_len: int = 1024
     dropout: float = 0.0 # see GPT class
     bias: bool = False
-    weight_tying: bool = False
+    weight_tying: bool = None
+    mlp_expansion_factor: int = 4
 
 def get_dynamic_arg_parser():
     """
@@ -41,12 +42,15 @@ def preprocess(args):
     match args.model.name:
         case "gpt":
             args.model.vocab_size = 50_304 # GPT-2 has vocab_size=50_257, padded up to nearest multiple of 64
+            if args.model.weight_tying is None:
+                args.model.weight_tying = True # the new default
         case "llama":
             args.model.vocab_size = 32_000
         case "olmo":
             raise NotImplementedError
             # args.model.vocab_size = None
 
+    assert args.model.embed_size % args.model.num_heads == 0
     """
         OptimizerConfig ==> optimizer
     """
