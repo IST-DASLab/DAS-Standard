@@ -11,12 +11,10 @@ from constants import (
 )
 
 def log_eval_loss(cfg, logger, crt_iter, loss):
-    if crt_iter == cfg.training.max_iters:
-        text_loss = TEXT_FINAL_VAL_LOSS
-        text_ppl = TEXT_FINAL_VAL_PPL
-    else:
-        text_loss = TEXT_VAL_LOSS
-        text_ppl = TEXT_VAL_PPL
+    is_last_step = crt_iter == cfg.training.max_iters
+
+    text_loss = TEXT_FINAL_VAL_LOSS if is_last_step else TEXT_VAL_LOSS
+    text_ppl = TEXT_FINAL_VAL_PPL if is_last_step else TEXT_VAL_PPL
 
     logger.log_dict({
         text_loss: loss,
