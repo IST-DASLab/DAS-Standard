@@ -1,0 +1,113 @@
+import torch.nn as nn
+from torch.optim import AdamW
+from argparse import Namespace as ArgParseNamespace
+
+from lr_schedulers import get_lr_cos_warmup
+from optimizers.kj_muon import SingleDeviceMuon
+
+
+class MultiOptimizer:
+    def __init__(self, cfg: ArgParseNamespace, model: nn.Module):
+        self.cfg = cfg
+        self.model = model
+
+        self.optim_iter = 0
+        self.optimizers = self._create_optimizers_list()
+        self._set_lr_init()
+
+        self.zero_grad(set_to_none=True)
+
+    def _create_optimizers_list(self):
+        cfg = self.cfg
+
+        match cfg.optimizer.name:
+            case "adamw":
+                return [
+                    AdamW(
+                        params=self._get_all_params(),
+                        lr=cfg.optimizer.adamw_lr,
+                        weight_decay=cfg.optimizer.weight_decay,
+                        betas=(
+                            cfg.optimizer.adamw_beta1,
+                            cfg.optimizer.adamw_beta2
+                        ),
+                        eps=cfg.optimizer.adamw_eps),
+                ]
+            case "muon":
+                return [
+                    SingleDeviceMuon(
+                        params=self._get_linear_layers(),
+                        lr=cfg.optimizer.muon_lr,
+                        weight_decay=cfg.optimizer.weight_decay,
+                        momentum=cfg.optimizer.muon_momentum
+                    ),
+                    AdamW(
+                        params=self._get_input_embedding() + self._get_input_embedding() + self._get_output_embedding(),
+                        lr=cfg.optimizer.adamw_lr,
+                        weight_decay=cfg.optimizer.weight_decay,
+                        betas=(
+                            cfg.optimizer.adamw_beta1,
+                            cfg.optimizer.adamw_beta2
+                        ),
+                        eps=cfg.optimizer.adamw_eps,
+                    )
+                ]
+            case _:
+                raise NotImplementedError(f'Optimizer {cfg.optimizer.name} is not implemented!')
+
+    def _get_input_embedding(self):
+        return [self.model.tok_embed.weight]
+
+    def _get_output_embedding(self):
+        return [self.model.lm_head.weight]
+
+    def _get_layer_norms(self):
+        return [p for p in self.model.parameters() if p.ndim == 1]
+
+    def _get_linear_layers(self):
+        return [p for p in self.model.block.parameters() if p.ndim == 2]
+
+    def _get_all_params(self):
+        return self.model.parameters()
+
+    def _set_lr_init(self):
+        """
+        This function is called after creating the variable self.optimizers and creates the variable "lr_init".
+        Having "lr_init" in place, we can easily change the learning rate using the scheduler defined in the config.
+        """
+        for opt in self.optimizers:
+            for group in opt.param_groups:
+                group["lr_init"] = group["lr"]
+
+    def _update_learning_rates(self):
+        cfg = self.cfg
+        for opt in self.optimizers:
+            for group in opt.param_groups:
+                match cfg.optimizer.lr_scheduler:
+                    case "cosine":
+                        group["lr"] = get_lr_cos_warmup(
+                            cfg=cfg,
+                            lr_init=group["lr_init"],
+                            step=self.optim_iter,
+                        )
+                    case _:
+                        raise NotImplementedError(f"Scheduler {cfg.optimizer.lr_scheduler} is not implemented")
+
+
+    def step(self, closure=None):
+        loss = None
+        if closure is not None:
+            loss = closure()
+
+        self.optim_iter += 1
+
+        for opt in self.optimizers:
+            opt.step()
+
+        self._update_learning_rates()
+
+        return loss
+
+    def zero_grad(self, set_to_none=True):
+        for opt in self.optimizers:
+            opt.zero_grad(set_to_none=set_to_none)
