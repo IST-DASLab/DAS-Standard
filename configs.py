@@ -37,7 +37,7 @@ class TrainingConfig:
     max_iters: int = -1 # will be automatically determined based on number of tokens, seq len, device batch size and number of workers
     backend: Literal["none", "ddp", "fsdp2"] = "ddp"
     dtype: Literal["bf16", "fp16", "fp32"] = "bf16"
-    compile: bool = False
+    compile_model: bool = False
     eval_interval: int = 200
 
     @property

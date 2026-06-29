@@ -55,7 +55,9 @@ class BaseBackend:
         return self.rank == 0
 
     def wrap_model(self, model):
-        return model.to(self.device) # no wrapping performed
+        if self.cfg.training.compile_model:
+            return torch.compile(model.to(self.device))
+        return model.to(self.device)
 
 
 class DDPBackend(BaseBackend):
@@ -78,7 +80,10 @@ class DDPBackend(BaseBackend):
         self.cfg.training.grad_acc_steps //= self.world_size
 
     def wrap_model(self, model):
-        return DDP(model, device_ids=[self.local_rank]).to(self.device)
+        wrapped = DDP(model, device_ids=[self.local_rank]).to(self.device)
+        if self.cfg.training.compile_model:
+            return torch.compile(wrapped)
+        return wrapped
 
     def terminate(self):
         dist.destroy_process_group()
