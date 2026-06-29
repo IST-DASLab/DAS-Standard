@@ -21,27 +21,23 @@ def get_dataset(args: ArgParseNamespace):
 def get_data_readers(args, verbose=True):
     train_path, val_path = get_dataset(args)
 
-    train_reader = DataReader(
+    train_reader = SimpleDataReader(
         path=train_path,
         batch_size=args.data.batch_size,
         seq_len=args.model.seq_len,
         seed=args.data.seed,
-        with_replacement=False,
-        auto_shard=True,
-        keep_in_ram=True)
+        auto_shard=True)
 
-    val_reader = DataReader(
+    val_reader = SimpleDataReader(
         path=train_path,
         batch_size=args.data.batch_size,
         seq_len=args.model.seq_len,
         seed=args.data.seed,
-        with_replacement=False,
-        auto_shard=False, # identical per rank
-        keep_in_ram=True)
+        auto_shard=False)
 
     if verbose:
-        print(f"Num training tokens: {train_reader.num_tokens}")
-        print(f"Num validation tokens: {val_reader.num_tokens}")
+        print(f"Num training tokens: {train_reader.num_toks}")
+        print(f"Num validation tokens: {val_reader.num_toks}")
 
     return train_reader, val_reader
 
@@ -118,6 +114,7 @@ class SimpleDataReader:
         idxs = self.perm[start:end] * self.seq_len + self.epoch_token_offset
 
         self.step += 1
+
         xy = np.stack([
             data[i: i + self.seq_len + 1]
             for i in idxs
