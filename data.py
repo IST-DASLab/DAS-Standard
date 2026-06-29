@@ -58,8 +58,6 @@ class SimpleDataReader:
             self.rank = 0
 
         self.data = None
-        self.last_epoch = None
-        self.step = 0
         self.perm = None
 
         # total number of tokens in the dataset: 197_980_429_805 for C4
@@ -72,6 +70,18 @@ class SimpleDataReader:
         self.num_batches = (self.num_seqs - 1) // self.batch_size  # used to generate new perm
         self.epoch_token_offset = None
 
+        self.last_epoch = None
+        self.step = None
+
+        self.reset()
+
+    def reset(self):
+        """
+        This function should be called on the validation reader after each evaluation
+        during training to make sure we always evaluate on the same first batch of data.
+        """
+        self.step = 0
+        self.last_epoch = None
         self._shuffle_epoch(0)
 
     def _get_len(self):
