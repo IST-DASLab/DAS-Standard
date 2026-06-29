@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from torch.optim import AdamW
 from argparse import Namespace as ArgParseNamespace
@@ -93,7 +94,7 @@ class MultiOptimizer:
                     case _:
                         raise NotImplementedError(f"Scheduler {cfg.optimizer.lr_scheduler} is not implemented")
 
-
+    @torch.no_grad()
     def step(self, closure=None):
         loss = None
         if closure is not None:
