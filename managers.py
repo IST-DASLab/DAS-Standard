@@ -7,6 +7,18 @@ from collections import defaultdict
 from contextlib import contextmanager
 from argparse import Namespace as ArgParseNamespace
 
+from constants import (
+    TEXT_ITER,
+    TEXT_TRAIN_ITER,
+    TEXT_VAL_ITER,
+    TEXT_ELAPSED_ITER,
+    TEXT_GPU_MEM_ITER,
+
+    TEXT_GPU_MEM_MIN,
+    TEXT_GPU_MEM_AVG,
+    TEXT_GPU_MEM_MAX,
+)
+
 class TimingManager:
     def __init__(self):
         self.metrics = defaultdict(float)
@@ -24,7 +36,7 @@ class TimingManager:
         end_event.record()
 
         torch.cuda.synchronize()
-        self.metrics[f'elapsed/{block_name}'] += end_event.elapsed_time(start_event)
+        self.metrics[block_name] += end_event.elapsed_time(start_event)
 
     def get_then_reset(self):
         crt_metrics = self.metrics.copy()
@@ -61,9 +73,16 @@ class LoggingManager:
         M = round(max(mem_per_gpu), 2)
         m = round(min(mem_per_gpu), 2)
 
-        self.metrics['gpu_memory/min'] = m
-        self.metrics['gpu_memory/avg'] = avg
-        self.metrics['gpu_memory/max'] = M
+        self.metrics[TEXT_GPU_MEM_MIN] = m
+        self.metrics[TEXT_GPU_MEM_AVG] = avg
+        self.metrics[TEXT_GPU_MEM_MAX] = M
+
+    def log_redundant_iters(self, crt_iter):
+        self.metrics[TEXT_ITER] = crt_iter
+        self.metrics[TEXT_TRAIN_ITER] = crt_iter
+        self.metrics[TEXT_VAL_ITER] = crt_iter
+        self.metrics[TEXT_ELAPSED_ITER] = crt_iter
+        self.metrics[TEXT_GPU_MEM_ITER] = crt_iter
 
     def log(self, key, value):
         if self.is_master:
