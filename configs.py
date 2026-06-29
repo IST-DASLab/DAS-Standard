@@ -1,8 +1,13 @@
 import sys
+import math
 import inspect
 from simple_parsing import ArgumentParser
+from argparse import Namespace as ArgParseNamespace
 from dataclasses import dataclass, is_dataclass
 from typing import Literal
+
+from models.gpt import GPTCausalSelfAttention, GPTMLP
+
 
 @dataclass
 class ModelConfig:
@@ -16,6 +21,62 @@ class ModelConfig:
     bias: bool = False
     weight_tying: bool = None
     mlp_expansion_factor: int = 4
+
+@dataclass
+class DatasetConfig:
+    path: str = "./data"
+    name: Literal["c4"] = "c4"
+
+@dataclass
+class TrainingConfig:
+    seed: int = 42
+    tokens_count: float = 0 # zero means disabled
+    chinchilla_token_ratio: int = 1 # how many chinchillas to train the model for
+    local_batch_size: int = 64 # per device batch size
+    grad_acc_steps: int = 8
+    max_iters: int = -1 # will be automatically determined based on number of tokens, seq len, device batch size and number of workers
+    backend: Literal["none", "ddp", "fsdp2"] = "ddp"
+    dtype: Literal["bf16", "fp16", "fp32"] = "bf16"
+    compile: bool = False
+    eval_interval: int = 200
+
+    @property
+    def global_batch_size(self) -> int:
+        return self.local_batch_size * self.grad_acc_steps
+
+
+@dataclass
+class OptimizerConfig:
+    name: Literal["adamw", "muon"] = "adamw"
+    weight_decay: float = 0.0
+
+    grad_clipping: float = 1.0 # rescale the global gradient to have this norm. Set to 0 to disable
+
+    # Learning Rate scheduling
+    lr_scheduler: Literal["cosine", "step"] = "cosine"
+    lr_warmup: float = 0.1 # percentage of number of steps
+    cos_start_lr_ratio: float = 0.01 # start from lr * 0.01
+    cos_end_lr_ratio: float = 0.1 # end at the lr * 0.1
+
+    # AdamW parameters
+    adamw_lr: float = 1e-3
+    adamw_beta1: float = 0.9
+    adamw_beta2: float = 0.95
+    adamw_eps: float = 1e-8
+
+    # Muon parameters
+    muon_lr: float = 1e-3
+    muon_momentum: float = 0.95
+
+
+@dataclass
+class WandbConfig:
+    entity: str = None
+    project: str = None
+    group: str = None
+    job_type: str = None
+    name: str = None
+    log_interval: int = 1
 
 def get_dynamic_arg_parser():
     """
@@ -35,24 +96,56 @@ def get_dynamic_arg_parser():
 
     return preprocess(parser.parse_args())
 
-def preprocess(args):
+def preprocess(cfg: ArgParseNamespace):
     """
         ModelConfig ==> model
     """
-    match args.model.name:
+    attn_params_fn = None
+    mlp_params_fn = None
+    match cfg.model.name:
         case "gpt":
-            args.model.vocab_size = 50_304 # GPT-2 has vocab_size=50_257, padded up to nearest multiple of 64
-            if args.model.weight_tying is None:
-                args.model.weight_tying = True # the new default
+            cfg.model.vocab_size = 50_304 # GPT-2 has vocab_size=50_257, padded up to nearest multiple of 64
+            if cfg.model.weight_tying is None:
+                cfg.model.weight_tying = True # the new default
+
+            # set functions to compute number of iterations
+            attn_params_fn = GPTCausalSelfAttention.get_param_count
+            mlp_params_fn = GPTMLP.get_param_count
         case "llama":
-            args.model.vocab_size = 32_000
+            cfg.model.vocab_size = 32_000
         case "olmo":
             raise NotImplementedError
             # args.model.vocab_size = None
 
-    assert args.model.embed_size % args.model.num_heads == 0
+    # compute number of iterations based on model size (only Linears from transformer blocks)
+    cfg.training.max_iters = _compute_max_iters(cfg, attn_fn=attn_params_fn, mlp_fn=mlp_params_fn)
+
+    assert cfg.model.embed_size % cfg.model.num_heads == 0
     """
         OptimizerConfig ==> optimizer
     """
 
-    return args
+    return cfg
+
+def _compute_max_iters(cfg, attn_fn, mlp_fn):
+    """
+    This function computes the number of iterations based on some number of
+    parameters for the model (can be full model size of
+    chinchilla token ratio and batch size / grad acc steps / seq len.
+
+    We only count the number of linear layers in transformer blocks (Attn & MLP)
+    """
+    L = cfg.model.num_layers
+    E = cfg.model.embed_size
+    mlp_exp = cfg.model.mlp_expansion_factor
+
+    B = cfg.training.local_batch_size
+    T = cfg.training.seq_len
+    A = cfg.training.grad_acc_steps
+    CTR = cfg.training.chinchilla_token_ratio
+
+    params_count = L * (attn_fn(E) + mlp_fn(E, mlp_exp))
+    num_tokens = params_count * CTR * 1_000_000
+    iterations = math.ceil(num_tokens / (B * T * A))
+
+    return iterations
