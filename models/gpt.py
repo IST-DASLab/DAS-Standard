@@ -17,7 +17,11 @@ class KarpathyLayerNorm(nn.Module):
         return F.layer_norm(x, self.weight.shape, self.weight, self.bias, eps=1e-5)
 
 
-class CausalSelfAttention(nn.Module):
+class GPTCausalSelfAttention(nn.Module):
+    @staticmethod
+    def get_param_count(E):
+        return 4 * E * E
+
     def __init__(self, cfg: ArgParseNamespace, layer_id: int):
         super().__init__()
         self.cfg = cfg
@@ -77,15 +81,21 @@ class CausalSelfAttention(nn.Module):
         return y
 
 
-class MLP(nn.Module):
+class GPTMLP(nn.Module):
+    @staticmethod
+    def get_param_count(E, exp_factor):
+        return 2 * E * (E * exp_factor)
+
     def __init__(self, cfg: ArgParseNamespace, layer_id: int):
         super().__init__()
         self.cfg = cfg
         self.layer_id = layer_id
 
         E = cfg.model.embed_size
-        self.fc = nn.Linear(in_features=E, out_features=4 * E)
-        self.Wo = nn.Linear(in_features=4 * E, out_features=E)
+        E_expanded = E * cfg.model.mlp_expansion_factor
+
+        self.fc = nn.Linear(in_features=E, out_features=E_expanded)
+        self.Wo = nn.Linear(in_features=E_expanded, out_features=E)
         self.dropout = nn.Dropout(cfg.model.dropout)
         self.activation = nn.GELU()
 
@@ -97,13 +107,13 @@ class MLP(nn.Module):
         return x
 
 
-class BlockGPT(nn.Module):
+class GPTBlock(nn.Module):
     def __init__(self, cfg: ArgParseNamespace, layer_id: int):
         super().__init__()
-        self.norm1 = nn.LayerNorn(cfg.model.embed_size)
-        self.attn = CausalSelfAttention(cfg, layer_id)
+        self.norm1 = KarpathyLayerNorm(cfg.model.embed_size)
+        self.attn = GPTCausalSelfAttention(cfg, layer_id)
         self.norm2 = KarpathyLayerNorm(cfg.model.embed_size)
-        self.mlp = MLP(cfg, layer_id)
+        self.mlp = GPTMLP(cfg, layer_id)
 
     def forward(self, x):
         x = x + self.attn(self.norm1(x))
@@ -120,7 +130,7 @@ class GPT(nn.Module):
         self.pos_embed = nn.Embedding(cfg.model.seq_len, cfg.model.embed_size)
         self.dropout = nn.Dropout(cfg.model.dropout)
         self.blocks = nn.ModuleList([
-            BlockGPT(cfg, layer_id)
+            GPTBlock(cfg, layer_id)
             for layer_id in range(cfg.model.num_layers)
         ])
         self.norm = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
@@ -144,7 +154,7 @@ class GPT(nn.Module):
         elif isinstance(module, nn.Embedding):
             torch.nn.init.normal_(module.weight, mean=0, std=0.02)
 
-    def forward(self, inputs):
+    def forward(self, inputs, targets):
         B, T = inputs.shape
         device = inputs.device
 
@@ -157,8 +167,14 @@ class GPT(nn.Module):
         for block in self.blocks:
             x = block(x)
         x = self.norm(x)
-        x = self.lm_head(x)
-        return x
+        logits = self.lm_head(x)
+
+        loss = F.cross_entropy(
+            input=logits.view(-1, logits.size(-1)),
+            target=targets.view(-1),
+            ignore_index=-1 # not sure about this
+        )
+        return loss
 
         # if targets is None:
         #     # inference-time mini-optimization: forward only through lm_head on the very last position
