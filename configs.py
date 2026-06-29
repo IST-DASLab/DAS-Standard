@@ -39,11 +39,11 @@ class TrainingConfig:
     dtype: Literal["bf16", "fp16", "fp32"] = "bf16"
     compile_model: bool = False
     eval_interval: int = 200
+    eval_batches: int = 32
 
     @property
     def global_batch_size(self) -> int:
         return self.local_batch_size * self.grad_acc_steps
-
 
 @dataclass
 class OptimizerConfig:

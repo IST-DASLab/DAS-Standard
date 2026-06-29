@@ -1,11 +1,26 @@
 import math
 import torch
-from backends import get_backend
+import torch.distributed as dist
+
+from backends import get_backend, BaseBackend
 from configs import get_dynamic_arg_parser
 from data import get_data_readers
+from evaluation import eval_and_log
 from models import get_model
 from optimizers import MultiOptimizer
 from managers import TimingManager, LoggingManager
+from constants import (
+    TEXT_ITER,
+
+    TEXT_TRAIN_ITER,
+    TEXT_TRAIN_LOSS,
+    TEXT_TRAIN_PPL,
+    TEXT_TRAIN_GRAD_NORM,
+
+    TEXT_ELAPSED_OPTIM_STEP,
+    TEXT_ELAPSED_FORWARD,
+    TEXT_ELAPSED_BACKWARD,
+)
 
 
 def main():
@@ -13,26 +28,32 @@ def main():
 
     logger = LoggingManager(cfg)
     timer = TimingManager()
-    backend = get_backend(cfg)
+    backend: BaseBackend = get_backend(cfg)
 
     model = backend.wrap_model(get_model(cfg))
     optimizer = MultiOptimizer(cfg, model)
     train_reader, val_reader = get_data_readers(cfg)
 
-    for crt_iter in range(cfg.training.max_iters):
+    for crt_iter in range(1, 1 + cfg.training.max_iters):
+        #####
+        ##### Eval
+        #####
+        eval_and_log(cfg, backend, model, train_reader, crt_iter)
+
+        #####
+        ##### Training
+        #####
+        model.train()
         total_step_loss = 0.0
         for acc_step in range(cfg.training.acc_steps):
-            model.require_backward_grad_sync = (acc_step == cfg.training.acc_steps - 1) # all-reduce gradients only at the last grad acc step
-
-            #####
-            ##### Sample a batch of data from the training set
-            #####
+            # all-reduce gradients only at the last grad acc step
+            model.require_backward_grad_sync = (acc_step == cfg.training.acc_steps - 1)
             x, y = train_reader.sample_batch()
 
             #####
             ##### Forward pass
             #####
-            with timer.record("forward"):
+            with timer.record(TEXT_ELAPSED_FORWARD):
                 with backend.get_amp_context():
                     unscaled_loss = model(x, y)
 
@@ -41,7 +62,7 @@ def main():
             #####
             ##### Backward pass
             #####
-            with timer.record("backward"):
+            with timer.record(TEXT_ELAPSED_BACKWARD):
                 with backend.get_amp_context():
                     scaled_loss.backward()
 
@@ -59,34 +80,24 @@ def main():
         #####
         ##### Optimizer step
         #####
-        with timer.record("optimizer_step"):
+        with timer.record(TEXT_ELAPSED_OPTIM_STEP):
             optimizer.step()
 
         optimizer.zero_grad(set_to_none=True)
 
         #####
-        ##### Eval
-        #####
-
-
-        #####
         ##### Logging
         #####
         logger.log_dict({
-            'iter': crt_iter,
-
-            'train/loss': total_step_loss,
-            'train/ppl': math.exp(total_step_loss),
-            'train/grad_norm': grad_norm,
+            TEXT_TRAIN_LOSS: total_step_loss,
+            TEXT_TRAIN_PPL: math.exp(total_step_loss),
+            TEXT_TRAIN_GRAD_NORM: grad_norm,
         })
         logger.log_dict(timer.get_then_reset())
         logger.log_memory_usage()
+        logger.log_redundant_iters(crt_iter) # log crt_iter for each section
         logger.commit(step=crt_iter)
-
-
-
-
-    # end for iter
+    # end for crt_iter
 
     logger.finish()
     backend.terminate()
