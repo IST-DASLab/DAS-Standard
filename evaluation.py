@@ -24,7 +24,7 @@ def log_eval_loss(cfg, logger, crt_iter, loss):
 def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
     is_first_step = crt_iter == 1
     is_middle_step = crt_iter % cfg.training.eval_interval == 0
-    is_last_step = crt_iter == cfg.training.max_iters
+    is_last_step = crt_iter == cfg.training.max_iters - 1
 
     if is_first_step or is_middle_step or is_last_step:
         model.eval()
