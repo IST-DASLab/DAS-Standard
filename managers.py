@@ -111,7 +111,7 @@ class LoggingManager:
     ##### Different statistics
     #####
     @torch.no_grad()
-    def log_model_info(self, model):
+    def log_model_info(self, model, world_size):
         if self.is_master:
             cfg = self.cfg
             is_tied = cfg.model.tie_embeds
@@ -144,11 +144,12 @@ class LoggingManager:
             print(f"Tokens info:")
             print(f"\t           Linear params (P): {params_linear:_}")
             print(f"\tChinchilla Token Ratio (CTR): {CTR * 20}x")
-            print(f"\t        Tokens (T = P * CTR): {T}")
+            print(f"\t        Tokens (T = P * CTR): {T:_}")
             print(f"\t         Sequence Length (S): {S}")
             print(f"\t       Device Batch Size (B): {B}")
             print(f"\t          Grad Acc Steps (A): {A}")
-            print(f"\t     Steps (T / (B * S * A)):{math.ceil(T / (B * S * A))}")
+            print(f"\t              World Size (W): {world_size}")
+            print(f"\t Steps (T / (B * S * A * W)): {math.ceil(T / (B * S * A * world_size))}")
             print("-" * 50)
 
     #####

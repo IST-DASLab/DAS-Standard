@@ -29,7 +29,7 @@ def main():
     timer = TimingManager()
 
     model = get_model(cfg)
-    logger.log_model_info(model)
+    logger.log_model_info(model, backend.world_size)
 
     model = backend.wrap_model(model)
     optimizer = MultiOptimizer(cfg, model)
