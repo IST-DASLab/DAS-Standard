@@ -40,10 +40,7 @@ class TrainingConfig:
     compile_model: bool = False
     eval_interval: int = 200
     eval_batches: int = 32
-
-    @property
-    def global_batch_size(self) -> int:
-        return self.local_batch_size * self.grad_acc_steps
+    output_folder: str = "./output"
 
 @dataclass
 class OptimizerConfig:
@@ -76,7 +73,6 @@ class WandbConfig:
     group: str = None
     job_type: str = None
     run_name: str = None
-    log_interval: int = 1
 
 def get_dynamic_arg_parser():
     """
