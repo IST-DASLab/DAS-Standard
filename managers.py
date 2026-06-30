@@ -57,7 +57,7 @@ class LoggingManager:
                 project=cfg.wandb.project,
                 group=cfg.wandb.group,
                 job_type=cfg.wandb.job_type,
-                name=cfg.wandb.model_name,
+                name=cfg.wandb.run_name,
                 config=cfg,
             )
 
@@ -107,7 +107,7 @@ class LoggingManager:
     #####
     def log_model_size(self, model):
         if self.is_master:
-            params_inp_embed = model.input_embed.weight.numel()
+            params_inp_embed = model.tok_embed.weight.numel()
             params_out_embed = model.lm_head.weight.numel()
             params_linear = sum(p.numel() for p in model.block.parameters() if p.ndim == 2)
             params_layer_norm = sum(p.numel() for p in model.parameters() if p.ndim == 1)
