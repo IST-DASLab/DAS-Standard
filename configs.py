@@ -88,7 +88,7 @@ def get_dynamic_arg_parser():
         if inspect.isclass(obj) and is_dataclass(obj) and "config" in name.lower():
             dest_name = name.lower().replace("config", "")
             parser.add_arguments(obj, dest=dest_name)
-            print(f'Found config "{name}": all fields are available in the "{dest_name}" object')
+            # print(f'Found config "{name}": all fields are available in the "{dest_name}" object')
 
     return preprocess(parser.parse_args())
 
@@ -135,8 +135,8 @@ def _compute_max_iters(cfg, attn_fn, mlp_fn):
     E = cfg.model.embed_size
     mlp_exp = cfg.model.mlp_expansion_factor
 
+    T = cfg.model.seq_len
     B = cfg.training.local_batch_size
-    T = cfg.training.seq_len
     A = cfg.training.grad_acc_steps
     CTR = cfg.training.chinchilla_token_ratio
 
