@@ -19,7 +19,7 @@ class ModelConfig:
     seq_len: int = 1024
     dropout: float = 0.0 # see GPT class
     bias: bool = False
-    weight_tying: bool = None
+    weight_tying: bool = False
     mlp_expansion_factor: int = 4
 
 @dataclass
@@ -145,7 +145,7 @@ def _compute_max_iters(cfg, attn_fn, mlp_fn):
     CTR = cfg.training.chinchilla_token_ratio
 
     params_count = L * (attn_fn(E) + mlp_fn(E, mlp_exp))
-    num_tokens = params_count * CTR * 1_000_000
+    num_tokens = params_count * CTR * 20
     iterations = math.ceil(num_tokens / (B * T * A))
 
     return iterations
