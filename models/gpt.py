@@ -137,7 +137,7 @@ class GPT(nn.Module):
         self.norm = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
         self.lm_head = nn.Linear(cfg.model.embed_size, cfg.model.vocab_size, bias=cfg.model.bias)
 
-        if cfg.model.weight_tying:
+        if cfg.model.tie_embeds:
             self.tok_embed.weight = self.lm_head.weight
 
         # initialize weights
@@ -190,6 +190,6 @@ class GPT(nn.Module):
     def get_num_params(self):
         embed_params_count = self.tok_embed.weight.numel()
         non_embed_params_count = sum(p.numel() for p in self.blocks.parameters())
-        if not self.cfg.model.weight_tying:
+        if not self.cfg.model.tie_embeds:
             embed_params_count *= 2
         return embed_params_count, non_embed_params_count

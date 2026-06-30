@@ -19,7 +19,7 @@ class ModelConfig:
     seq_len: int = 1024
     dropout: float = 0.0 # see GPT class
     bias: bool = False
-    weight_tying: bool = False
+    tie_embeds: bool = False
     mlp_expansion_factor: int = 4
 
 @dataclass
@@ -101,8 +101,8 @@ def preprocess(cfg: ArgParseNamespace):
     match cfg.model.model_name:
         case "gpt":
             cfg.model.vocab_size = 50_304 # GPT-2 has vocab_size=50_257, padded up to nearest multiple of 64
-            if cfg.model.weight_tying is None:
-                cfg.model.weight_tying = True # the new default
+            if cfg.model.tie_embeds is None:
+                cfg.model.tie_embeds = True # the new default
 
             # set functions to compute number of iterations
             attn_params_fn = GPTCausalSelfAttention.get_param_count
