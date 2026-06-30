@@ -29,7 +29,7 @@ def get_data_readers(cfg):
         auto_shard=True)
 
     val_reader = SimpleDataReader(
-        path=train_path,
+        path=val_path,
         batch_size=cfg.training.local_batch_size,
         seq_len=cfg.model.seq_len,
         seed=cfg.training.seed,
