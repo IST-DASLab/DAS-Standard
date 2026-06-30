@@ -1,5 +1,3 @@
-TEXT_ITER = "iter"
-
 TEXT_LRS_ITER = "lrs/iter"
 
 TEXT_TRAIN_ITER = "train/iter"
