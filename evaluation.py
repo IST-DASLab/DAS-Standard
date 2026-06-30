@@ -43,9 +43,9 @@ def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
             logger.update_eval_pbar(step_inc=1, val_loss=f"{total_loss:.4f}")
         # end for idx
 
-        logger.close_val_pbar()
+        logger.close_eval_pbar()
 
         dist.all_reduce(total_loss, op=dist.ReduceOp.SUM)
         total_loss = total_loss.item() / backend.world_size
 
-        log_eval_loss(logger, crt_iter, total_loss)
+        log_eval_loss(cfg, logger, crt_iter, total_loss)

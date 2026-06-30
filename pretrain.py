@@ -23,21 +23,20 @@ from constants import (
 def main():
     cfg = get_dynamic_arg_parser()
 
+    backend: BaseBackend = get_backend(cfg) # must be created first
+
     logger = LoggingManager(cfg)
     timer = TimingManager()
-    backend: BaseBackend = get_backend(cfg)
 
     model = get_model(cfg)
     logger.log_model_size(model)
 
     model = backend.wrap_model(model)
-
-    logger.log_console("Creating optimizer")
     optimizer = MultiOptimizer(cfg, model)
 
-    logger.log_console("Creating data readers")
     train_reader, val_reader = get_data_readers(cfg)
 
+    logger.log_console(f"Dataset tokens: train={train_reader.num_toks:_} | val={val_reader.num_toks:_}")
     logger.start_train_pbar(total_iters=cfg.training.max_iters)
 
     for crt_iter in range(1, 1 + cfg.training.max_iters):
@@ -51,9 +50,9 @@ def main():
         #####
         model.train()
         total_step_loss = 0.0
-        for acc_step in range(cfg.training.acc_steps):
+        for acc_step in range(cfg.training.grad_acc_steps):
             # all-reduce gradients only at the last grad acc step
-            model.require_backward_grad_sync = (acc_step == cfg.training.acc_steps - 1)
+            model.require_backward_grad_sync = (acc_step == cfg.training.grad_acc_steps - 1)
             x, y = train_reader.sample_batch()
 
             #####
@@ -63,7 +62,7 @@ def main():
                 with backend.get_amp_context():
                     unscaled_loss = model(x, y)
 
-            scaled_loss = unscaled_loss / cfg.training.acc_steps
+            scaled_loss = unscaled_loss / cfg.training.grad_acc_steps
 
             #####
             ##### Backward pass
@@ -78,8 +77,8 @@ def main():
         #####
         ##### Gradient clipping
         #####
-        if cfg.training.grad_clipping > 0: # clip gradient if needed
-            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.training.grad_clipping).item()
+        if cfg.optimizer.grad_clipping > 0: # clip gradient if needed
+            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.optimizer.grad_clipping).item()
         else: # otherwise, compute the global gradient norm
             grad_norm = math.sqrt(sum(p.grad.norm(p=2) ** 2 for p in model.parameters() if p.grad is not None))
 
@@ -103,7 +102,7 @@ def main():
         })
         logger.log_dict(timer.get_then_reset())
         logger.log_memory_usage()
-        logger.log_redundant_iters(crt_iter) # log crt_iter for each section
+        logger.log_redundant_iters(crt_iter) # log crt_iter for each section in wandb
         logger.commit(step=crt_iter)
     # end for crt_iter
 
