@@ -43,7 +43,7 @@ class MultiOptimizer:
                         momentum=cfg.optimizer.muon_momentum
                     ),
                     AdamW(
-                        params=self._get_input_embedding() + self._get_input_embedding() + self._get_output_embedding(),
+                        params=self._get_input_embedding() + self._get_output_embedding() + self._get_layer_norms(),
                         lr=cfg.optimizer.adamw_lr,
                         weight_decay=cfg.optimizer.weight_decay,
                         betas=(
