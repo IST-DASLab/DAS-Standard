@@ -12,6 +12,8 @@ from tqdm.auto import tqdm  # Use auto to support both terminal and Jupyter
 
 from constants import (
     TEXT_ITER,
+    TEXT_LRS_ITER,
+
     TEXT_TRAIN_ITER,
     TEXT_VAL_ITER,
     TEXT_ELAPSED_ITER,
@@ -176,6 +178,7 @@ class LoggingManager:
     def log_redundant_iters(self, crt_iter):
         if self.is_master:
             self.metrics[TEXT_ITER] = crt_iter
+            self.metrics[TEXT_LRS_ITER] = crt_iter
             self.metrics[TEXT_TRAIN_ITER] = crt_iter
             self.metrics[TEXT_VAL_ITER] = crt_iter
             self.metrics[TEXT_ELAPSED_ITER] = crt_iter
