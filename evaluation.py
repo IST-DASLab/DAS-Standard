@@ -17,7 +17,7 @@ def log_eval_loss(cfg, logger, crt_iter, loss):
     text_ppl = TEXT_FINAL_VAL_PPL if is_last_step else TEXT_VAL_PPL
 
     logger.log_dict({text_loss: loss, text_ppl: math.exp(loss)})
-    logger.log_console(f"Evaluation", data=OrderedDict(step=crt_iter, loss=f"{loss:.4f}", ppl=f"{math.exp(loss):.4f}"))
+    logger.log_console(f"\nEvaluation", data=OrderedDict(step=crt_iter, loss=f"{loss:.4f}", ppl=f"{math.exp(loss):.4f}"))
 
 
 @torch.no_grad()
