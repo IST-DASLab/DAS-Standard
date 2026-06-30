@@ -65,7 +65,6 @@ if __name__ == "__main__":
             "compile_model": [False],
             "eval_interval": [100],
             "eval_batches": [32],
-            "log_interval": [1],
 
             ### optimizer section
             "optimizer_name": ["adamw"],
