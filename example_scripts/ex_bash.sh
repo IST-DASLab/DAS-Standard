@@ -38,6 +38,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 torchrun --nproc-per-node=8 pretrain.py \
     --compile_model False \
     --eval_interval 100 \
     --eval_batches 32 \
+    --log_interval 1 \
 
     ### optimizer section
     --optimizer_name adamw \
@@ -65,5 +66,4 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 torchrun --nproc-per-node=8 pretrain.py \
     --project das-standard \
     --group ${WANDB_GROUP} \
     --job_type ${WANDB_JOB_TYPE} \
-    --run_name ${WANDB_RUN_NAME} \
-    --log_interval 1
+    --run_name ${WANDB_RUN_NAME}
