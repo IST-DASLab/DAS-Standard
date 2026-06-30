@@ -80,7 +80,7 @@ class DDPBackend(BaseBackend):
         self.cfg.training.grad_acc_steps //= self.world_size
 
     def wrap_model(self, model):
-        wrapped = DDP(model, device_ids=[self.local_rank]).to(self.device)
+        wrapped = DDP(model.to(self.device), device_ids=[self.local_rank])
         if self.cfg.training.compile_model:
             return torch.compile(wrapped)
         return wrapped
