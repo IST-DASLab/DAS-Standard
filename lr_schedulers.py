@@ -3,7 +3,7 @@ from argparse import Namespace as ArgParseNamespace
 
 def get_lr_cos_warmup(cfg: ArgParseNamespace, lr_init: float, step: int):
     max_iters = cfg.training.max_iters
-    warmup_steps = int(max_iters * cfg.training.lr_warmup)
+    warmup_steps = int(max_iters * cfg.optimizer.lr_warmup)
 
     if step < warmup_steps:
         lr_start = lr_init * cfg.optimizer.cos_start_lr_ratio
