@@ -88,10 +88,12 @@ class LoggingManager:
             )
 
     def update_eval_pbar(self, step_inc: int = 1, **kwargs):
-        self._update_pbar(self.eval_pbar, step_inc, **kwargs)
+        if self.is_master:
+            self._update_pbar(self.eval_pbar, step_inc, **kwargs)
 
     def update_train_pbar(self, step_inc: int = 1, **kwargs):
-        self._update_pbar(self.train_pbar, step_inc, **kwargs)
+        if self.is_master:
+            self._update_pbar(self.train_pbar, step_inc, **kwargs)
 
     def _update_pbar(self, pbar, step_inc: int = 1, **kwargs):
         if self.is_master and pbar:
