@@ -9,30 +9,30 @@ from argparse import Namespace as ArgParseNamespace
 import torch.distributed as dist
 
 
-def get_dataset(args: ArgParseNamespace):
-    root = args.data.source_dir
-    if args.data.model_name == "c4":
+def get_dataset(cfg: ArgParseNamespace):
+    root = cfg.data.source_dir
+    if cfg.data.model_name == "c4":
         train_path = os.path.join(root, "c4", "train.bin")
         val_path = os.path.join(root, "c4", "val.bin")
         return train_path, val_path
-    raise NotImplementedError(f'Unknown dataset {args.data.model_name}')
+    raise NotImplementedError(f'Unknown dataset {cfg.data.model_name}')
 
 
-def get_data_readers(args, verbose=True):
-    train_path, val_path = get_dataset(args)
+def get_data_readers(cfg, verbose=True):
+    train_path, val_path = get_dataset(cfg)
 
     train_reader = SimpleDataReader(
         path=train_path,
-        batch_size=args.data.batch_size,
-        seq_len=args.model.seq_len,
-        seed=args.data.seed,
+        batch_size=cfg.data.batch_size,
+        seq_len=cfg.model.seq_len,
+        seed=cfg.data.seed,
         auto_shard=True)
 
     val_reader = SimpleDataReader(
         path=train_path,
-        batch_size=args.data.batch_size,
-        seq_len=args.model.seq_len,
-        seed=args.data.seed,
+        batch_size=cfg.data.batch_size,
+        seq_len=cfg.model.seq_len,
+        seed=cfg.data.seed,
         auto_shard=False)
 
     if verbose:

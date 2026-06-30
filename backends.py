@@ -8,12 +8,12 @@ from argparse import Namespace as ArgParseNamespace
 from contextlib import nullcontext
 from tqdm import tqdm
 
-def get_backend(args: ArgParseNamespace):
-    match args.training.backend:
+def get_backend(cfg: ArgParseNamespace):
+    match cfg.training.backend:
         case "ddp":
-            return DDPBackend(args)
+            return DDPBackend(cfg)
         case _:
-            raise NotImplementedError(f"Backend {args.training.backend} is not implemented")
+            raise NotImplementedError(f"Backend {cfg.training.backend} is not implemented")
 
 class BaseBackend:
     def __init__(self, cfg: ArgParseNamespace, rank, local_rank, world_size):

@@ -21,7 +21,7 @@ class MultiOptimizer:
     def _create_optimizers_list(self):
         cfg = self.cfg
 
-        match cfg.optimizer.model_name:
+        match cfg.optimizer.optimizer_name:
             case "adamw":
                 return [
                     AdamW(

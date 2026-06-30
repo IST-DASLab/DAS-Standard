@@ -83,7 +83,7 @@ def get_dynamic_arg_parser():
     This function iterates through all dataclasses defined in the config.py file
     and creates command line arguments dynamically.
 
-    After parsing the args, they are preprocessed before returning them in the
+    After parsing the cfg, they are preprocessed before returning them in the
     main process for usage.
     """
     parser = ArgumentParser(description="Arguments are read from the dataclass fields *Config in configs package, such as ModelConfig, OptimizerConfig, etc.")
@@ -115,7 +115,7 @@ def preprocess(cfg: ArgParseNamespace):
             cfg.model.vocab_size = 32_000
         case "olmo":
             raise NotImplementedError
-            # args.model.vocab_size = None
+            # cfg.model.vocab_size = None
 
     # compute number of iterations based on model size (only Linears from transformer blocks)
     cfg.training.max_iters = _compute_max_iters(cfg, attn_fn=attn_params_fn, mlp_fn=mlp_params_fn)
