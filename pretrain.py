@@ -30,15 +30,22 @@ def main():
     timer = TimingManager()
     backend: BaseBackend = get_backend(cfg)
 
+    logger.log_console("Creating model")
     model = backend.wrap_model(get_model(cfg))
+
+    logger.log_console("Creating optimizer")
     optimizer = MultiOptimizer(cfg, model)
+
+    logger.log_console("Creating data readers")
     train_reader, val_reader = get_data_readers(cfg)
+
+    logger.start_train_pbar(total_iters=cfg.training.max_iters)
 
     for crt_iter in range(1, 1 + cfg.training.max_iters):
         #####
         ##### Eval
         #####
-        eval_and_log(cfg, backend, model, train_reader, crt_iter)
+        eval_and_log(cfg, backend, model, train_reader, logger, crt_iter)
 
         #####
         ##### Training
@@ -88,6 +95,8 @@ def main():
         #####
         ##### Logging
         #####
+        logger.update_train_pbar(step_inc=1, loss=f"{total_step_loss:.4f}")
+
         logger.log_dict({
             TEXT_TRAIN_LOSS: total_step_loss,
             TEXT_TRAIN_PPL: math.exp(total_step_loss),

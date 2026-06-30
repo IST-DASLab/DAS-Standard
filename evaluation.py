@@ -1,7 +1,7 @@
 import math
-
 import torch
 import torch.distributed as dist
+from collections import OrderedDict
 
 from constants import (
     TEXT_VAL_LOSS,
@@ -16,10 +16,8 @@ def log_eval_loss(cfg, logger, crt_iter, loss):
     text_loss = TEXT_FINAL_VAL_LOSS if is_last_step else TEXT_VAL_LOSS
     text_ppl = TEXT_FINAL_VAL_PPL if is_last_step else TEXT_VAL_PPL
 
-    logger.log_dict({
-        text_loss: loss,
-        text_ppl: math.exp(text_loss),
-    })
+    logger.log_dict({text_loss: loss, text_ppl: math.exp(loss)})
+    logger.log_console(f"Evaluation", data=OrderedDict(step=crt_iter, loss=loss, ppl=math.exp(loss)))
 
 
 @torch.no_grad()
@@ -32,13 +30,20 @@ def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
         model.eval()
         num_batches = cfg.training.eval_batches if crt_iter < cfg.training.max_iters else reader.num_batches
         total_loss = torch.tensor(0.0, dtype=torch.float32, device=model.device)
+
+        logger.start_eval_pbar(total_batches=num_batches)
         reader.reset()
+
         for idx in range(num_batches):
             x, y = reader.sample_batch()
             with backend.get_amp_context():
                 loss = model(x, y)
             total_loss += loss.item()
+
+            logger.update_val_pbar(step_inc=1, val_loss=f"{total_loss:.4f}")
         # end for idx
+
+        logger.close_val_pbar()
 
         dist.all_reduce(total_loss, op=dist.ReduceOp.SUM)
         total_loss = total_loss.item() / backend.world_size
