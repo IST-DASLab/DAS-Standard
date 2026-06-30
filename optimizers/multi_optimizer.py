@@ -102,10 +102,11 @@ class MultiOptimizer:
 
         self.optim_iter += 1
 
+        self._update_learning_rates()
+
         for opt in self.optimizers:
             opt.step()
 
-        self._update_learning_rates()
 
         return loss
 
