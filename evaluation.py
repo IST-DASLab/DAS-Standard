@@ -46,6 +46,6 @@ def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
         logger.close_eval_pbar()
 
         dist.all_reduce(total_loss, op=dist.ReduceOp.SUM)
-        total_loss = total_loss.item() / backend.world_size
+        total_loss = total_loss.item() / backend.world_size / num_batches
 
         log_eval_loss(cfg, logger, crt_iter, total_loss)
