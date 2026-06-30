@@ -92,7 +92,7 @@ if __name__ == "__main__":
             "project": ["das-standard"],
             "group": [Template("${model_name}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}")],
             "job_type": [Template("lr=${adamw_lr}")],
-            "name": [Template("${group}_${job_type}_seed=${seed}")],
+            "run_name": [Template("${group}_${job_type}_seed=${seed}")],
             "log_interval": [1],
         }
     )
