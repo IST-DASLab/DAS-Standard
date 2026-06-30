@@ -10,12 +10,12 @@ import torch.distributed as dist
 
 
 def get_dataset(cfg: ArgParseNamespace):
-    root = cfg.data.source_dir
-    if cfg.data.model_name == "c4":
+    root = cfg.dataset.dataset_path
+    if cfg.dataset.dataset_name == "c4":
         train_path = os.path.join(root, "c4", "train.bin")
         val_path = os.path.join(root, "c4", "val.bin")
         return train_path, val_path
-    raise NotImplementedError(f'Unknown dataset {cfg.data.model_name}')
+    raise NotImplementedError(f'Unknown dataset {cfg.dataset.dataset_name}')
 
 
 def get_data_readers(cfg, verbose=True):
@@ -23,16 +23,16 @@ def get_data_readers(cfg, verbose=True):
 
     train_reader = SimpleDataReader(
         path=train_path,
-        batch_size=cfg.data.batch_size,
+        batch_size=cfg.training.local_batch_size,
         seq_len=cfg.model.seq_len,
-        seed=cfg.data.seed,
+        seed=cfg.training.seed,
         auto_shard=True)
 
     val_reader = SimpleDataReader(
         path=train_path,
-        batch_size=cfg.data.batch_size,
+        batch_size=cfg.training.local_batch_size,
         seq_len=cfg.model.seq_len,
-        seed=cfg.data.seed,
+        seed=cfg.training.seed,
         auto_shard=False)
 
     if verbose:
