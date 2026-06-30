@@ -29,8 +29,7 @@ def main():
     timer = TimingManager()
 
     model = get_model(cfg)
-    logger.log_console(str(model))
-    logger.log_model_size(model)
+    logger.log_model_info(model)
 
     model = backend.wrap_model(model)
     optimizer = MultiOptimizer(cfg, model)
@@ -44,7 +43,7 @@ def main():
         #####
         ##### Eval
         #####
-        eval_and_log(cfg, backend, model, train_reader, logger, crt_iter)
+        eval_and_log(cfg, backend, model, val_reader, logger, crt_iter)
 
         #####
         ##### Training

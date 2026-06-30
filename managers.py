@@ -1,3 +1,4 @@
+import math
 import os
 import gpustat
 import wandb
@@ -110,8 +111,15 @@ class LoggingManager:
     ##### Different statistics
     #####
     @torch.no_grad()
-    def log_model_size(self, model):
+    def log_model_info(self, model):
         if self.is_master:
+            cfg = self.cfg
+            is_tied = cfg.model.tie_embeds
+            CTR = cfg.training.chinchilla_token_ratio
+            S = cfg.model.seq_len
+            B = cfg.training.local_batch_size
+            A = cfg.training.grad_acc_steps
+
             params_inp_embed = model.tok_embed.weight.numel()
             params_pos_embed = model.pos_embed.weight.numel() if hasattr(model, "pos_embed") else 0
             params_out_embed = model.lm_head.weight.numel()
@@ -119,8 +127,11 @@ class LoggingManager:
             params_layer_norm = sum(p.numel() for p in model.parameters() if p.ndim == 1)
             params_all = sum(p.numel() for p in model.parameters())
 
-            is_tied = self.cfg.model.tie_embeds
 
+            T = params_linear * CTR * 20
+            print("-" * 50)
+            print("Model:")
+            print(str(model))
             print("-" * 50)
             print(f"Model summary:")
             print(f"\t Input Embedding params: {params_inp_embed:_}") # (1 - int(is_tied)) * params_out_embed (tied: {is_tied})
@@ -129,6 +140,15 @@ class LoggingManager:
             print(f"\t          Linear params: {params_linear:_}")
             print(f"\t     Layer norms params: {params_layer_norm:_}")
             print(f"\t             All params: {params_all:_}")
+            print("-" * 50)
+            print(f"Tokens info:")
+            print(f"\t           Linear params (P): {params_linear:_}")
+            print(f"\tChinchilla Token Ratio (CTR): {CTR * 20}x")
+            print(f"\t        Tokens (T = P * CTR): {T}")
+            print(f"\t         Sequence Length (S): {S}")
+            print(f"\t       Device Batch Size (B): {B}")
+            print(f"\t          Grad Acc Steps (A): {A}")
+            print(f"\t     Steps (T / (B * S * A)):{math.ceil()}")
             print("-" * 50)
 
     #####
