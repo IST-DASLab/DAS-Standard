@@ -27,8 +27,10 @@ def main():
     timer = TimingManager()
     backend: BaseBackend = get_backend(cfg)
 
-    model = backend.wrap_model(get_model(cfg))
+    model = get_model(cfg)
     logger.log_model_size(model)
+
+    model = backend.wrap_model(model)
 
     logger.log_console("Creating optimizer")
     optimizer = MultiOptimizer(cfg, model)
