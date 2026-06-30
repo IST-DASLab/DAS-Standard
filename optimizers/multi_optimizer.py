@@ -69,7 +69,7 @@ class MultiOptimizer:
         return [p for p in self.model.parameters() if p.ndim == 1]
 
     def _get_linear_layers(self):
-        return [p for p in self.model.block.parameters() if p.ndim == 2]
+        return [p for p in self.model.blocks.parameters() if p.ndim == 2]
 
     def _get_all_params(self):
         return self.model.parameters()
