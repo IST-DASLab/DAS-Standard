@@ -97,6 +97,13 @@ class MultiOptimizer:
                     case _:
                         raise NotImplementedError(f"Scheduler {cfg.optimizer.lr_scheduler} is not implemented")
 
+    def extract_learning_rates(self):
+        lrs = {}
+        for opt in self.optimizers:
+            opt_name = opt.__class__.__name__
+            lrs[f"lrs/{opt_name}"] = opt.param_groups[0]["lr"]
+        return lrs
+
     @torch.no_grad()
     def step(self, closure=None):
         loss = None

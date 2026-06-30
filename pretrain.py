@@ -101,6 +101,7 @@ def main():
             TEXT_TRAIN_GRAD_NORM: grad_norm,
         })
         logger.log_dict(timer.get_then_reset())
+        logger.log_dict(optimizer.extract_learning_rates())
         logger.log_memory_usage()
         logger.log_redundant_iters(crt_iter) # log crt_iter for each section in wandb
         logger.commit(step=crt_iter)
