@@ -40,7 +40,7 @@ def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
                 loss = model(x, y)
             total_loss += loss.item()
 
-            logger.update_val_pbar(step_inc=1, val_loss=f"{total_loss:.4f}")
+            logger.update_eval_pbar(step_inc=1, val_loss=f"{total_loss:.4f}")
         # end for idx
 
         logger.close_val_pbar()
