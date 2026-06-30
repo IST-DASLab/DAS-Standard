@@ -93,9 +93,10 @@ class GPTMLP(nn.Module):
 
         E = cfg.model.embed_size
         E_expanded = E * cfg.model.mlp_expansion_factor
+        bias = cfg.model.bias
 
-        self.fc = nn.Linear(in_features=E, out_features=E_expanded)
-        self.Wo = nn.Linear(in_features=E_expanded, out_features=E)
+        self.fc = nn.Linear(in_features=E, out_features=E_expanded, bias=bias)
+        self.Wo = nn.Linear(in_features=E_expanded, out_features=E, bias=bias)
         self.dropout = nn.Dropout(cfg.model.dropout)
         self.activation = nn.GELU()
 
@@ -110,9 +111,9 @@ class GPTMLP(nn.Module):
 class GPTBlock(nn.Module):
     def __init__(self, cfg: ArgParseNamespace, layer_id: int):
         super().__init__()
-        self.norm1 = KarpathyLayerNorm(cfg.model.embed_size)
+        self.norm1 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
         self.attn = GPTCausalSelfAttention(cfg, layer_id)
-        self.norm2 = KarpathyLayerNorm(cfg.model.embed_size)
+        self.norm2 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
         self.mlp = GPTMLP(cfg, layer_id)
 
     def forward(self, x):
