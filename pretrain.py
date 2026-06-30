@@ -29,11 +29,10 @@ def main():
     timer = TimingManager()
 
     model = get_model(cfg)
-    logger.log_model_info(model, backend.world_size)
+    optimizer = MultiOptimizer(cfg, model) # use raw model before wrapping
+    logger.log_model_info(model, backend.world_size) # use raw model before wrapping
 
     model = backend.wrap_model(model)
-    optimizer = MultiOptimizer(cfg, model)
-
     train_reader, val_reader = get_data_readers(cfg)
 
     logger.log_console(f"Dataset tokens", data=OrderedDict(train=f"{train_reader.num_toks:_}", val=f"{val_reader.num_toks:_}"))
