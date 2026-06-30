@@ -40,7 +40,7 @@ class TimingManager:
         end_event.record()
 
         torch.cuda.synchronize()
-        self.metrics[block_name] += end_event.elapsed_time(start_event)
+        self.metrics[block_name] += start_event.elapsed_time(end_event)
 
     def get_then_reset(self):
         crt_metrics = self.metrics.copy()
