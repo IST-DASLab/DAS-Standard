@@ -6,5 +6,5 @@ tiktoken
 wandb
 tqdm
 gridsearcher
-simple_parsing
+simple-parsing
 gpustat
