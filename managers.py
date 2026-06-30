@@ -113,6 +113,7 @@ class LoggingManager:
     def log_model_size(self, model):
         if self.is_master:
             params_inp_embed = model.tok_embed.weight.numel()
+            params_pos_embed = model.pos_embed.weight.numel() if hasattr(model, "pos_embed") else 0
             params_out_embed = model.lm_head.weight.numel()
             params_linear = sum(p.numel() for p in model.blocks.parameters() if p.ndim == 2)
             params_layer_norm = sum(p.numel() for p in model.parameters() if p.ndim == 1)
@@ -122,10 +123,12 @@ class LoggingManager:
 
             print("-" * 50)
             print(f"Model summary:")
-            print(f"\t  Embedding params: {params_inp_embed + (1 - int(is_tied)) * params_out_embed:_} (tied: {is_tied})")
-            print(f"\t     Linear params: {params_linear:_}")
-            print(f"\tLayer norms params: {params_layer_norm:_}")
-            print(f"\t        All params: {params_all:_}")
+            print(f"\t Input Embedding params: {params_inp_embed:_}") # (1 - int(is_tied)) * params_out_embed (tied: {is_tied})
+            print(f"\t   Pos Embedding params: {params_pos_embed:_}")
+            print(f"\tOutput Embedding params: {params_out_embed * (1 - int(is_tied)):_} (tied: {is_tied})")
+            print(f"\t          Linear params: {params_linear:_}")
+            print(f"\t     Layer norms params: {params_layer_norm:_}")
+            print(f"\t             All params: {params_all:_}")
             print("-" * 50)
 
     #####
