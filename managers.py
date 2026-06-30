@@ -148,7 +148,7 @@ class LoggingManager:
             print(f"\t         Sequence Length (S): {S}")
             print(f"\t       Device Batch Size (B): {B}")
             print(f"\t          Grad Acc Steps (A): {A}")
-            print(f"\t     Steps (T / (B * S * A)):{math.ceil()}")
+            print(f"\t     Steps (T / (B * S * A)):{math.ceil(T / (B * S * A))}")
             print("-" * 50)
 
     #####
