@@ -103,6 +103,24 @@ class LoggingManager:
             self.eval_pbar = None
 
     #####
+    ##### Different statistics
+    #####
+    def log_model_size(self, model):
+        if self.is_master:
+            params_inp_embed = model.input_embed.weight.numel()
+            params_out_embed = model.lm_head.weight.numel()
+            params_linear = sum(p.numel() for p in model.block.parameters() if p.ndim == 2)
+            params_layer_norm = sum(p.numel() for p in model.parameters() if p.ndim == 1)
+            params_all = sum(p.numel() for p in model.parameters())
+            print("-" * 50)
+            print(f"Model summary:")
+            print(f"\t  Embedding params: {params_inp_embed + params_out_embed:_} (tied: {self.cfg.model.weight_tying})")
+            print(f"\t     Linear params: {params_linear:_}")
+            print(f"\tLayer norms params: {params_layer_norm:_}")
+            print(f"\t        All params: {params_all:_}")
+            print("-" * 50)
+
+    #####
     ##### Logging methods
     #####
     def log_memory_usage(self):
