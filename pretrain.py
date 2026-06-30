@@ -29,6 +29,7 @@ def main():
     timer = TimingManager()
 
     model = get_model(cfg)
+    logger.log_console(str(model))
     logger.log_model_size(model)
 
     model = backend.wrap_model(model)
