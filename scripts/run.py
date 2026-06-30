@@ -12,7 +12,7 @@ def main(dist, gpus, params):
             torchrun=dist,
             master_addr='127.0.0.1',
             master_port=29500 + gpus[0],  # heuristic
-            rdzv_backend='static', # static, c10d
+            rdzv_backend='static' if 'gpu413' in socket.gethostname() else 'c10d',
         ),
         cfg_sched=SchedulingConfig(
             distributed_training=True,
@@ -21,7 +21,6 @@ def main(dist, gpus, params):
             params_values=params
         )
     )
-
 
 if __name__ == "__main__":
     DATASETS_DIR = '/localhome/imodoran/datasets/' if socket.gethostname().startswith('gpu') else '/home/imodoran/datasets/'
@@ -48,7 +47,7 @@ if __name__ == "__main__":
             "seq_len": [1024],
             "dropout": ["0.0"],
             "bias": [False],
-            "weight_tying": [False],
+            "tie_embeds": [False],
             "mlp_expansion_factor": [4],
 
             ### dataset section
@@ -59,15 +58,15 @@ if __name__ == "__main__":
             "seed": [42],
             "tokens_count": [0],
             "chinchilla_token_ratio": [1],
-            "local_batch_size": [64],
-            "grad_acc_steps": [8],
+            "local_batch_size": [16],
+            "grad_acc_steps": [32],
             # "max_iters": [-1], # not needed, automatically determined
             "backend": ["ddp"],
             "dtype": ["bf16"],
             "compile_model": [False],
             "eval_interval": [100],
             "eval_batches": [32],
-            "log_interval": [1],
+            # "log_interval": [1],
 
             ### optimizer section
             "optimizer_name": ["adamw"],
