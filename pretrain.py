@@ -10,9 +10,6 @@ from models import get_model
 from optimizers import MultiOptimizer
 from managers import TimingManager, LoggingManager
 from constants import (
-    TEXT_ITER,
-
-    TEXT_TRAIN_ITER,
     TEXT_TRAIN_LOSS,
     TEXT_TRAIN_PPL,
     TEXT_TRAIN_GRAD_NORM,
