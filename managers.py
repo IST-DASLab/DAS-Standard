@@ -57,7 +57,7 @@ class LoggingManager:
                 project=cfg.wandb.project,
                 group=cfg.wandb.group,
                 job_type=cfg.wandb.job_type,
-                name=cfg.wandb.name,
+                name=cfg.wandb.model_name,
                 config=cfg,
             )
 

@@ -11,7 +11,7 @@ from models.gpt import GPTCausalSelfAttention, GPTMLP
 
 @dataclass
 class ModelConfig:
-    name: Literal["gpt", "llama", "olmo"] = "llama"
+    model_name: Literal["gpt", "llama", "olmo"] = "llama"
     vocab_size: int = -1
     num_layers: int = 6
     num_heads: int = 8
@@ -24,8 +24,8 @@ class ModelConfig:
 
 @dataclass
 class DatasetConfig:
-    path: str = "./data"
-    name: Literal["c4"] = "c4"
+    dataset_path: str = "./data"
+    dataset_name: Literal["c4"] = "c4"
 
 @dataclass
 class TrainingConfig:
@@ -47,7 +47,7 @@ class TrainingConfig:
 
 @dataclass
 class OptimizerConfig:
-    name: Literal["adamw", "muon"] = "adamw"
+    optimizer_name: Literal["adamw", "muon"] = "adamw"
     weight_decay: float = 0.0
 
     grad_clipping: float = 1.0 # rescale the global gradient to have this norm. Set to 0 to disable
@@ -75,7 +75,7 @@ class WandbConfig:
     project: str = None
     group: str = None
     job_type: str = None
-    name: str = None
+    run_name: str = None
     log_interval: int = 1
 
 def get_dynamic_arg_parser():
@@ -102,7 +102,7 @@ def preprocess(cfg: ArgParseNamespace):
     """
     attn_params_fn = None
     mlp_params_fn = None
-    match cfg.model.name:
+    match cfg.model.model_name:
         case "gpt":
             cfg.model.vocab_size = 50_304 # GPT-2 has vocab_size=50_257, padded up to nearest multiple of 64
             if cfg.model.weight_tying is None:

@@ -11,11 +11,11 @@ import torch.distributed as dist
 
 def get_dataset(args: ArgParseNamespace):
     root = args.data.source_dir
-    if args.data.name == "c4":
+    if args.data.model_name == "c4":
         train_path = os.path.join(root, "c4", "train.bin")
         val_path = os.path.join(root, "c4", "val.bin")
         return train_path, val_path
-    raise NotImplementedError(f'Unknown dataset {args.data.name}')
+    raise NotImplementedError(f'Unknown dataset {args.data.model_name}')
 
 
 def get_data_readers(args, verbose=True):

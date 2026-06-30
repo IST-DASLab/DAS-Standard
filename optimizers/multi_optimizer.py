@@ -21,7 +21,7 @@ class MultiOptimizer:
     def _create_optimizers_list(self):
         cfg = self.cfg
 
-        match cfg.optimizer.name:
+        match cfg.optimizer.model_name:
             case "adamw":
                 return [
                     AdamW(
@@ -54,7 +54,7 @@ class MultiOptimizer:
                     )
                 ]
             case _:
-                raise NotImplementedError(f'Optimizer {cfg.optimizer.name} is not implemented!')
+                raise NotImplementedError(f'Optimizer {cfg.optimizer.model_name} is not implemented!')
 
     def _get_input_embedding(self):
         return [self.model.tok_embed.weight]
