@@ -192,10 +192,10 @@ class LoggingManager:
 
     def log_console(self, message: str, data: Optional[OrderedDict] = None):
         if self.is_master:
-            log_parts = [message]
+            log_parts = []
             if data:
                 log_parts.extend(f"{k}={v}" for k, v in data.items())
-            print(" | ".join(log_parts))
+            print(f"{message}: " + " | ".join(log_parts))
 
     def commit(self, step: int):
         if self.is_master and self.metrics:

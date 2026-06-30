@@ -1,6 +1,6 @@
 import math
 import torch
-import torch.distributed as dist
+from collections import OrderedDict
 
 from backends import get_backend, BaseBackend
 from configs import get_dynamic_arg_parser
@@ -36,7 +36,7 @@ def main():
 
     train_reader, val_reader = get_data_readers(cfg)
 
-    logger.log_console(f"Dataset tokens: train={train_reader.num_toks:_} | val={val_reader.num_toks:_}")
+    logger.log_console(f"Dataset tokens", data=OrderedDict(train=f"{train_reader.num_toks:_}", val=f"{val_reader.num_toks:_}"))
     logger.start_train_pbar(total_iters=cfg.training.max_iters)
 
     for crt_iter in range(1, 1 + cfg.training.max_iters):
