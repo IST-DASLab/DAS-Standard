@@ -18,7 +18,7 @@ def get_dataset(cfg: ArgParseNamespace):
     raise NotImplementedError(f'Unknown dataset {cfg.dataset.dataset_name}')
 
 
-def get_data_readers(cfg, verbose=True):
+def get_data_readers(cfg):
     train_path, val_path = get_dataset(cfg)
 
     train_reader = SimpleDataReader(
@@ -34,10 +34,6 @@ def get_data_readers(cfg, verbose=True):
         seq_len=cfg.model.seq_len,
         seed=cfg.training.seed,
         auto_shard=False)
-
-    if verbose:
-        print(f"Num training tokens: {train_reader.num_toks}")
-        print(f"Num validation tokens: {val_reader.num_toks}")
 
     return train_reader, val_reader
 
