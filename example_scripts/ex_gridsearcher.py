@@ -46,7 +46,7 @@ if __name__ == "__main__":
             "seq_len": [1024],
             "dropout": ["0.0"],
             "bias": [False],
-            "weight_tying": [False],
+            "tie_embeds": [False],
             "mlp_expansion_factor": [4],
 
             ### dataset section
