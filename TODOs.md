@@ -40,7 +40,7 @@
   - **[done]** wandb
   - **[done]** `tqdm` progress bars 
 - **[done]** timing
-- **[done]** 
+- **[ ]** model checkpointing
 
 ### Evaluation
 - **[done]** 
