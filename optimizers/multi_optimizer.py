@@ -3,14 +3,16 @@ import torch.nn as nn
 from torch.optim import AdamW
 from argparse import Namespace as ArgParseNamespace
 
+from backends import BaseBackend
 from lr_schedulers import get_lr_cos_warmup
-from optimizers.kj_muon import SingleDeviceMuon
+from optimizers.kj_muon import SingleDeviceMuon, Muon
 
 
 class MultiOptimizer:
-    def __init__(self, cfg: ArgParseNamespace, model: nn.Module):
+    def __init__(self, cfg: ArgParseNamespace, model: nn.Module, backend: BaseBackend):
         self.cfg = cfg
         self.model = model
+        self.backend = backend
 
         self.optim_iter = 0
         self.optimizers = self._create_optimizers_list()
@@ -35,8 +37,9 @@ class MultiOptimizer:
                         eps=cfg.optimizer.adamw_eps),
                 ]
             case "muon":
+                muon_fn = SingleDeviceMuon if self.backend.world_size == 1 else Muon
                 return [
-                    SingleDeviceMuon(
+                    muon_fn(
                         params=self._get_linear_layers(),
                         lr=cfg.optimizer.muon_lr,
                         weight_decay=cfg.optimizer.weight_decay,

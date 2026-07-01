@@ -29,7 +29,7 @@ def main():
     timer = TimingManager()
 
     model = get_model(cfg)
-    optimizer = MultiOptimizer(cfg, model) # use raw model before wrapping
+    optimizer = MultiOptimizer(cfg, model, backend) # use raw model before wrapping
     logger.log_model_info(model, backend.world_size) # use raw model before wrapping
 
     model = backend.wrap_model(model)
