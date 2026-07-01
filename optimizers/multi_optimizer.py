@@ -4,7 +4,7 @@ from torch.optim import AdamW
 from argparse import Namespace as ArgParseNamespace
 
 from backends import BaseBackend
-from lr_schedulers import get_lr_cos_warmup
+from lr_sched_names import get_lr_cos_warmup
 from optimizers.kj_muon import SingleDeviceMuon, Muon
 
 
@@ -90,7 +90,7 @@ class MultiOptimizer:
         cfg = self.cfg
         for opt in self.optimizers:
             for group in opt.param_groups:
-                match cfg.optimizer.lr_scheduler:
+                match cfg.optimizer.lr_sched_name:
                     case "cosine":
                         group["lr"] = get_lr_cos_warmup(
                             cfg=cfg,
@@ -98,7 +98,7 @@ class MultiOptimizer:
                             step=self.optim_iter,
                         )
                     case _:
-                        raise NotImplementedError(f"Scheduler {cfg.optimizer.lr_scheduler} is not implemented")
+                        raise NotImplementedError(f"Scheduler {cfg.optimizer.lr_sched_name} is not implemented")
 
     def extract_learning_rates(self):
         lrs = {}

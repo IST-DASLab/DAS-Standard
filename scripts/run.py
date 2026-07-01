@@ -63,21 +63,23 @@ if __name__ == "__main__":
             # "max_iters": [-1], # not needed, automatically determined
             "backend": ["ddp"],
             "dtype": ["bf16"],
-            "compile_model": [False],
+            "compile_model": [True],
             "eval_interval": [100],
             "eval_batches": [32],
-            # "log_interval": [1],
 
             ### optimizer section
-            "optimizer_name": ["adamw"],
+            "optimizer_name": [
+                # "adamw",
+                "muon",
+            ],
             "weight_decay": ["0.0"],
             "grad_clipping": ["1.0"],
 
             # Learning Rate scheduling
-            "lr_scheduler": ["cosine"],
-            "lr_warmup": ["0.1"],
-            "cos_start_lr_ratio": ["0.01"],
-            "cos_end_lr_ratio": ["0.1"],
+            "lr_sched_name": ["cosine"],
+            "lr_sched_warmup": ["0.1"],
+            "lr_sched_start_ratio": ["0.01"],
+            "lr_sched_end_ratio": ["0.1"],
 
             # AdamW parameters
             "adamw_lr": ["1e-3"],
@@ -86,14 +88,20 @@ if __name__ == "__main__":
             "adamw_eps": ["1e-8"],
 
             # Muon parameters
-            "muon_lr": ["1e-3"],
+            "muon_lr": ["4e-2"],
             "muon_momentum": ["0.95"],
 
             ### wandb section
             "entity": ["ist"],
             "project": ["das-standard"],
-            "group": [Template("${model_name}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}")],
-            "job_type": [Template("lr=${adamw_lr}")],
+            "group": [
+                # Template("${model_name}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}"), # AdamW
+                Template("${model_name}_${optimizer_name}_wd=${weight_decay}_mu=${muon_momentum}"), # Muon
+            ],
+            "job_type": [
+                # Template("lr=${adamw_lr}"), # AdamW
+                Template("lr-muon=${muon_lr}_lr-adamw=${adamw_lr}"),  # Muon
+            ],
             "run_name": [Template("${group}_${job_type}_seed=${seed}")],
         }
     )

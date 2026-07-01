@@ -50,10 +50,10 @@ class OptimizerConfig:
     grad_clipping: float = 1.0 # rescale the global gradient to have this norm. Set to 0 to disable
 
     # Learning Rate scheduling
-    lr_scheduler: Literal["cosine", "step"] = "cosine"
-    lr_warmup: float = 0.1 # percentage of number of steps
-    cos_start_lr_ratio: float = 0.01 # start from lr * 0.01
-    cos_end_lr_ratio: float = 0.1 # end at the lr * 0.1
+    lr_sched_name: Literal["cosine", "step"] = "cosine"
+    lr_sched_warmup: float = 0.1 # percentage of number of steps at the beginning of training, e.g. first 10% steps we do linear lr warmup
+    lr_sched_start_ratio: float = 0.01 # for warmup, start the lr value from lr * lr_sched_start_ratio
+    lr_sched_end_ratio: float = 0.1 # for the decay part (after warmup), decay the lr value from lr to lr * lr_sched_end_ratio
 
     # AdamW parameters
     adamw_lr: float = 1e-3

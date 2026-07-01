@@ -72,10 +72,10 @@ if __name__ == "__main__":
             "grad_clipping": ["1.0"],
 
             # Learning Rate scheduling
-            "lr_scheduler": ["cosine"],
-            "lr_warmup": ["0.1"],
-            "cos_start_lr_ratio": ["0.01"],
-            "cos_end_lr_ratio": ["0.1"],
+            "lr_sched_name": ["cosine"],
+            "lr_sched_warmup": ["0.1"],
+            "lr_sched_start_ratio": ["0.01"],
+            "lr_sched_end_ratio": ["0.1"],
 
             # AdamW parameters
             "adamw_lr": ["1e-3"],
