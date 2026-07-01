@@ -28,7 +28,11 @@
 
 ### Optimizer
 - **[done]** optimizers package and factory
-- **[done]** learning rate scheduling
+- **[ ]** learning rate scheduling
+  - **[done]** cosine
+  - **[ ]** linear
+  - **[ ]** trapezoidal
+  - **[done]** renamed params related to lr scheduling
 
 ### Managers
 - **[done]** file with constants
