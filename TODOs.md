@@ -14,6 +14,9 @@
   - **[done]** DDP
   - **[ ]** FSDP support
 
+### Matmuls Precision
+- **[ ]** integrate Quartet-II
+
 ### Dataset
 - **[done]** sharded data reader
 
