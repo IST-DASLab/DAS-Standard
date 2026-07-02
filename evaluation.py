@@ -26,7 +26,7 @@ def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
 
     if is_first_step or is_middle_step or is_last_step:
         model.eval()
-        num_batches = cfg.training.eval_batches if crt_iter < cfg.training.max_iters else reader.num_batches
+        num_batches = reader.num_batches if is_last_step else cfg.training.eval_batches
         total_loss = torch.tensor(0.0, dtype=torch.float32, device=model.device)
 
         logger.start_eval_pbar(total_batches=num_batches)
