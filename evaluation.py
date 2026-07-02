@@ -10,9 +10,7 @@ from constants import (
     TEXT_FINAL_VAL_PPL,
 )
 
-def log_eval_loss(cfg, logger, crt_iter, loss):
-    is_last_step = crt_iter == cfg.training.max_iters
-
+def log_eval_loss(cfg, logger, crt_iter, loss, is_last_step):
     text_loss = TEXT_FINAL_VAL_LOSS if is_last_step else TEXT_VAL_LOSS
     text_ppl = TEXT_FINAL_VAL_PPL if is_last_step else TEXT_VAL_PPL
 
@@ -48,4 +46,4 @@ def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
         dist.all_reduce(total_loss, op=dist.ReduceOp.SUM)
         total_loss = total_loss.item() / backend.world_size / num_batches
 
-        log_eval_loss(cfg, logger, crt_iter, total_loss)
+        log_eval_loss(cfg, logger, crt_iter, total_loss, is_last_step)
