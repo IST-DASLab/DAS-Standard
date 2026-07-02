@@ -20,11 +20,11 @@ def log_eval_loss(cfg, logger, crt_iter, loss, is_last_step):
 
 @torch.no_grad()
 def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
-    is_first_step = crt_iter == 1
+    is_random_model = crt_iter == 0 # called with explicit crt_iter=0 before the training loop on the randomly initialized model
     is_middle_step = crt_iter % cfg.training.eval_interval == 0
     is_last_step = crt_iter == cfg.training.max_iters
 
-    if is_first_step or is_middle_step or is_last_step:
+    if is_random_model or is_middle_step or is_last_step:
         model.eval()
         num_batches = reader.num_batches if is_last_step else cfg.training.eval_batches
         total_loss = torch.tensor(0.0, dtype=torch.float32, device=model.device)

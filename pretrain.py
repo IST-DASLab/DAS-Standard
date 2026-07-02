@@ -38,12 +38,15 @@ def main():
     logger.log_console(f"Dataset tokens", data=OrderedDict(train=f"{train_reader.num_toks:_}", val=f"{val_reader.num_toks:_}"))
     logger.start_train_pbar(total_iters=cfg.training.max_iters)
 
-    for crt_iter in range(1, 1 + cfg.training.max_iters):
-        #####
-        ##### Eval
-        #####
-        eval_and_log(cfg, backend, model, val_reader, logger, crt_iter)
+    #####
+    ##### Eval for the randomly initialized model
+    #####
+    eval_and_log(cfg, backend, model, val_reader, logger, 0)
 
+    #####
+    ##### Training Loop
+    #####
+    for crt_iter in range(1, 1 + cfg.training.max_iters):
         #####
         ##### Training
         #####
@@ -88,6 +91,11 @@ def main():
             optimizer.step()
 
         optimizer.zero_grad(set_to_none=True)
+
+        #####
+        ##### Eval
+        #####
+        eval_and_log(cfg, backend, model, val_reader, logger, crt_iter)
 
         #####
         ##### Logging
