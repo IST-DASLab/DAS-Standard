@@ -10,14 +10,6 @@ from constants import (
     TEXT_FINAL_VAL_PPL,
 )
 
-def log_eval_loss(cfg, logger, crt_iter, loss, is_last_step):
-    text_loss = TEXT_FINAL_VAL_LOSS if is_last_step else TEXT_VAL_LOSS
-    text_ppl = TEXT_FINAL_VAL_PPL if is_last_step else TEXT_VAL_PPL
-
-    logger.log_dict({text_loss: loss, text_ppl: math.exp(loss)})
-    logger.log_console(f"\nEvaluation", data=OrderedDict(step=crt_iter, loss=f"{loss:.4f}", ppl=f"{math.exp(loss):.4f}" if loss <= 10 else "too large"))
-
-
 @torch.no_grad()
 def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
     is_random_model = crt_iter == 0 # called with explicit crt_iter=0 before the training loop on the randomly initialized model
@@ -46,4 +38,16 @@ def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
         dist.all_reduce(total_loss, op=dist.ReduceOp.SUM)
         total_loss = total_loss.item() / backend.world_size / num_batches
 
-        log_eval_loss(cfg, logger, crt_iter, total_loss, is_last_step)
+        text_loss = TEXT_FINAL_VAL_LOSS if is_last_step else TEXT_VAL_LOSS
+        text_ppl = TEXT_FINAL_VAL_PPL if is_last_step else TEXT_VAL_PPL
+
+        logger.log_dict({text_loss: loss, text_ppl: math.exp(loss)})
+        logger.log_console(
+            f"\nEvaluation",
+            data=OrderedDict(
+                step=crt_iter,
+                num_batches=num_batches,
+                loss=f"{loss:.4f}",
+                ppl=f"{math.exp(loss):.4f}" if loss <= 0 else "too large"
+            )
+        )
