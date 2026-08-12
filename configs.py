@@ -6,18 +6,22 @@ from argparse import Namespace as ArgParseNamespace
 from dataclasses import dataclass, is_dataclass
 from typing import Literal
 
-from models.gpt import GPTCausalSelfAttention, GPTMLP
+from models.attention import MultiHeadSelfAttention
+from models.gpt import GPTMLP
 
 
 @dataclass
 class ModelConfig:
     model_name: Literal["gpt", "llama", "olmo"] = "llama"
+    attn_type: Literal["mhsa", "mhsa-flash", "gqa", "gqa-flash"] = "mhsa"
+    attn_gqa_kvg: int = 8
+    custom_size: str = "100M"
     vocab_size: int = -1
     num_layers: int = 6
     num_heads: int = 8
     embed_size: int = 1024
     seq_len: int = 1024
-    dropout: float = 0.0 # see GPT class
+    dropout: float = 0.0
     bias: bool = False
     tie_embeds: bool = False
     mlp_expansion_factor: int = 4
@@ -105,7 +109,7 @@ def preprocess(cfg: ArgParseNamespace):
                 cfg.model.tie_embeds = True # the new default
 
             # set functions to compute number of iterations
-            attn_params_fn = GPTCausalSelfAttention.get_param_count
+            attn_params_fn = MultiHeadSelfAttention.get_param_count
             mlp_params_fn = GPTMLP.get_param_count
         case "llama":
             cfg.model.vocab_size = 32_000

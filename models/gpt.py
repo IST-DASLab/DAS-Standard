@@ -5,80 +5,8 @@ import torch.nn as nn
 from torch.nn import functional as F
 from argparse import Namespace as ArgParseNamespace
 
-
-class KarpathyLayerNorm(nn.Module):
-    """ LayerNorm but with an optional bias. PyTorch doesn't support simply bias=False """
-    def __init__(self, ndim: int, bias: bool):
-        super().__init__()
-        self.weight = nn.Parameter(torch.ones(ndim))
-        self.bias = nn.Parameter(torch.zeros(ndim)) if bias else None
-
-    def forward(self, x):
-        return F.layer_norm(x, self.weight.shape, self.weight, self.bias, eps=1e-5)
-
-
-class GPTCausalSelfAttention(nn.Module):
-    @staticmethod
-    def get_param_count(E):
-        return 4 * E * E
-
-    def __init__(self, cfg: ArgParseNamespace, layer_id: int):
-        super().__init__()
-        self.cfg = cfg
-        self.layer_id = layer_id
-
-        E = cfg.model.embed_size
-        bias = cfg.model.bias
-
-        # TODO: introduce QuartetLinear
-        self.Wq = nn.Linear(E, E, bias=bias)
-        self.Wk = nn.Linear(E, E, bias=bias)
-        self.Wv = nn.Linear(E, E, bias=bias)
-        self.Wo = nn.Linear(E, E, bias=bias)
-        self.drop_res = nn.Dropout(cfg.model.dropout)
-
-        self.is_flash_attn = hasattr(torch.nn.functional, 'scaled_dot_product_attention')
-        if not self.is_flash_attn:
-            print(f'WARNING: SDPA attention not found, using manual implementation')
-            T = cfg.model.seq_len
-
-            mask = torch.tril(torch.ones(T, T)).view(1, 1, T, T)
-            self.register_buffer('mask', mask)
-
-            self.drop_attn = nn.Dropout(cfg.model.dropout)
-
-    def forward(self, x):
-        B, T, E = x.shape
-        H = self.cfg.model.num_heads
-
-        Q = self.Wq(x)
-        K = self.Wk(x)
-        V = self.Wv(x)
-        #                                             Q/K/V        after view        after transpose
-        Q = Q.view(B, T, H, E // H).transpose(1, 2) # (B, T, E) => (B, T, H, E/H) => (B, H, T, E/H)
-        K = K.view(B, T, H, E // H).transpose(1, 2) # (B, T, E) => (B, T, H, E/H) => (B, H, T, E/H)
-        V = V.view(B, T, H, E // H).transpose(1, 2) # (B, T, E) => (B, T, H, E/H) => (B, H, T, E/H)
-
-        if self.is_flash_attn:
-            y = torch.nn.functional.scaled_dot_product_attention(
-                query=Q,
-                key=K,
-                value=V,
-                attn_mask=None,
-                dropout_p=self.cfg.model.dropout,
-                is_causal=True,
-            )
-        else: # manual implementation of attention
-            attn = (Q @ K.transpose(-2, -1)) / math.sqrt(K.size(-1))
-            attn = attn.masked_fill(self.mask[:, :, :T, :T] == 0, float("-inf")) # write -inf where mask is zero
-            attn = F.softmax(attn, dim=-1)
-            attn = self.drop_attn(attn)
-            y = attn @ V
-
-        y = y.transpose(1, 2).contiguous().view(B, T, E)
-        y = self.Wo(y)
-        y = self.drop_res(y)
-        return y
+from models.attention import MultiHeadSelfAttention
+from models.norm import LayerNorm
 
 
 class GPTMLP(nn.Module):
@@ -111,9 +39,9 @@ class GPTMLP(nn.Module):
 class GPTBlock(nn.Module):
     def __init__(self, cfg: ArgParseNamespace, layer_id: int):
         super().__init__()
-        self.norm1 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
-        self.attn = GPTCausalSelfAttention(cfg, layer_id)
-        self.norm2 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
+        self.norm1 = LayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
+        self.attn = MultiHeadSelfAttention(cfg, layer_id)
+        self.norm2 = LayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
         self.mlp = GPTMLP(cfg, layer_id)
 
     def forward(self, x):
@@ -134,7 +62,7 @@ class GPT(nn.Module):
             GPTBlock(cfg, layer_id)
             for layer_id in range(cfg.model.num_layers)
         ])
-        self.norm = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
+        self.norm = LayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
         self.lm_head = nn.Linear(cfg.model.embed_size, cfg.model.vocab_size, bias=cfg.model.bias)
 
         if cfg.model.tie_embeds:
