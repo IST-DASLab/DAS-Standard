@@ -1,18 +1,21 @@
 import sys
 import math
 import inspect
+
+import torch
 from simple_parsing import ArgumentParser
 from argparse import Namespace as ArgParseNamespace
 from dataclasses import dataclass, is_dataclass
 from typing import Literal
 
 from models.attention import MultiHeadSelfAttention
-from models.gpt import GPTMLP
+from models.gpt import GPTFeedForward
 
 
 @dataclass
 class ModelConfig:
     model_name: Literal["gpt", "llama", "olmo"] = "llama"
+    dtype: Literal["bf16", "fp16", "fp32"] = "fp32"
     attn_type: Literal["mhsa", "mhsa-flash", "gqa", "gqa-flash"] = "mhsa"
     attn_gqa_kvg: int = 8
     custom_size: str = "100M"
@@ -110,7 +113,7 @@ def preprocess(cfg: ArgParseNamespace):
 
             # set functions to compute number of iterations
             attn_params_fn = MultiHeadSelfAttention.get_param_count
-            mlp_params_fn = GPTMLP.get_param_count
+            mlp_params_fn = GPTFeedForward.get_param_count
         case "llama":
             cfg.model.vocab_size = 32_000
         case "olmo":
@@ -124,6 +127,15 @@ def preprocess(cfg: ArgParseNamespace):
     """
         OptimizerConfig ==> optimizer
     """
+
+    # map model dtype from string to torch dtype;
+    match cfg.model.dtype:
+        case "bf16":
+            cfg.model.dtype = torch.bfloat16
+        case "fp16":
+            cfg.model.dtype = torch.float16
+        case "fp32":
+            cfg.model.dtype = torch.float32
 
     return cfg
 

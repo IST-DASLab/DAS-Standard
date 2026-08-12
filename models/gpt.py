@@ -9,7 +9,7 @@ from models.attention import MultiHeadSelfAttention
 from models.norm import KarpathyLayerNorm
 
 
-class GPTMLP(nn.Module):
+class GPTFeedForward(nn.Module):
     @staticmethod
     def get_param_count(E, exp_factor):
         return 2 * E * (E * exp_factor)
@@ -42,7 +42,7 @@ class GPTBlock(nn.Module):
         self.norm1 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
         self.attn = MultiHeadSelfAttention(cfg, layer_id)
         self.norm2 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
-        self.mlp = GPTMLP(cfg, layer_id)
+        self.mlp = GPTFeedForward(cfg, layer_id)
 
     def forward(self, x):
         x = x + self.attn(self.norm1(x))
