@@ -6,7 +6,7 @@ from torch.nn import functional as F
 from argparse import Namespace as ArgParseNamespace
 
 from models.attention import MultiHeadSelfAttention
-from models.norm import LayerNorm
+from models.norm import KarpathyLayerNorm
 
 
 class GPTMLP(nn.Module):
@@ -39,9 +39,9 @@ class GPTMLP(nn.Module):
 class GPTBlock(nn.Module):
     def __init__(self, cfg: ArgParseNamespace, layer_id: int):
         super().__init__()
-        self.norm1 = LayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
+        self.norm1 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
         self.attn = MultiHeadSelfAttention(cfg, layer_id)
-        self.norm2 = LayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
+        self.norm2 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
         self.mlp = GPTMLP(cfg, layer_id)
 
     def forward(self, x):
@@ -62,7 +62,7 @@ class GPT(nn.Module):
             GPTBlock(cfg, layer_id)
             for layer_id in range(cfg.model.num_layers)
         ])
-        self.norm = LayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
+        self.norm = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
         self.lm_head = nn.Linear(cfg.model.embed_size, cfg.model.vocab_size, bias=cfg.model.bias)
 
         if cfg.model.tie_embeds:
