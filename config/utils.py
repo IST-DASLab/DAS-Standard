@@ -3,6 +3,7 @@ import math
 from .ladder_gpt import *
 from .ladder_llama2 import *
 from .ladder_llama3 import *
+from .ladder_qwen3 import *
 
 def model_config_factory(model_name, model_size):
     key = f"{model_name.lower()}_{model_size.lower()}"
@@ -19,6 +20,7 @@ def model_config_factory(model_name, model_size):
         "gpt_2.5b": config_gpt_2500m,
         "gpt_6.4b": config_gpt_6400m,
         "gpt_12.6b": config_gpt_12600m,
+
         "llama2_35m": config_llama2_35m,
         "llama2_60m": config_llama2_60m,
         "llama2_135m": config_llama2_135m,
@@ -30,6 +32,7 @@ def model_config_factory(model_name, model_size):
         "llama2_13b": config_llama2_13b,
         "llama2_34b": config_llama2_34b,
         "llama2_70b": config_llama2_70b,
+
         "llama3_90m": config_llama3_90m,
         "llama3_200m": config_llama3_200m,
         "llama3_350m": config_llama3_350m,
@@ -39,6 +42,19 @@ def model_config_factory(model_name, model_size):
         "llama3_17b": config_llama3_17b,
         "llama3_70b": config_llama3_70b,
         "llama3_405b": config_llama3_405b,
+
+
+        "qwen3_43m": config_qwen3_43m,
+        "qwen3_71m": config_qwen3_71m,
+        "qwen3_110m": config_qwen3_110m,
+        "qwen3_220m": config_qwen3_220m,
+        "qwen3_407m": config_qwen3_407m,
+        "qwen3_600m": config_qwen3_600m,
+        "qwen3_1.7b": config_qwen3_1700m,
+        "qwen3_4b": config_qwen3_4b,
+        "qwen3_8b": config_qwen3_8b,
+        "qwen3_14b": config_qwen3_14b,
+        "qwen3_32b": config_qwen3_32b,
     }[key]()
 
 def _compute_max_iters(cfg, attn_fn, mlp_fn):
