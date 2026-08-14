@@ -1,5 +1,4 @@
 import sys
-import math
 import inspect
 
 import torch
@@ -8,17 +7,28 @@ from argparse import Namespace as ArgParseNamespace
 from dataclasses import dataclass, is_dataclass
 from typing import Literal
 
-from models.attention import MultiHeadSelfAttention
+from config import model_config_factory
+from config.utils import _compute_max_iters
+from models.attention import MultiHeadSelfAttention, GroupedQueryAttention
 from models.gpt import GPTFeedForward
+from models.llama import LlamaFeedForward
 
+
+# @dataclass
+# class UserConfig:
+#     model_name: Literal["gpt", "llama", "olmo"] = "llama"
+#     model_dtype: Literal["bf16", "fp16", "fp32"] = "fp32"
+#     model_attn_type: Literal["mhsa", "mhsa-flash", "gqa", "gqa-flash"] = "mhsa"
+#     model_custom_size: str = "100M"
+#     model_seq_len: int = 1024
+#     training_tokens_count: float = 0 # zero means disabled
 
 @dataclass
 class ModelConfig:
-    model_name: Literal["gpt", "llama", "olmo"] = "llama"
     dtype: Literal["bf16", "fp16", "fp32"] = "fp32"
     attn_type: Literal["mhsa", "mhsa-flash", "gqa", "gqa-flash"] = "mhsa"
     attn_gqa_kvg: int = 8
-    custom_size: str = "100M"
+    rope_theta: float = 10_000.0
     vocab_size: int = -1
     num_layers: int = 6
     num_heads: int = 8
@@ -27,18 +37,23 @@ class ModelConfig:
     dropout: float = 0.0
     bias: bool = False
     tie_embeds: bool = False
-    mlp_expansion_factor: int = 4
+    gpt_mlp_exp_factor: int = 4
+    llama_mlp_size: int = 11_008
+
 
 @dataclass
 class DatasetConfig:
     dataset_path: str = "./data"
     dataset_name: Literal["c4"] = "c4"
 
+
 @dataclass
-class TrainingConfig:
+class TrainingConfig: # mainly set by user
+    model_name: Literal["gpt", "llama2", "llama3", "olmo" ] = "llama2"
+    model_size: str = "100M"
     seed: int = 42
-    tokens_count: float = 0 # zero means disabled
-    chinchilla_token_ratio: int = 1 # how many chinchillas to train the model for
+    tokens_count: float = 0 # zero means disabled (lower priority than `chinchilla_token_ratio`)
+    chinchilla_token_ratio: int = 1 # how many chinchillas to train the model for (higher priorith than `tokens_count`)
     local_batch_size: int = 64 # per device batch size
     grad_acc_steps: int = 8
     max_iters: int = -1 # will be automatically determined based on number of tokens, seq len, device batch size and number of workers
@@ -48,6 +63,7 @@ class TrainingConfig:
     eval_interval: int = 200
     eval_batches: int = 32
     output_folder: str = "./output"
+
 
 @dataclass
 class OptimizerConfig:
@@ -81,6 +97,7 @@ class WandbConfig:
     job_type: str = None
     run_name: str = None
 
+
 def get_dynamic_arg_parser():
     """
     This function iterates through all dataclasses defined in the config.py file
@@ -99,36 +116,43 @@ def get_dynamic_arg_parser():
 
     return preprocess(parser.parse_args())
 
+
 def preprocess(cfg: ArgParseNamespace):
-    """
-        ModelConfig ==> model
-    """
     attn_params_fn = None
     mlp_params_fn = None
-    match cfg.model.model_name:
-        case "gpt":
-            cfg.model.vocab_size = 50_304 # GPT-2 has vocab_size=50_257, padded up to nearest multiple of 64
-            if cfg.model.tie_embeds is None:
-                cfg.model.tie_embeds = True # the new default
+    model_name = cfg.training.model_name
+    model_size = cfg.training.model_size
 
-            # set functions to compute number of iterations
+    #####
+    ##### Use predefined model Config
+    #####
+    cfg.model = model_config_factory(model_name, model_size)
+
+    #####
+    ##### Set functions to compute params count
+    #####
+    if "gpt" in model_name:
+        attn_params_fn = MultiHeadSelfAttention.get_param_count
+        mlp_params_fn = GPTFeedForward.get_param_count
+    elif "llama" in model_name:
+        if "mhsa" in cfg.model.attn_type:
             attn_params_fn = MultiHeadSelfAttention.get_param_count
-            mlp_params_fn = GPTFeedForward.get_param_count
-        case "llama":
-            cfg.model.vocab_size = 32_000
-        case "olmo":
-            raise NotImplementedError
-            # cfg.model.vocab_size = None
+        elif "gqa" in cfg.model.attn_type:
+            attn_params_fn = GroupedQueryAttention.get_param_count
+        else:
+            raise RuntimeError(f"Invalid attn_type for attn_params_fn!")
+        mlp_params_fn = LlamaFeedForward.get_param_count
 
-    # compute number of iterations based on model size (only Linears from transformer blocks)
+    #####
+    ##### Compute number of iterations based on model size (only Linears from transformer blocks)
+    #####
     cfg.training.max_iters = _compute_max_iters(cfg, attn_fn=attn_params_fn, mlp_fn=mlp_params_fn)
 
     assert cfg.model.embed_size % cfg.model.num_heads == 0
-    """
-        OptimizerConfig ==> optimizer
-    """
 
-    # map model dtype from string to torch dtype;
+    #####
+    ##### Map model dtype from string to torch dtype;
+    #####
     match cfg.model.dtype:
         case "bf16":
             cfg.model.dtype = torch.bfloat16
@@ -138,26 +162,3 @@ def preprocess(cfg: ArgParseNamespace):
             cfg.model.dtype = torch.float32
 
     return cfg
-
-def _compute_max_iters(cfg, attn_fn, mlp_fn):
-    """
-    This function computes the number of iterations based on some number of
-    parameters for the model (can be full model size of
-    chinchilla token ratio and batch size / grad acc steps / seq len.
-
-    We only count the number of linear layers in transformer blocks (Attn & MLP)
-    """
-    L = cfg.model.num_layers
-    E = cfg.model.embed_size
-    mlp_exp = cfg.model.mlp_expansion_factor
-
-    T = cfg.model.seq_len
-    B = cfg.training.local_batch_size
-    A = cfg.training.grad_acc_steps
-    CTR = cfg.training.chinchilla_token_ratio
-
-    params_count = L * (attn_fn(E) + mlp_fn(E, mlp_exp))
-    num_tokens = params_count * CTR * 20
-    iterations = math.ceil(num_tokens / (B * T * A))
-
-    return iterations
