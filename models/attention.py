@@ -5,6 +5,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 from argparse import Namespace as ArgParseNamespace
 
+from models.norm import RMSNorm
 from models.rope import apply_rope
 
 def attn_factory(cfg: ArgParseNamespace):
@@ -96,6 +97,7 @@ class GroupedQueryAttention(nn.Module):
         bias = cfg.model.bias
         Nkvg = cfg.model.attn_kv_groups
         drp = cfg.model.dropout
+        qk_norm = cfg.model.qk_norm
 
         assert E % Nh == 0, "Embedding size must be a multiple of Nh"
         assert Nh % Nkvg == 0, "Number of heads must be a multiple of number KV-groups"
@@ -107,6 +109,10 @@ class GroupedQueryAttention(nn.Module):
         self.dropout_attn = nn.Dropout(p=drp)
         self.dropout_out = nn.Dropout(p=drp)
 
+        if qk_norm:
+            self.q_norm = RMSNorm(ndim=E)
+            self.k_norm = RMSNorm(ndim=E)
+
     def forward(self, x, mask, cos, sin):
         assert mask is not None, "Found mask=None in GQA!"
         B, T, E = x.shape
@@ -114,6 +120,7 @@ class GroupedQueryAttention(nn.Module):
         H = E // Nh # head size
         Nkvg = self.cfg.model.attn_kv_groups
         Gs = Nh // Nkvg
+        qk_norm = self.cfg.model.qk_norm
 
         Q = self.Wq(x) # (B, T, E = Nh * H)
         K = self.Wk(x) # (B, T, Nkvg * H)
@@ -126,13 +133,23 @@ class GroupedQueryAttention(nn.Module):
         K = K.view(B, T, Nkvg, H).transpose(1, 2)
         V = V.view(B, T, Nkvg, H).transpose(1, 2)
 
-        # (B, Nkvg, T, H) => (B, Nkvg*Gs, T, H): [x1, x2] becomes [x1, x1, x2, x2]
-        K = K.repeat_interleave(Gs, dim=1)
-        V = V.repeat_interleave(Gs, dim=1)
+        #####
+        ##### QK-norm
+        #####
+        if qk_norm:
+            Q = self.q_norm(Q)
+            K = self.k_norm(K)
 
+        #####
+        ##### RoPE
+        #####
         if (cos is not None) and (sin is not None):
             Q = apply_rope(Q, self.cos, self.sin)
             K = apply_rope(K, self.cos, self.sin)
+
+        # (B, Nkvg, T, H) => (B, Nkvg*Gs, T, H): [x1, x2] becomes [x1, x1, x2, x2]
+        K = K.repeat_interleave(Gs, dim=1)
+        V = V.repeat_interleave(Gs, dim=1)
 
         # (B, Nh, T, H) @ (B, Nkvg*Gs=Nh, T, H).T(2,3) = (B, Nh, T, T)
         A = Q @ K.transpose(2, 3) / math.sqrt(K.shape[-1])
