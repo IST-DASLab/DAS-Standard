@@ -33,13 +33,24 @@ class RMSNorm(nn.Module):
     """
         Root Mean Square Layer Normalization: https://arxiv.org/pdf/1910.07467
     """
-    def __init__(self, ndim: int, eps: float = 1e-5):
+    def __init__(self, ndim: int, bias: bool=False, eps: float = 1e-5, qwen3_compatible: bool=False):
         super().__init__()
-        self.eps = eps
         self.ndim = ndim
+        self.eps = eps
+        self.qwen3_compatible = qwen3_compatible
         self.weight = nn.Parameter(torch.ones(ndim, dtype=torch.float))
+        self.bias = nn.Parameter(torch.zeros(ndim)) if bias else None
 
     def forward(self, x):
-        means = x.pow(2).mean(dim=-1, keepdim=True)
-        norm_x = x * torch.rsqrt(means + self.eps)
-        return (norm_x * self.weight).to(dtype=x.dtype)
+        input_dtype = x.dtype
+
+        if self.qwen3_compatible:
+            x = x.to(dtype=torch.float32)
+
+        var = x.pow(2).mean(dim=-1, keepdim=True)
+        norm_x = x * torch.rsqrt(var + self.eps) * self.weight
+
+        if self.bias is not None:
+            norm_x = norm_x + self.bias
+
+        return norm_x.to(dtype=input_dtype.dtype)
