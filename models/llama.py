@@ -41,13 +41,14 @@ class Llama(nn.Module):
         V = cfg.model.vocab_size
         L = cfg.model.num_layers
         S = cfg.model.seq_len
+        dtype = cfg.model.dtype
 
         assert not cfg.model.bias, "Llama model needs bias=False, but found bias=True"
 
-        self.tok_embed = nn.Embedding(V, E)
+        self.tok_embed = nn.Embedding(V, E, dtype=dtype)
         self.blocks = nn.ModuleList([LlamaBlock(cfg) for _ in range(L)])
         self.norm = RMSNorm(ndim=E)
-        self.lm_head = nn.Linear(E, V, bias=False)
+        self.lm_head = nn.Linear(E, V, bias=False, dtype=dtype)
 
         self.cos, self.sin = precompute_rope(cfg)
         self.mask = torch.triu(
@@ -56,11 +57,13 @@ class Llama(nn.Module):
         ).view(1, 1, S, S)
 
     def forward(self, inputs, targets):
+        dtype = self.cfg.model.dtype
+
         x = self.tok_embed(inputs)
         for block in self.blocks:
             x = block(x, self.mask, self.cos, self.sin)
         x = self.norm(x)
-        logits = self.lm_head(x)
+        logits = self.lm_head(x).to(dtype=dtype)
 
         loss = F.cross_entropy(
             input=logits.view(-1, logits.size(-1)),
