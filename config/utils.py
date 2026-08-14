@@ -6,7 +6,6 @@ from .ladder_llama3 import *
 from .ladder_qwen3 import *
 
 def model_config_factory(model_name, model_size):
-    key = f"{model_name.lower()}_{model_size.lower()}"
     return {
         "gpt_3m": config_gpt_3m,
         "gpt_11m": config_gpt_11m,
@@ -43,7 +42,6 @@ def model_config_factory(model_name, model_size):
         "llama3_70b": config_llama3_70b,
         "llama3_405b": config_llama3_405b,
 
-
         "qwen3_43m": config_qwen3_43m,
         "qwen3_71m": config_qwen3_71m,
         "qwen3_110m": config_qwen3_110m,
@@ -55,7 +53,7 @@ def model_config_factory(model_name, model_size):
         "qwen3_8b": config_qwen3_8b,
         "qwen3_14b": config_qwen3_14b,
         "qwen3_32b": config_qwen3_32b,
-    }[key]()
+    }[f"{model_name}_{model_size}".lower()]()
 
 def _compute_max_iters(cfg, attn_fn, mlp_fn):
     """
