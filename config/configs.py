@@ -10,8 +10,7 @@ from typing import Literal
 from config import model_config_factory
 from config.utils import _compute_max_iters
 from models.attention import MultiHeadSelfAttention, GroupedQueryAttention
-from models.gpt import GPTFeedForward
-from models.llama import LlamaFeedForward
+from models.feedforward import GPTFeedForward, LlamaFeedForward
 
 
 # @dataclass
@@ -28,6 +27,7 @@ class ModelConfig:
     dtype: Literal["bf16", "fp16", "fp32"] = "fp32"
     attn_type: Literal["mhsa", "mhsa-flash", "gqa", "gqa-flash"] = "mhsa"
     attn_gqa_kvg: int = 8
+    qk_norm: bool = False
     rope_theta: float = 10_000.0
     vocab_size: int = -1
     num_layers: int = 6
