@@ -6,12 +6,11 @@ from models.qwen import Qwen3
 
 
 def get_model(cfg: ArgParseNamespace):
-    match cfg.training.model_name:
-        case "gpt":
-            return GPT(cfg)
-        case "llama2" | "llama3":
-            return Llama(cfg)
-        case "qwen3":
-            return Qwen3(cfg)
-        case _:
-            raise NotImplementedError
+    model_name_size = cfg.training.model_name_size
+    if "gpt" in model_name_size:
+        return GPT(cfg)
+    if "llama" in model_name_size:
+        return Llama(cfg)
+    if "qwen3" in model_name_size:
+        return Qwen3(cfg)
+    raise NotImplementedError

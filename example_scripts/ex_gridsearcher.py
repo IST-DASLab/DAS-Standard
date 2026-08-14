@@ -38,7 +38,7 @@ if __name__ == "__main__":
         ],
         params={
             ### model section
-            "model_name": ["llama"],
+            "model_name_size": ["llama3-1b"],
             # "vocab_size": [-1], # not needed, automatically determined
             "num_layers": [6],
             "num_heads": [8],
@@ -90,7 +90,7 @@ if __name__ == "__main__":
             ### wandb section
             "entity": ["ist"],
             "project": ["das-standard"],
-            "group": [Template("${model_name}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}")],
+            "group": [Template("${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}")],
             "job_type": [Template("lr=${adamw_lr}")],
             "run_name": [Template("${group}_${job_type}_seed=${seed}")],
         }

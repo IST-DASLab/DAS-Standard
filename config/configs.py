@@ -12,16 +12,6 @@ from config.utils import _compute_max_iters
 from models.attention import MultiHeadSelfAttention, GroupedQueryAttention
 from models.feedforward import GPTFeedForward, LlamaFeedForward
 
-
-# @dataclass
-# class UserConfig:
-#     model_name: Literal["gpt", "llama", "olmo"] = "llama"
-#     model_dtype: Literal["bf16", "fp16", "fp32"] = "fp32"
-#     model_attn_type: Literal["mhsa", "mhsa-flash", "gqa", "gqa-flash"] = "mhsa"
-#     model_custom_size: str = "100M"
-#     model_seq_len: int = 1024
-#     training_tokens_count: float = 0 # zero means disabled
-
 @dataclass
 class ModelConfig:
     dtype: Literal["bf16", "fp16", "fp32"] = "fp32"
@@ -49,8 +39,7 @@ class DatasetConfig:
 
 @dataclass
 class TrainingConfig: # mainly set by user
-    model_name: Literal["gpt", "llama2", "llama3", "olmo" ] = "llama2"
-    model_size: str = "100M"
+    model_name_size: str = "llama3-1b"
     seed: int = 42
     tokens_count: float = 0 # zero means disabled (lower priority than `chinchilla_token_ratio`)
     chinchilla_token_ratio: int = 1 # how many chinchillas to train the model for (higher priorith than `tokens_count`)
@@ -120,21 +109,20 @@ def get_dynamic_arg_parser():
 def preprocess(cfg: ArgParseNamespace):
     attn_params_fn = None
     mlp_params_fn = None
-    model_name = cfg.training.model_name
-    model_size = cfg.training.model_size
+    model_name_size = cfg.training.model_name_size
 
     #####
     ##### Use predefined model Config
     #####
-    cfg.model = model_config_factory(model_name, model_size)
+    cfg.model = model_config_factory(model_name_size)
 
     #####
     ##### Set functions to compute params count
     #####
-    if "gpt" in model_name:
+    if "gpt" in model_name_size:
         attn_params_fn = MultiHeadSelfAttention.get_param_count
         mlp_params_fn = GPTFeedForward.get_param_count
-    elif "llama" in model_name:
+    elif ("llama" in model_name_size) or ("qwen" in model_name_size):
         if "mhsa" in cfg.model.attn_type:
             attn_params_fn = MultiHeadSelfAttention.get_param_count
         elif "gqa" in cfg.model.attn_type:

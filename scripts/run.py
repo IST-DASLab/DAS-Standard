@@ -39,7 +39,7 @@ if __name__ == "__main__":
         ],
         params={
             ### model section
-            "model_name": ["gpt"],
+            "model_name_size": ["gpt-85m"],
             # "vocab_size": [-1], # not needed, automatically determined
             "num_layers": [12],
             "num_heads": [12],
@@ -95,8 +95,8 @@ if __name__ == "__main__":
             "entity": ["ist"],
             "project": ["das-standard"],
             "group": [
-                # Template("${model_name}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}"), # AdamW
-                Template("${model_name}_${optimizer_name}_wd=${weight_decay}_mu=${muon_momentum}"), # Muon
+                # Template("${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}"), # AdamW
+                Template("${model_name_size}_${optimizer_name}_wd=${weight_decay}_mu=${muon_momentum}"), # Muon
             ],
             "job_type": [
                 # Template("lr=${adamw_lr}"), # AdamW

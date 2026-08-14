@@ -57,7 +57,7 @@ class MultiOptimizer:
                     )
                 ]
             case _:
-                raise NotImplementedError(f'Optimizer {cfg.optimizer.model_name} is not implemented!')
+                raise NotImplementedError(f'Optimizer {cfg.optimizer.optimizer_name} is not implemented!')
 
     def _get_input_embedding(self):
         return [self.model.tok_embed.weight]
