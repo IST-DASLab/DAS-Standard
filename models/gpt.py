@@ -6,36 +6,10 @@ from torch.nn import functional as F
 from argparse import Namespace as ArgParseNamespace
 
 from models.attention import MultiHeadSelfAttention
+from models.feedforward import GPTFeedForward
 from models.norm import KarpathyLayerNorm
 from models.rope import precompute_rope
 
-
-class GPTFeedForward(nn.Module):
-    @staticmethod
-    def get_param_count(cfg: ArgParseNamespace):
-        E = cfg.model.embed_size
-        exp_factor = cfg.model.gpt_mlp_exp_factor
-        return 2 * E * (E * exp_factor)
-
-    def __init__(self, cfg: ArgParseNamespace):
-        super().__init__()
-        self.cfg = cfg
-
-        E = cfg.model.embed_size
-        E_expanded = E * cfg.model.gpt_mlp_exp_factor
-        bias = cfg.model.bias
-
-        self.fc = nn.Linear(in_features=E, out_features=E_expanded, bias=bias)
-        self.Wo = nn.Linear(in_features=E_expanded, out_features=E, bias=bias)
-        self.dropout = nn.Dropout(cfg.model.dropout)
-        self.activation = nn.GELU()
-
-    def forward(self, x):
-        x = self.fc(x)
-        x = self.activation(x)
-        x = self.Wo(x)
-        x = self.dropout(x)
-        return x
 
 class GPTBlock(nn.Module):
     def __init__(self, cfg: ArgParseNamespace):

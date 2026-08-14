@@ -1,40 +1,12 @@
-import math
-
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from argparse import Namespace as ArgParseNamespace
 
 from models.attention import attn_factory
+from models.feedforward import LlamaFeedForward
 from models.norm import RMSNorm
 from models.rope import precompute_rope
-
-
-class LlamaFeedForward(nn.Module):
-    @staticmethod
-    def get_param_count(cfg: ArgParseNamespace):
-        E = cfg.model.embed_size
-        Hdim = cfg.model.llama_mlp_size
-        return 3 * E * Hdim
-
-    def __init__(self, cfg: ArgParseNamespace):
-        super().__init__()
-
-        E = cfg.model.embed_size
-        Hdim = cfg.model.llama_mlp_size
-        dtype = cfg.model.dtype
-
-        self.fc1 = nn.Linear(E, Hdim, dtype=dtype, bias=False)
-        self.fc2 = nn.Linear(E, Hdim, dtype=dtype, bias=False)
-        self.fc3 = nn.Linear(Hdim, E, dtype=dtype, bias=False)
-        self.silu = nn.SiLU()
-
-    def forward(self, x):
-        x1 = self.fc1(x)
-        x2 = self.fc2(x)
-        x = self.silu(x1) * x2
-        x = self.fc3(x)
-        return x
 
 
 class LlamaBlock(nn.Module):
