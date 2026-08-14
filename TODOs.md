@@ -23,11 +23,12 @@
 
 ### Models
 - **[done]** GPT model and model factory
-- **[ ]** OLMo
 - **[ ]** Llama
+- **[ ]** OLMo
 - **[ ]** custom models with different number of params
 - **[ ]** add option to use custom attention implementation or FlashAttention from PyTorch. See comparison in [LLM-from-scratch](https://github.com/rasbt/LLMs-from-scratch/blob/main/ch03/02_bonus_efficient-multihead-attention/mha-implementations.ipynb)
 - **[ ]** implement KV-cache for inference
+- **[done]** allocate only one mask (for attention) and sin/cos (for RoPE) in the model class and not for each attention module 
 
 ### Optimizer
 - **[done]** optimizers package and factory
@@ -49,11 +50,14 @@
   - **[ ]** add a `permanent_metric` dictionary that does not clean at each step to store the total running time of the process
 - **[ ]** model checkpointing
 
+### Inference
+- **[ ]** KV-cache: https://magazine.sebastianraschka.com/p/coding-the-kv-cache-in-llms
+
 ### Evaluation
 - **[done]** 
 
 ### Main Scripts
-- Pretraining
+- **[done]** Pretraining
 
 ### Readability
 - **[ ]** implement the factory methods inside the corresponding dataclass to follow OLMo-core standard
