@@ -133,7 +133,7 @@ class GroupedQueryAttention(nn.Module):
 
         # (B, Nh, T, H) @ (B, Nkvg*Gs=Nh, T, H).T(2,3) = (B, Nh, T, T)
         A = Q @ K.transpose(2, 3) / math.sqrt(K.shape[-1])
-        A = A.masked_fill(self.mask[:, :, :T, :T] == 0, float('-inf'))
+        A = A.masked_fill(self.mask[:, :, :T, :T], float('-inf'))
         A = F.softmax(A, dim=-1)
         A = self.dropout_attn(A)
 
