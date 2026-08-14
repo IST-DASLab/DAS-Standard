@@ -21,7 +21,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 torchrun --nproc-per-node=8 pretrain.py \
     --dropout 0.0 \
     --bias False \
     --weight_tying False \
-    --mlp_expansion_factor 4 \
+    --gpt_mlp_exp_factor 4 \
 
     ### dataset section
     --dataset_path ./data \

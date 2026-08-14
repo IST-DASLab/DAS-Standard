@@ -6,7 +6,7 @@ def main(dist, gpus, params):
     gs = GridSearcher(script="/nfs/scistore19/alistgrp/imodoran/workplace/DAS-Standard/pretrain.py")
     gs.run(
         param_name_for_exp_root_folder="output_folder",
-        exp_folder=Template("${run_name}"),
+        exp_folder=Template("results/${run_name}"),
         cfg_torchrun=TorchRunConfig(
             launch_blocking=0,
             torchrun=dist,
@@ -48,7 +48,7 @@ if __name__ == "__main__":
             "dropout": ["0.0"],
             "bias": [False],
             "tie_embeds": [False],
-            "mlp_expansion_factor": [4],
+            "gpt_mlp_exp_factor": [4],
 
             ### dataset section
             "dataset_path": [DATASETS_DIR],
@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
             ### optimizer section
             "optimizer_name": [
-                # "adamw",
+                "adamw",
                 "muon",
             ],
             "weight_decay": ["0.0"],

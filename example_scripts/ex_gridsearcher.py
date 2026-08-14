@@ -47,7 +47,7 @@ if __name__ == "__main__":
             "dropout": ["0.0"],
             "bias": [False],
             "tie_embeds": [False],
-            "mlp_expansion_factor": [4],
+            "gpt_mlp_exp_factor": [4],
 
             ### dataset section
             "dataset_path": ["./data"],
