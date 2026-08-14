@@ -7,20 +7,22 @@ from argparse import Namespace as ArgParseNamespace
 
 from models.attention import MultiHeadSelfAttention
 from models.norm import KarpathyLayerNorm
+from models.rope import precompute_rope
 
 
 class GPTFeedForward(nn.Module):
     @staticmethod
-    def get_param_count(E, exp_factor):
+    def get_param_count(cfg: ArgParseNamespace):
+        E = cfg.model.embed_size
+        exp_factor = cfg.model.gpt_mlp_exp_factor
         return 2 * E * (E * exp_factor)
 
-    def __init__(self, cfg: ArgParseNamespace, layer_id: int):
+    def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
         self.cfg = cfg
-        self.layer_id = layer_id
 
         E = cfg.model.embed_size
-        E_expanded = E * cfg.model.mlp_expansion_factor
+        E_expanded = E * cfg.model.gpt_mlp_exp_factor
         bias = cfg.model.bias
 
         self.fc = nn.Linear(in_features=E, out_features=E_expanded, bias=bias)
@@ -35,14 +37,13 @@ class GPTFeedForward(nn.Module):
         x = self.dropout(x)
         return x
 
-
 class GPTBlock(nn.Module):
-    def __init__(self, cfg: ArgParseNamespace, layer_id: int):
+    def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
+        self.attn = MultiHeadSelfAttention(cfg)
+        self.mlp = GPTFeedForward(cfg)
         self.norm1 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
-        self.attn = MultiHeadSelfAttention(cfg, layer_id)
         self.norm2 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
-        self.mlp = GPTFeedForward(cfg, layer_id)
 
     def forward(self, x):
         x = x + self.attn(self.norm1(x))
@@ -55,15 +56,19 @@ class GPT(nn.Module):
         super().__init__()
         self.cfg = cfg
 
-        self.tok_embed = nn.Embedding(cfg.model.vocab_size, cfg.model.embed_size)
-        self.pos_embed = nn.Embedding(cfg.model.seq_len, cfg.model.embed_size)
-        self.dropout = nn.Dropout(cfg.model.dropout)
-        self.blocks = nn.ModuleList([
-            GPTBlock(cfg, layer_id)
-            for layer_id in range(cfg.model.num_layers)
-        ])
-        self.norm = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
-        self.lm_head = nn.Linear(cfg.model.embed_size, cfg.model.vocab_size, bias=cfg.model.bias)
+        E = cfg.model.embed_size
+        V = cfg.model.vocab_size
+        L = cfg.model.num_layers
+        S = cfg.model.seq_len
+        drp = cfg.model.dropout
+        bias = cfg.model.bias
+
+        self.tok_embed = nn.Embedding(V, E)
+        self.pos_embed = nn.Embedding(S, E)
+        self.dropout = nn.Dropout(drp)
+        self.blocks = nn.ModuleList([GPTBlock(cfg) for _ in range(L)])
+        self.norm = KarpathyLayerNorm(E, bias=bias)
+        self.lm_head = nn.Linear(E, V, bias=bias)
 
         if cfg.model.tie_embeds:
             self.tok_embed.weight = self.lm_head.weight
@@ -73,7 +78,10 @@ class GPT(nn.Module):
 
         for name, p in self.named_parameters():
             if name.endswith("Wo.weight"):
-                torch.nn.init.normal_(p, mean=0, std=0.02 / math.sqrt(2 * cfg.model.num_layers))
+                torch.nn.init.normal_(p, mean=0, std=0.02 / math.sqrt(2 * L))
+
+        self.mask = torch.triu(torch.ones(S, S), diagonal=1).bool().view(1, 1, S, S)
+        self.cos, self.sin = precompute_rope(cfg)
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
@@ -101,7 +109,7 @@ class GPT(nn.Module):
         loss = F.cross_entropy(
             input=logits.view(-1, logits.size(-1)),
             target=targets.view(-1),
-            ignore_index=-1 # not sure about this
+            ignore_index=-1
         )
         return loss
 

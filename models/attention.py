@@ -5,22 +5,33 @@ import torch.nn as nn
 from torch.nn import functional as F
 from argparse import Namespace as ArgParseNamespace
 
-from models.rope import precompute_rope, apply_rope
+from models.rope import apply_rope
+
+def attn_factory(cfg: ArgParseNamespace):
+    match cfg.model.attn_type:
+        case "mhsa":
+            return MultiHeadSelfAttention(cfg)
+        # case "mhsa-flash":
+        #     raise NotImplementedError
+        case "gqa":
+            return GroupedQueryAttention(cfg)
+        # case "gqa-flash":
+        #     raise NotImplementedError
+        case _:
+            raise NotImplementedError
 
 
 class MultiHeadSelfAttention(nn.Module):
     @staticmethod
-    def get_param_count(E):
+    def get_param_count(cfg: ArgParseNamespace):
+        E = cfg.model.embed_size
         return 4 * E * E
 
-    def __init__(self, cfg: ArgParseNamespace, layer_id: int, use_rope: bool=False):
+    def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
         self.cfg = cfg
-        self.layer_id = layer_id
-        self.use_rope = use_rope
 
         E = cfg.model.embed_size
-        S = cfg.model.seq_len
         bias = cfg.model.bias
         drp = cfg.model.dropout
 
@@ -30,17 +41,9 @@ class MultiHeadSelfAttention(nn.Module):
         self.Wo = nn.Linear(E, E, bias=bias)
         self.dropout_attn = nn.Dropout(p=drp)
         self.dropout_out = nn.Dropout(p=drp)
-        self.register_buffer(
-            name="mask",
-            tensor=torch.triu(torch.ones(S, S), diagonal=1).bool().view(1, 1, S, S)
-        )
 
-        if use_rope:
-            cos, sin = precompute_rope(cfg)
-            self.register_buffer("cos", cos)
-            self.register_buffer("sin", sin)
-
-    def forward(self, x):
+    def forward(self, x, mask, cos, sin):
+        assert mask is not None, "Found mask=None in MHSA!"
         B, T, E = x.shape
         Nh = self.cfg.model.num_heads
         H = E // Nh # head size
@@ -54,13 +57,13 @@ class MultiHeadSelfAttention(nn.Module):
         K = K.view(B, T, Nh, H).transpose(1, 2)
         V = V.view(B, T, Nh, H).transpose(1, 2)
 
-        if self.use_rope:
-            Q = apply_rope(Q, self.cos, self.sin)
-            K = apply_rope(K, self.cos, self.sin)
+        if (cos is not None) and (sin is not None):
+            Q = apply_rope(Q, cos, sin)
+            K = apply_rope(K, cos, sin)
 
         # (B, Nh, T, H) @ (B, Nh, T, H).T(2, 3) = (B, Nh, T, T)
         A = Q @ K.transpose(2, 3) / math.sqrt(K.size(-1))
-        A = A.masked_fill(self.mask[:, :, :T, :T], float('-inf'))
+        A = A.masked_fill(mask[:, :, :T, :T], float('-inf'))
         A = F.softmax(A, dim=-1)
         A = self.dropout_attn(A)
 
@@ -73,20 +76,29 @@ class MultiHeadSelfAttention(nn.Module):
         out = self.dropout_out(out)
         return out
 
+
 class GroupedQueryAttention(nn.Module):
-    def __init__(self, cfg: ArgParseNamespace, layer_id: int, use_rope: bool=False):
+    @staticmethod
+    def get_param_count(cfg: ArgParseNamespace):
+        E = cfg.model.embed_size
+        Nh = cfg.model.num_heads
+        H = E // Nh # head size
+        Nkvg = cfg.model.attn_kv_groups
+        return 2 * (E * E + E * (Nkvg * H))
+
+    def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
         self.cfg = cfg
-        self.layer_id = layer_id
-        self.use_rope = use_rope
 
-        S = cfg.model.seq_len
         E = cfg.model.embed_size
         Nh = cfg.model.num_heads
         H = E // Nh # head size
         bias = cfg.model.bias
         Nkvg = cfg.model.attn_kv_groups
         drp = cfg.model.dropout
+
+        assert E % Nh == 0, "Embedding size must be a multiple of Nh"
+        assert Nh % Nkvg == 0, "Number of heads must be a multiple of number KV-groups"
 
         self.Wq = nn.Linear(E, E, bias=bias)
         self.Wk = nn.Linear(E, Nkvg * H, bias=bias)
@@ -95,17 +107,8 @@ class GroupedQueryAttention(nn.Module):
         self.dropout_attn = nn.Dropout(p=drp)
         self.dropout_out = nn.Dropout(p=drp)
 
-        self.register_buffer(
-            name="mask",
-            tensor=torch.triu(torch.ones(S, S), diagonal=1).bool().view(1, 1, S, S)
-        )
-
-        if use_rope:
-            cos, sin = precompute_rope(cfg)
-            self.register_buffer("cos", cos)
-            self.register_buffer("sin", sin)
-
-    def forward(self, x):
+    def forward(self, x, mask, cos, sin):
+        assert mask is not None, "Found mask=None in GQA!"
         B, T, E = x.shape
         Nh = self.cfg.model.num_heads
         H = E // Nh # head size
@@ -127,7 +130,7 @@ class GroupedQueryAttention(nn.Module):
         K = K.repeat_interleave(Gs, dim=1)
         V = V.repeat_interleave(Gs, dim=1)
 
-        if self.use_rope:
+        if (cos is not None) and (sin is not None):
             Q = apply_rope(Q, self.cos, self.sin)
             K = apply_rope(K, self.cos, self.sin)
 

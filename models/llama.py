@@ -5,16 +5,28 @@ import torch.nn as nn
 from torch.nn import functional as F
 from argparse import Namespace as ArgParseNamespace
 
+from models.attention import attn_factory
+from models.norm import RMSNorm
+from models.rope import precompute_rope
+
+
 class LlamaFeedForward(nn.Module):
+    @staticmethod
+    def get_param_count(cfg: ArgParseNamespace):
+        E = cfg.model.embed_size
+        Hdim = cfg.model.llama_mlp_size
+        return 3 * E * Hdim
+
     def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
 
         E = cfg.model.embed_size
+        Hdim = cfg.model.llama_mlp_size
         dtype = cfg.model.dtype
 
-        self.fc1 = nn.Linear(E, E, dtype=dtype, bias=False)
-        self.fc2 = nn.Linear(E, E, dtype=dtype, bias=False)
-        self.fc3 = nn.Linear(E, E, dtype=dtype, bias=False)
+        self.fc1 = nn.Linear(E, Hdim, dtype=dtype, bias=False)
+        self.fc2 = nn.Linear(E, Hdim, dtype=dtype, bias=False)
+        self.fc3 = nn.Linear(Hdim, E, dtype=dtype, bias=False)
         self.silu = nn.SiLU()
 
     def forward(self, x):
@@ -26,17 +38,61 @@ class LlamaFeedForward(nn.Module):
 
 
 class LlamaBlock(nn.Module):
-    def __init__(self, cfg: ArgParseNamespace, layer_id: int):
+    def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
+        E = cfg.model.embed_size
+        self.attn = attn_factory(cfg)
+        self.mlp = LlamaFeedForward(cfg)
+        self.norm1 = RMSNorm(ndim=E)
+        self.norm2 = RMSNorm(ndim=E)
+
+    def forward(self, x, mask, cos, sin):
+        shortcut = x
+        x = self.norm1(x)
+        x = self.attn(x, mask, cos, sin)
+        x = x + shortcut
+
+        shortcut = x
+        x = self.norm2(x)
+        x = self.mlp(x)
+        x = x + shortcut
+
+        return x
 
 
-class Llama2(nn.Module):
+class Llama(nn.Module):
     def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
         self.cfg = cfg
 
-        self.tok_embed = nn.Embedding(cfg.model.vocab_size, cfg.model.embed_size)
-        self.blocks = nn.ModuleList([
-            LlamaBlock(cfg, layer_id)
-            for layer_id in range(cfg.model.num_layers)
-        ])
+        E = cfg.model.embed_size
+        V = cfg.model.vocab_size
+        L = cfg.model.num_layers
+        S = cfg.model.seq_len
+
+        assert not cfg.model.bias, "Llama model needs bias=False, but found bias=True"
+
+        self.tok_embed = nn.Embedding(V, E)
+        self.blocks = nn.ModuleList([LlamaBlock(cfg) for _ in range(L)])
+        self.norm = RMSNorm(ndim=E)
+        self.lm_head = nn.Linear(E, V, bias=False)
+
+        self.cos, self.sin = precompute_rope(cfg)
+        self.mask = torch.triu(
+            torch.ones(S, S, dtype=torch.bool),
+            diagonal=1
+        ).view(1, 1, S, S)
+
+    def forward(self, inputs, targets):
+        x = self.tok_embed(inputs)
+        for block in self.blocks:
+            x = block(x, self.mask, self.cos, self.sin)
+        x = self.norm(x)
+        logits = self.lm_head(x)
+
+        loss = F.cross_entropy(
+            input=logits.view(-1, logits.size(-1)),
+            target=targets.view(-1),
+            ignore_index=-1
+        )
+        return loss
