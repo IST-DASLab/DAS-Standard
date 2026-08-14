@@ -3,7 +3,7 @@ import torch
 from collections import OrderedDict
 
 from backends import get_backend, BaseBackend
-from configs import get_dynamic_arg_parser
+from config import get_dynamic_arg_parser
 from data import get_data_readers
 from evaluation import eval_and_log
 from models import get_model
