@@ -94,27 +94,44 @@ def get_dynamic_arg_parser():
 
     After parsing the cfg, they are preprocessed before returning them in the
     main process for usage.
+
+    !!!!! Trick !!!!!
+    To allow the user to override certain fields of the ModelConfig, we do the following:
+    1) we parse only the training arguments to read model_name_size
+    2) we build the full parser with dynamic defaults: for the model, we inject the model ladder as the base default and simple_parsing will apply the user
+    overrides over these exact values from the ladder.
+
+    For example, this is useful when we want to use llama2-1B with a smaller sequence length: the default sequence length will be 4096, but the user can
+    override this field with 1024 by specifying --seq_len=1024 in the command line
     """
-    parser = ArgumentParser(description="Arguments are read from the dataclass fields *Config in configs package, such as ModelConfig, OptimizerConfig, etc.")
+
+    ##### step 1: build a temporary parser and extract `model_name_size`
+    temp_parser = ArgumentParser(add_help=False)
+    temp_parser.add_arguments(TrainingConfig, dest="training")
+    temp_known_args, _ = temp_parser.parse_known_args() # parse only args from TrainingConfig (added, so it's known)
+    model_name_size = temp_known_args.training.model_size
+
+    ##### step 2: build the full parser now
+    full_parser = ArgumentParser(description="Arguments are read from the dataclass fields *Config in configs package, such as ModelConfig, OptimizerConfig, etc.")
 
     for name, obj in inspect.getmembers(sys.modules[__name__]): # current module
         if inspect.isclass(obj) and is_dataclass(obj) and "config" in name.lower():
             dest_name = name.lower().replace("config", "")
-            parser.add_arguments(obj, dest=dest_name)
+
+            if dest_name == "model":
+                model_ladder = model_config_factory(model_name_size)
+                full_parser.add_arguments(obj, dest=dest_name, default=model_ladder)
+            else:
+                full_parser.add_arguments(obj, dest=dest_name)
             # print(f'Found config "{name}": all fields are available in the "{dest_name}" object')
 
-    return preprocess(parser.parse_args())
+    return preprocess(full_parser.parse_args())
 
 
 def preprocess(cfg: ArgParseNamespace):
     attn_params_fn = None
     mlp_params_fn = None
     model_name_size = cfg.training.model_name_size
-
-    #####
-    ##### Use predefined model Config
-    #####
-    cfg.model = model_config_factory(model_name_size)
 
     #####
     ##### Set functions to compute params count
