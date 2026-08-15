@@ -153,17 +153,14 @@ def preprocess(cfg: ArgParseNamespace):
     #####
     cfg.training.max_iters = _compute_max_iters(cfg, attn_fn=attn_params_fn, mlp_fn=mlp_params_fn)
 
+    #####
+    ##### Check model size
+    #####
     assert cfg.model.embed_size % cfg.model.num_heads == 0
 
     #####
     ##### Map model dtype from string to torch dtype;
     #####
-    match cfg.model.dtype:
-        case "bf16":
-            cfg.model.dtype = torch.bfloat16
-        case "fp16":
-            cfg.model.dtype = torch.float16
-        case "fp32":
-            cfg.model.dtype = torch.float32
+    cfg.model.dtype = { "bf16": torch.bfloat16, "fp16": torch.float16, "fp32": torch.float32, }[cfg.model.dtype]
 
     return cfg
