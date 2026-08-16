@@ -37,7 +37,7 @@ class GPT(nn.Module):
         drp = cfg.model.dropout
         bias = cfg.model.bias
 
-        self.tok_embed = nn.Embedding(V, E)
+        self.token_embed = nn.Embedding(V, E)
         self.pos_embed = nn.Embedding(S, E)
         self.dropout = nn.Dropout(drp)
         self.blocks = nn.ModuleList([GPTBlock(cfg) for _ in range(L)])
@@ -45,7 +45,7 @@ class GPT(nn.Module):
         self.lm_head = nn.Linear(in_features=E, out_features=V, bias=bias)
 
         if cfg.model.tie_embeds:
-            self.tok_embed.weight = self.lm_head.weight
+            self.token_embed.weight = self.lm_head.weight
 
         # initialize weights
         self.apply(self._init_weights)
@@ -71,7 +71,7 @@ class GPT(nn.Module):
 
         pos = torch.arange(0, T, dtype=torch.long, device=device)
 
-        tok_emb = self.tok_embed(inputs)
+        tok_emb = self.token_embed(inputs)
         pos_emb = self.pos_embed(pos)
 
         x = self.dropout(tok_emb + pos_emb)
@@ -98,7 +98,7 @@ class GPT(nn.Module):
         # return logits, loss
 
     def get_num_params(self):
-        embed_params_count = self.tok_embed.weight.numel()
+        embed_params_count = self.token_embed.weight.numel()
         non_embed_params_count = sum(p.numel() for p in self.blocks.parameters())
         if not self.cfg.model.tie_embeds:
             embed_params_count *= 2

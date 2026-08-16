@@ -121,7 +121,7 @@ class LoggingManager:
             B = cfg.training.local_batch_size
             A = cfg.training.grad_acc_steps
 
-            params_inp_embed = model.tok_embed.weight.numel()
+            params_inp_embed = model.token_embed.weight.numel()
             params_pos_embed = model.pos_embed.weight.numel() if hasattr(model, "pos_embed") else 0
             params_out_embed = model.lm_head.weight.numel()
             params_linear = sum(p.numel() for p in model.blocks.parameters() if p.ndim == 2)

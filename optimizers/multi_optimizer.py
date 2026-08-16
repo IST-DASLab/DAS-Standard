@@ -60,7 +60,7 @@ class MultiOptimizer:
                 raise NotImplementedError(f'Optimizer {cfg.optimizer.optimizer_name} is not implemented!')
 
     def _get_input_embedding(self):
-        return [self.model.tok_embed.weight]
+        return [self.model.token_embed.weight]
 
     def _get_pos_embedding(self):
         return [self.model.pos_embed.weight] if hasattr(self.model, "pos_embed") else []

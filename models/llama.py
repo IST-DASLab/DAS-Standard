@@ -45,7 +45,7 @@ class Llama(nn.Module):
 
         assert not cfg.model.bias, "Llama model needs bias=False, but found bias=True"
 
-        self.tok_embed = nn.Embedding(V, E, dtype=dtype)
+        self.token_embed = nn.Embedding(V, E, dtype=dtype)
         self.blocks = nn.ModuleList([LlamaBlock(cfg) for _ in range(L)])
         self.norm = RMSNorm(ndim=E)
         self.lm_head = nn.Linear(in_features=E, out_features=V, bias=False, dtype=dtype)
@@ -59,7 +59,7 @@ class Llama(nn.Module):
     def forward(self, inputs, targets):
         dtype = self.cfg.model.dtype
 
-        x = self.tok_embed(inputs)
+        x = self.token_embed(inputs)
         for block in self.blocks:
             x = block(x, self.mask, self.cos, self.sin)
         x = self.norm(x)
