@@ -50,11 +50,13 @@ class Llama(nn.Module):
         self.norm = RMSNorm(ndim=E)
         self.lm_head = nn.Linear(in_features=E, out_features=V, bias=False, dtype=dtype)
 
-        self.cos, self.sin = precompute_rope(cfg)
-        self.mask = torch.triu(
-            torch.ones(S, S, dtype=torch.bool),
-            diagonal=1
-        ).view(1, 1, S, S)
+        cos, sin = precompute_rope(cfg)
+        self.register_buffer(name="cos", tensor=cos, persistent=False)
+        self.register_buffer(name="sin", tensor=sin, persistent=False)
+        self.register_buffer(
+            name="mask",
+            tensor=torch.triu(torch.ones(S, S), diagonal=1).bool().view(1, 1, S, S),
+            persistent=False)
 
     def forward(self, inputs, targets):
         dtype = self.cfg.model.dtype

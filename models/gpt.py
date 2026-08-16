@@ -54,8 +54,13 @@ class GPT(nn.Module):
             if name.endswith("Wo.weight"):
                 torch.nn.init.normal_(p, mean=0, std=0.02 / math.sqrt(2 * L))
 
-        self.mask = torch.triu(torch.ones(S, S), diagonal=1).bool().view(1, 1, S, S)
-        self.cos, self.sin = precompute_rope(cfg)
+        cos, sin = precompute_rope(cfg)
+        self.register_buffer(name="cos", tensor=cos, persistent=False)
+        self.register_buffer(name="sin", tensor=sin, persistent=False)
+        self.register_buffer(
+            name="mask",
+            tensor=torch.triu(torch.ones(S, S), diagonal=1).bool().view(1, 1, S, S),
+            persistent=False)
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
