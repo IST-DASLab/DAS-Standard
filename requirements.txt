@@ -1,5 +1,7 @@
 torch
 numpy
+scipy
+triton
 transformers
 datasets
 tiktoken
