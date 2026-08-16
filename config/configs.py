@@ -13,36 +13,6 @@ from models.attention import MultiHeadSelfAttention, GroupedQueryAttention
 from models.feedforward import GPTFeedForward, LlamaFeedForward
 
 @dataclass
-class ModelConfig:
-    dtype: Literal["bf16", "fp16", "fp32"] = "fp32"
-    attn_type: Literal["mhsa", "mhsa-flash", "gqa", "gqa-flash"] = "mhsa"
-    attn_gqa_kvg: int = 8
-    qk_norm: bool = False
-    rope_theta: float = 10_000.0
-    vocab_size: int = -1
-    num_layers: int = 6
-    num_heads: int = 8
-    embed_size: int = 1024
-    seq_len: int = 1024
-    dropout: float = 0.0
-    bias: bool = False
-    tie_embeds: bool = False
-    gpt_mlp_exp_factor: int = 4
-    llama_mlp_size: int = 11_008
-
-
-@dataclass
-class DatasetConfig:
-    dataset_path: str = "./data"
-    dataset_name: Literal["c4"] = "c4"
-
-@dataclass
-class QATConfig:
-    method_name: Literal["quartet2", "disabled"] = "disabled"
-    hadamard_size: int = 128
-
-
-@dataclass
 class TrainingConfig: # mainly set by user
     model_name_size: str = "llama3-1b"
     linear_type: Literal["quantized", "linear"] = "linear"
@@ -58,6 +28,12 @@ class TrainingConfig: # mainly set by user
     eval_interval: int = 200
     eval_batches: int = 32
     output_folder: str = "./output"
+
+
+@dataclass
+class QATConfig:
+    method_name: Literal["quartet2", "disabled"] = "disabled"
+    hadamard_size: int = 128
 
 
 @dataclass
@@ -85,12 +61,37 @@ class OptimizerConfig:
 
 
 @dataclass
+class DatasetConfig:
+    dataset_path: str = "./data"
+    dataset_name: Literal["c4"] = "c4"
+
+
+@dataclass
 class WandbConfig:
     entity: str = None
     project: str = None
     group: str = None
     job_type: str = None
     run_name: str = None
+
+
+@dataclass
+class ModelConfig: # initialized via model ladders
+    dtype: Literal["bf16", "fp16", "fp32"] = "fp32"
+    attn_type: Literal["mhsa", "mhsa-flash", "gqa", "gqa-flash"] = "mhsa"
+    attn_gqa_kvg: int = 8
+    qk_norm: bool = False
+    rope_theta: float = 10_000.0
+    vocab_size: int = -1
+    num_layers: int = 6
+    num_heads: int = 8
+    embed_size: int = 1024
+    seq_len: int = 1024
+    dropout: float = 0.0
+    bias: bool = False
+    tie_embeds: bool = False
+    gpt_mlp_exp_factor: int = 4
+    llama_mlp_size: int = 11_008
 
 
 def get_dynamic_arg_parser():
