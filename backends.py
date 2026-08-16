@@ -80,7 +80,7 @@ class DDPBackend(BaseBackend):
             have 8 processes running in parallel
         """
         self.cfg.training.grad_acc_steps //= self.world_size
-        print(f"Using DDP backend")
+        print(f"\n=== Using DDP backend ===\n")
 
     def wrap_model(self, model):
         wrapped = DDP(model.to(self.device), device_ids=[self.local_rank])
@@ -100,4 +100,4 @@ class SingleBackend(BaseBackend):
             local_rank=0,
             world_size=1
         )
-        print(f"Using Single GPU backend")
+        print(f"\n=== Using Single GPU backend ===\n")
