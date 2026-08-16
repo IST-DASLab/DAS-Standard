@@ -19,7 +19,7 @@ def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
     if is_random_model or is_middle_step or is_last_step:
         model.eval()
         num_batches = reader.num_batches if is_last_step else cfg.training.eval_batches
-        total_loss = torch.tensor(0.0, dtype=torch.float32, device=model.device)
+        total_loss = torch.tensor(0.0, dtype=torch.float32, device=backend.get_device())
 
         logger.start_eval_pbar(total_batches=num_batches)
         reader.reset()
@@ -47,7 +47,7 @@ def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
             data=OrderedDict(
                 step=crt_iter,
                 num_batches=num_batches,
-                loss=f"{loss:.4f}",
+                loss=f"{total_loss:.4f}",
                 ppl=f"{math.exp(loss):.4f}" if loss <= 0 else "too large"
             )
         )

@@ -52,6 +52,9 @@ class BaseBackend:
     def terminate(self):
         pass # do nothing by default
 
+    def get_device(self):
+        raise NotImplementedError
+
     @property
     def is_master(self):
         return self.rank == 0
@@ -91,6 +94,9 @@ class DDPBackend(BaseBackend):
     def terminate(self):
         dist.destroy_process_group()
 
+    def get_device(self):
+        return f"cuda:{self.local_rank}"
+
 
 class SingleBackend(BaseBackend):
     def __init__(self, cfg: ArgParseNamespace):
@@ -101,3 +107,6 @@ class SingleBackend(BaseBackend):
             world_size=1
         )
         print(f"\n=== Using Single GPU backend ===\n")
+
+    def get_device(self):
+        return "cuda:0"
