@@ -4,7 +4,7 @@
 # ##########   fp32 is inherited from the seed config; you'll want bf16 for
 # ##########   anything at or above config_gpt_1_5b to fit/train at speed.
 # #############################################################################
-from config.configs import ModelConfig
+from .configs import ModelConfig
 
 
 def config_gpt_3m():
