@@ -50,6 +50,6 @@ def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
                 step=crt_iter,
                 num_batches=num_batches,
                 loss=f"{total_loss:.4f}",
-                ppl=f"{total_ppl:.4f}" if total_ppl < 1000 else "too large (>1000)"
+                ppl=f"{total_ppl:.4f}"# if total_ppl < 1000 else "too large (>1000)"
             )
         )
