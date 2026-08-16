@@ -84,7 +84,7 @@ class GroupedQueryAttention(nn.Module):
         E = cfg.model.embed_size
         Nh = cfg.model.num_heads
         H = E // Nh # head size
-        Nkvg = cfg.model.attn_kv_groups
+        Nkvg = cfg.model.attn_gqa_kvg
         return 2 * (E * E + E * (Nkvg * H))
 
     def __init__(self, cfg: ArgParseNamespace):
@@ -95,7 +95,7 @@ class GroupedQueryAttention(nn.Module):
         Nh = cfg.model.num_heads
         H = E // Nh # head size
         bias = cfg.model.bias
-        Nkvg = cfg.model.attn_kv_groups
+        Nkvg = cfg.model.attn_gqa_kvg
         drp = cfg.model.dropout
         qk_norm = cfg.model.qk_norm
 
@@ -118,7 +118,7 @@ class GroupedQueryAttention(nn.Module):
         B, T, E = x.shape
         Nh = self.cfg.model.num_heads
         H = E // Nh # head size
-        Nkvg = self.cfg.model.attn_kv_groups
+        Nkvg = self.cfg.model.attn_gqa_kvg
         Gs = Nh // Nkvg
         qk_norm = self.cfg.model.qk_norm
 
