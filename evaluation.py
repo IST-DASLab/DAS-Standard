@@ -38,17 +38,18 @@ def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
         if backend.world_size > 1:
             dist.all_reduce(total_loss, op=dist.ReduceOp.SUM)
         total_loss = total_loss.item() / backend.world_size / num_batches
+        total_ppl = math.exp(total_loss)
 
         text_loss = TEXT_FINAL_VAL_LOSS if is_last_step else TEXT_VAL_LOSS
         text_ppl = TEXT_FINAL_VAL_PPL if is_last_step else TEXT_VAL_PPL
 
-        logger.log_dict({text_loss: loss, text_ppl: math.exp(loss)})
+        logger.log_dict({text_loss: loss, text_ppl: total_ppl})
         logger.log_console(
             f"\nEvaluation",
             data=OrderedDict(
                 step=crt_iter,
                 num_batches=num_batches,
                 loss=f"{total_loss:.4f}",
-                ppl=f"{math.exp(loss):.4f}" if loss <= 0 else "too large"
+                ppl=f"{total_ppl:.4f}" if total_ppl < 1000 else "too large (>1000)"
             )
         )
