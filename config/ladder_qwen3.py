@@ -50,7 +50,7 @@
 # counts are in the comment on each config, and they are the number you want
 # for anything compute-related -- see the warning above the small ladder.
 # =============================================================================
-from config.configs import ModelConfig
+from .configs import ModelConfig
 
 
 # #############################################################################

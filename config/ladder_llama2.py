@@ -3,7 +3,7 @@
 # ##########   dtype=bf16, vocab=32_000, seq_len=4096, rope_theta=10_000.
 # ##########   MHSA below ~13B (as in the real family), GQA-8 above.
 # #############################################################################
-from config.configs import ModelConfig
+from .configs import ModelConfig
 
 
 def config_llama2_35m():

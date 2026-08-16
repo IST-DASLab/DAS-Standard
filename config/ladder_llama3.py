@@ -4,7 +4,7 @@
 # ##########   GQA everywhere. The 128k vocab dominates below ~1B, so every
 # ##########   sub-1B rung ties embeddings (as Llama-3.2 1B/3B actually do).
 # #############################################################################
-from config.configs import ModelConfig
+from .configs import ModelConfig
 
 
 def config_llama3_90m():
