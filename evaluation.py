@@ -35,7 +35,8 @@ def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
 
         logger.close_eval_pbar()
 
-        dist.all_reduce(total_loss, op=dist.ReduceOp.SUM)
+        if backend.world_size > 1:
+            dist.all_reduce(total_loss, op=dist.ReduceOp.SUM)
         total_loss = total_loss.item() / backend.world_size / num_batches
 
         text_loss = TEXT_FINAL_VAL_LOSS if is_last_step else TEXT_VAL_LOSS
