@@ -14,8 +14,8 @@ from models.feedforward import GPTFeedForward, LlamaFeedForward
 class TrainingConfig: # mainly set by user
     model_name_size: str = "llama3-1b"
     seed: int = 42
-    tokens_count: float = 0 # zero means disabled (lower priority than `chinchilla_token_ratio`)
-    chinchilla_token_ratio: int = 1 # how many chinchillas to train the model for (higher priorith than `tokens_count`)
+    num_tokens: float = 0 # do not set it explicitly because it will be computed in based on `chinchilla_token_ratio`
+    chinchilla_token_ratio: int = 1 # how many chinchillas to train the model for (sets num_tokens)
     local_batch_size: int = 64 # per device batch size
     grad_acc_steps: int = 8
     max_iters: int = -1 # will be automatically determined based on number of tokens, seq len, device batch size and number of workers
@@ -136,7 +136,7 @@ def get_dynamic_arg_parser():
 
 
 def preprocess(cfg: ArgParseNamespace):
-    from .utils import compute_max_iters
+    from .utils import compute_num_iters_and_tokens
     attn_params_fn = None
     mlp_params_fn = None
     model_name_size = cfg.training.model_name_size
@@ -157,9 +157,9 @@ def preprocess(cfg: ArgParseNamespace):
         mlp_params_fn = LlamaFeedForward.get_param_count
 
     #####
-    ##### Compute number of iterations based on model size (only Linears from transformer blocks)
+    ##### Compute number of iterations & num tokens based on model size (only Linears from transformer blocks)
     #####
-    cfg.training.max_iters = compute_max_iters(cfg, attn_fn=attn_params_fn, mlp_fn=mlp_params_fn)
+    cfg.training.max_iters, cfg.training.num_tokens = compute_num_iters_and_tokens(cfg, attn_fn=attn_params_fn, mlp_fn=mlp_params_fn)
 
     #####
     ##### Check model size

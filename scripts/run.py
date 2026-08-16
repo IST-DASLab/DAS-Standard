@@ -43,7 +43,7 @@ if __name__ == "__main__":
             ##########################
             "model_name_size": ["llama2"],
             "seed": [42],
-            # "tokens_count": [0], # lower priority over chinchilla_token_ratio
+            # "num_tokens": [0], # lower priority over chinchilla_token_ratio
             "chinchilla_token_ratio": [1],
             "local_batch_size": [16],
             "grad_acc_steps": [32],

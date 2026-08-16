@@ -26,8 +26,8 @@ if __name__ == "__main__":
     DATASETS_DIR = '/localhome/imodoran/datasets/' if socket.gethostname().startswith('gpu') else '/home/imodoran/datasets/'
 
     main(
-        dist=False,
-        # dist=True,
+        # dist=False,
+        dist=True,
         gpus=[
             0,
             1,
@@ -44,14 +44,14 @@ if __name__ == "__main__":
             ##########################
             "model_name_size": ["llama2-35m"],
             "seed": [42],
-            # "tokens_count": [0], # lower priority over chinchilla_token_ratio
+            # "num_tokens": [0], # lower priority over chinchilla_token_ratio
             "chinchilla_token_ratio": [1],
             "local_batch_size": [16],
             "grad_acc_steps": [32],
             # "max_iters": [-1], # not needed, automatically determined
             "backend": [
-                "single",
-                # "ddp",
+                # "single",
+                "ddp",
             ],
             "amp_dtype": ["bf16"],
             "compile_model": [True],

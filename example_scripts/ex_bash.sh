@@ -29,7 +29,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 torchrun --nproc-per-node=8 pretrain.py \
 
     ### training section
     --seed $SEED \
-    --tokens_count 0 \
+    --num_tokens 0 \
     --chinchilla_token_ratio 1 \
     --local_batch_size 64 \
     --grad_acc_steps 8 \

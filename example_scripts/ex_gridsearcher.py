@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
             ### training section
             "seed": [42],
-            "tokens_count": [0],
+            "num_tokens": [0],
             "chinchilla_token_ratio": [1],
             "local_batch_size": [64],
             "grad_acc_steps": [8],
