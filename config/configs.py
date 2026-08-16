@@ -36,6 +36,11 @@ class DatasetConfig:
     dataset_path: str = "./data"
     dataset_name: Literal["c4"] = "c4"
 
+@dataclass
+class QATConfig:
+    method_name: Literal["quartet2", "disabled"] = "disabled"
+    hadamard_size: int = 128
+
 
 @dataclass
 class TrainingConfig: # mainly set by user
