@@ -1,16 +1,15 @@
 import sys
-import inspect
-
 import torch
-from simple_parsing import ArgumentParser
-from argparse import Namespace as ArgParseNamespace
-from dataclasses import dataclass, is_dataclass
+import inspect
 from typing import Literal
+from simple_parsing import ArgumentParser
+from dataclasses import dataclass, is_dataclass
+from argparse import Namespace as ArgParseNamespace
 
-from config import model_config_factory
-from config.utils import _compute_max_iters
 from models.attention import MultiHeadSelfAttention, GroupedQueryAttention
 from models.feedforward import GPTFeedForward, LlamaFeedForward
+
+from .utils import model_config_factory, compute_max_iters
 
 @dataclass
 class TrainingConfig: # mainly set by user
@@ -157,7 +156,7 @@ def preprocess(cfg: ArgParseNamespace):
     #####
     ##### Compute number of iterations based on model size (only Linears from transformer blocks)
     #####
-    cfg.training.max_iters = _compute_max_iters(cfg, attn_fn=attn_params_fn, mlp_fn=mlp_params_fn)
+    cfg.training.max_iters = compute_max_iters(cfg, attn_fn=attn_params_fn, mlp_fn=mlp_params_fn)
 
     #####
     ##### Check model size

@@ -55,7 +55,7 @@ def model_config_factory(model_name_size):
         "qwen3-32b": config_qwen3_32b,
     }[model_name_size.lower()]()
 
-def _compute_max_iters(cfg, attn_fn, mlp_fn):
+def compute_max_iters(cfg, attn_fn, mlp_fn):
     """
     This function computes the number of iterations based on some number of
     parameters for the model (can be full model size of
