@@ -53,4 +53,4 @@ class RMSNorm(nn.Module):
         if self.bias is not None:
             norm_x = norm_x + self.bias
 
-        return norm_x.to(dtype=input_dtype.dtype)
+        return norm_x.to(dtype=input_dtype)
