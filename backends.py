@@ -10,6 +10,8 @@ from tqdm import tqdm
 
 def get_backend(cfg: ArgParseNamespace):
     match cfg.training.backend:
+        case "single":
+            return SingleBackend(cfg)
         case "ddp":
             return DDPBackend(cfg)
         case _:
@@ -78,6 +80,7 @@ class DDPBackend(BaseBackend):
             have 8 processes running in parallel
         """
         self.cfg.training.grad_acc_steps //= self.world_size
+        print(f"Using DDP backend")
 
     def wrap_model(self, model):
         wrapped = DDP(model.to(self.device), device_ids=[self.local_rank])
@@ -89,7 +92,7 @@ class DDPBackend(BaseBackend):
         dist.destroy_process_group()
 
 
-class NoneBackend(BaseBackend):
+class SingleBackend(BaseBackend):
     def __init__(self, cfg: ArgParseNamespace):
         super().__init__(
             cfg=cfg,
@@ -97,3 +100,4 @@ class NoneBackend(BaseBackend):
             local_rank=0,
             world_size=1
         )
+        print(f"Using Single GPU backend")

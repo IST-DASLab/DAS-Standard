@@ -19,12 +19,31 @@ class TrainingConfig: # mainly set by user
     local_batch_size: int = 64 # per device batch size
     grad_acc_steps: int = 8
     max_iters: int = -1 # will be automatically determined based on number of tokens, seq len, device batch size and number of workers
-    backend: Literal["none", "ddp", "fsdp2"] = "ddp"
+    backend: Literal["single", "ddp", "fsdp2"] = "ddp"
     amp_dtype: Literal["bf16", "fp16", "fp32"] = "bf16"
     compile_model: bool = False
     eval_interval: int = 200
     eval_batches: int = 32
     output_folder: str = "./output"
+
+
+@dataclass
+class ModelConfig: # initialized via model ladders
+    dtype: Literal["bf16", "fp16", "fp32"] = "fp32"
+    attn_type: Literal["mhsa", "mhsa-flash", "gqa", "gqa-flash"] = "mhsa"
+    attn_gqa_kvg: int = 8
+    qk_norm: bool = False
+    rope_theta: float = 10_000.0
+    vocab_size: int = -1
+    num_layers: int = 6
+    num_heads: int = 8
+    embed_size: int = 1024
+    seq_len: int = 1024
+    dropout: float = 0.0
+    bias: bool = False
+    tie_embeds: bool = False
+    gpt_mlp_exp_factor: int = 4
+    llama_mlp_size: int = 11_008
 
 
 @dataclass
@@ -72,25 +91,6 @@ class WandbConfig:
     run_name: str = None
 
 
-@dataclass
-class ModelConfig: # initialized via model ladders
-    dtype: Literal["bf16", "fp16", "fp32"] = "fp32"
-    attn_type: Literal["mhsa", "mhsa-flash", "gqa", "gqa-flash"] = "mhsa"
-    attn_gqa_kvg: int = 8
-    qk_norm: bool = False
-    rope_theta: float = 10_000.0
-    vocab_size: int = -1
-    num_layers: int = 6
-    num_heads: int = 8
-    embed_size: int = 1024
-    seq_len: int = 1024
-    dropout: float = 0.0
-    bias: bool = False
-    tie_embeds: bool = False
-    gpt_mlp_exp_factor: int = 4
-    llama_mlp_size: int = 11_008
-
-
 def get_dynamic_arg_parser():
     """
     This function iterates through all dataclasses defined in the config.py file
@@ -114,7 +114,7 @@ def get_dynamic_arg_parser():
     temp_parser = ArgumentParser(add_help=False)
     temp_parser.add_arguments(TrainingConfig, dest="training")
     temp_known_args, _ = temp_parser.parse_known_args() # parse only args from TrainingConfig (added, so it's known)
-    model_name_size = temp_known_args.training.model_size
+    model_name_size = temp_known_args.training.model_name_size
 
     ##### step 2: build the full parser now
     full_parser = ArgumentParser(description="Arguments are read from the dataclass fields *Config in configs package, such as ModelConfig, OptimizerConfig, etc.")
