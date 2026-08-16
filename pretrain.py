@@ -18,6 +18,7 @@ from constants import (
     TEXT_ELAPSED_FORWARD,
     TEXT_ELAPSED_BACKWARD,
 )
+from qat import wrap_model_for_qat
 
 
 def main():
@@ -29,6 +30,7 @@ def main():
     timer = TimingManager()
 
     model = get_model(cfg)
+    wrap_model_for_qat(model, cfg, except_modules=None)
     optimizer = MultiOptimizer(cfg, model, backend) # use raw model before wrapping
     logger.log_model_info(model, backend.world_size) # use raw model before wrapping
 
