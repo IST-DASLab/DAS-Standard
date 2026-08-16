@@ -67,11 +67,13 @@ def compute_max_iters(cfg, attn_fn, mlp_fn):
     """
     L = cfg.model.num_layers
     S = cfg.model.seq_len
+    V = cfg.model.vocab_size
+    E = cfg.model.embed_size
     B = cfg.training.local_batch_size
     A = cfg.training.grad_acc_steps
     CTR = cfg.training.chinchilla_token_ratio
 
-    params_count = L * (attn_fn(cfg) + mlp_fn(cfg))
+    params_count = L * (attn_fn(cfg) + mlp_fn(cfg)) + 2 * V * E
     num_tokens = params_count * CTR * 20
     iterations = math.ceil(num_tokens / (B * S * A))
 
