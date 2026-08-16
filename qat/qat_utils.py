@@ -57,5 +57,5 @@ def wrap_model_for_qat(model, cfg: ArgParseNamespace, except_modules=None):
                 raise RuntimeError(f"Unknown qat.qat_method value: {cfg.qat.qat_method}")
             # setattr(wrapped_module, 'layer_name', name)
             swap_module(model, name, wrapped_module)
-            print(f"wrapped {name}")
+            # print(f"wrapped {name}")
 

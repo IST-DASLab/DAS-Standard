@@ -360,7 +360,7 @@ class Quartet_II_Linear(torch.nn.Linear):
         self.M_bf16 = torch.zeros_like(self.weight, dtype=torch.bfloat16, requires_grad=False)
 
         self.name = name
-        print(f'Created Quartet_II_Linear module {self.name}')
+        # print(f'Created Quartet_II_Linear module {self.name}')
 
         if Quartet_II_fn.hadamard_matrix is None:
             Quartet_II_fn.hadamard_matrix = torch.tensor(
