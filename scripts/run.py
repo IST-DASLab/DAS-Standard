@@ -38,39 +38,38 @@ if __name__ == "__main__":
             7,
         ],
         params={
-            ### model section
-            "model_name_size": ["gpt-85m"],
-            # "vocab_size": [-1], # not needed, automatically determined
-            "num_layers": [12],
-            "num_heads": [12],
-            "embed_size": [768],
-            "seq_len": [1024],
-            "dropout": ["0.0"],
-            "bias": [False],
-            "tie_embeds": [False],
-            "gpt_mlp_exp_factor": [4],
-
-            ### dataset section
-            "dataset_path": [DATASETS_DIR],
-            "dataset_name": ["c4"],
-
-            ### training section
+            ##########################
+            ##### TrainingConfig #####
+            ##########################
+            "model_name_size": ["llama2"],
             "seed": [42],
-            "tokens_count": [0],
+            # "tokens_count": [0], # lower priority over chinchilla_token_ratio
             "chinchilla_token_ratio": [1],
             "local_batch_size": [16],
             "grad_acc_steps": [32],
             # "max_iters": [-1], # not needed, automatically determined
             "backend": ["ddp"],
-            "dtype": ["bf16"],
+            "amp_dtype": ["bf16"],
             "compile_model": [True],
             "eval_interval": [100],
             "eval_batches": [32],
 
-            ### optimizer section
+
+
+            #####################
+            ##### QATConfig #####
+            #####################
+            "method_name": ["disabled"],
+            "hadamard_size": [128],
+
+
+
+            ###########################
+            ##### OptimizerConfig #####
+            ###########################
             "optimizer_name": [
                 "adamw",
-                "muon",
+                # "muon",
             ],
             "weight_decay": ["0.0"],
             "grad_clipping": ["1.0"],
@@ -91,7 +90,19 @@ if __name__ == "__main__":
             "muon_lr": ["4e-2"],
             "muon_momentum": ["0.95"],
 
-            ### wandb section
+
+
+            #########################
+            ##### DatasetConfig #####
+            #########################
+            "dataset_path": [DATASETS_DIR],
+            "dataset_name": ["c4"],
+
+
+
+            #######################
+            ##### WandbConfig #####
+            #######################
             "entity": ["ist"],
             "project": ["das-standard"],
             "group": [
