@@ -1,3 +1,8 @@
+import os
+# Suppress C++ backend warnings and Dynamo internal logs
+os.environ["TORCH_CPP_LOG_LEVEL"] = "ERROR"
+os.environ["TORCH_LOGS"] = "-all"
+
 import warnings
 warnings.filterwarnings("ignore")
 
