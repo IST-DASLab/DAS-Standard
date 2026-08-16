@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore")
+
 import math
 import torch
 from collections import OrderedDict
@@ -9,6 +12,7 @@ from evaluation import eval_and_log
 from models import get_model
 from optimizers import MultiOptimizer
 from managers import TimingManager, LoggingManager
+from qat import wrap_model_for_qat
 from constants import (
     TEXT_TRAIN_LOSS,
     TEXT_TRAIN_PPL,
@@ -18,7 +22,6 @@ from constants import (
     TEXT_ELAPSED_FORWARD,
     TEXT_ELAPSED_BACKWARD,
 )
-from qat import wrap_model_for_qat
 
 
 def main():
