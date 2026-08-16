@@ -45,9 +45,9 @@ class LlamaFeedForward(nn.Module):
         Hdim = cfg.model.llama_mlp_size
         dtype = cfg.model.dtype
 
-        self.fc1 = nn.Linear(E, Hdim, dtype=dtype, bias=False)
-        self.fc2 = nn.Linear(E, Hdim, dtype=dtype, bias=False)
-        self.fc3 = nn.Linear(Hdim, E, dtype=dtype, bias=False)
+        self.fc1 = nn.Linear(in_features=E, out_features=Hdim, dtype=dtype, bias=False)
+        self.fc2 = nn.Linear(in_features=E, out_features=Hdim, dtype=dtype, bias=False)
+        self.fc3 = nn.Linear(in_features=Hdim, out_features=E, dtype=dtype, bias=False)
         self.silu = nn.SiLU()
 
     def forward(self, x):

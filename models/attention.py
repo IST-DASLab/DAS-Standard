@@ -36,10 +36,10 @@ class MultiHeadSelfAttention(nn.Module):
         bias = cfg.model.bias
         drp = cfg.model.dropout
 
-        self.Wq = nn.Linear(E, E, bias=bias)
-        self.Wk = nn.Linear(E, E, bias=bias)
-        self.Wv = nn.Linear(E, E, bias=bias)
-        self.Wo = nn.Linear(E, E, bias=bias)
+        self.Wq = nn.Linear(in_features=E, out_features=E, bias=bias)
+        self.Wk = nn.Linear(in_features=E, out_features=E, bias=bias)
+        self.Wv = nn.Linear(in_features=E, out_features=E, bias=bias)
+        self.Wo = nn.Linear(in_features=E, out_features=E, bias=bias)
         self.dropout_attn = nn.Dropout(p=drp)
         self.dropout_out = nn.Dropout(p=drp)
 
@@ -102,10 +102,10 @@ class GroupedQueryAttention(nn.Module):
         assert E % Nh == 0, "Embedding size must be a multiple of Nh"
         assert Nh % Nkvg == 0, "Number of heads must be a multiple of number KV-groups"
 
-        self.Wq = nn.Linear(E, E, bias=bias)
-        self.Wk = nn.Linear(E, Nkvg * H, bias=bias)
-        self.Wv = nn.Linear(E, Nkvg * H, bias=bias)
-        self.Wo = nn.Linear(E, E, bias=bias)
+        self.Wq = nn.Linear(in_features=E, out_features=E, bias=bias)
+        self.Wk = nn.Linear(in_features=E, out_features=Nkvg * H, bias=bias)
+        self.Wv = nn.Linear(in_features=E, out_features=Nkvg * H, bias=bias)
+        self.Wo = nn.Linear(in_features=E, out_features=E, bias=bias)
         self.dropout_attn = nn.Dropout(p=drp)
         self.dropout_out = nn.Dropout(p=drp)
 

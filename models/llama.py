@@ -48,7 +48,7 @@ class Llama(nn.Module):
         self.tok_embed = nn.Embedding(V, E, dtype=dtype)
         self.blocks = nn.ModuleList([LlamaBlock(cfg) for _ in range(L)])
         self.norm = RMSNorm(ndim=E)
-        self.lm_head = nn.Linear(E, V, bias=False, dtype=dtype)
+        self.lm_head = nn.Linear(in_features=E, out_features=V, bias=False, dtype=dtype)
 
         self.cos, self.sin = precompute_rope(cfg)
         self.mask = torch.triu(

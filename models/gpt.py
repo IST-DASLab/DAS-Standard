@@ -42,7 +42,7 @@ class GPT(nn.Module):
         self.dropout = nn.Dropout(drp)
         self.blocks = nn.ModuleList([GPTBlock(cfg) for _ in range(L)])
         self.norm = KarpathyLayerNorm(E, bias=bias)
-        self.lm_head = nn.Linear(E, V, bias=bias)
+        self.lm_head = nn.Linear(in_features=E, out_features=V, bias=bias)
 
         if cfg.model.tie_embeds:
             self.tok_embed.weight = self.lm_head.weight
