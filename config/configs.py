@@ -9,7 +9,6 @@ from argparse import Namespace as ArgParseNamespace
 from models.attention import MultiHeadSelfAttention, GroupedQueryAttention
 from models.feedforward import GPTFeedForward, LlamaFeedForward
 
-from .utils import model_config_factory, compute_max_iters
 
 @dataclass
 class TrainingConfig: # mainly set by user
@@ -109,6 +108,7 @@ def get_dynamic_arg_parser():
     For example, this is useful when we want to use llama2-1B with a smaller sequence length: the default sequence length will be 4096, but the user can
     override this field with 1024 by specifying --seq_len=1024 in the command line
     """
+    from .utils import model_config_factory
 
     ##### step 1: build a temporary parser and extract `model_name_size`
     temp_parser = ArgumentParser(add_help=False)
@@ -134,6 +134,7 @@ def get_dynamic_arg_parser():
 
 
 def preprocess(cfg: ArgParseNamespace):
+    from .utils import compute_max_iters
     attn_params_fn = None
     mlp_params_fn = None
     model_name_size = cfg.training.model_name_size
