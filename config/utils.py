@@ -72,10 +72,13 @@ def compute_max_iters(cfg, attn_fn, mlp_fn):
     B = cfg.training.local_batch_size
     A = cfg.training.grad_acc_steps
     CTR = cfg.training.chinchilla_token_ratio
+    is_tied = cfg.model.tie_embeds
 
-    params_count = L * (attn_fn(cfg) + mlp_fn(cfg)) + 2 * V * E
+    params_count = L * (attn_fn(cfg) + mlp_fn(cfg)) + V * E * (2 - int(is_tied))
     num_tokens = params_count * CTR * 20
     iterations = math.ceil(num_tokens / (B * S * A))
+
+    print(f"\n##### {iterations=} #####\n")
 
     return iterations
 
