@@ -22,7 +22,7 @@ class TrainingConfig: # mainly set by user
     grad_acc_steps: int = 8
     max_iters: int = -1 # will be automatically determined based on number of tokens, seq len, device batch size and number of workers
     backend: Literal["none", "ddp", "fsdp2"] = "ddp"
-    dtype: Literal["bf16", "fp16", "fp32"] = "bf16"
+    amp_dtype: Literal["bf16", "fp16", "fp32"] = "bf16"
     compile_model: bool = False
     eval_interval: int = 200
     eval_batches: int = 32
@@ -55,7 +55,7 @@ class OptimizerConfig:
     adamw_eps: float = 1e-8
 
     # Muon parameters
-    muon_lr: float = 1e-3
+    muon_lr: float = 1e-2
     muon_momentum: float = 0.95
 
 

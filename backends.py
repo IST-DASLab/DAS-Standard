@@ -44,7 +44,7 @@ class BaseBackend:
                 'fp32': torch.float32,
                 'bf16': torch.bfloat16,
                 'fp16': torch.float16,
-            }[self.cfg.training.dtype]
+            }[self.cfg.training.amp_dtype]
         )
 
     def terminate(self):
