@@ -128,8 +128,9 @@ class LoggingManager:
             params_layer_norm = sum(p.numel() for p in model.parameters() if p.ndim == 1)
             params_all = sum(p.numel() for p in model.parameters())
 
+            params_embed = params_inp_embed if cfg.model.tie_embeds else params_inp_embed + params_out_embed
 
-            T = params_linear * CTR * 20
+            T = (params_linear + params_embed) * CTR * 20
             print("-" * 50)
             print("Model:")
             print(str(model))
@@ -143,14 +144,15 @@ class LoggingManager:
             print(f"\t             All params: {params_all:_}")
             print("-" * 50)
             print(f"Tokens info:")
-            print(f"\t           Linear params (P): {params_linear:_}")
-            print(f"\tChinchilla Token Ratio (CTR): {CTR * 20}x")
-            print(f"\t        Tokens (T = P * CTR): {T:_}")
-            print(f"\t         Sequence Length (S): {S}")
-            print(f"\t       Device Batch Size (B): {B}")
-            print(f"\t          Grad Acc Steps (A): {A}")
-            print(f"\t              World Size (W): {world_size}")
-            print(f"\t Steps (T / (B * S * A * W)): {math.ceil(T / (B * S * A * world_size))}")
+            print(f"\t            Linear params (P): {params_linear:_}")
+            print(f"\t       Embedding params (EMB): {params_embed:_}")
+            print(f"\t Chinchilla Token Ratio (CTR): {CTR * 20}x")
+            print(f"\t Tokens (T = CTR * (P + EMB)): {T:_}")
+            print(f"\t          Sequence Length (S): {S}")
+            print(f"\t        Device Batch Size (B): {B}")
+            print(f"\t           Grad Acc Steps (A): {A}")
+            print(f"\t               World Size (W): {world_size}")
+            print(f"\t  Steps (T / (B * S * A * W)): {math.ceil(T / (B * S * A * world_size))}")
             print("-" * 50)
 
     #####
