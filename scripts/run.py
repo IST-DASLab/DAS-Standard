@@ -59,7 +59,7 @@ if __name__ == "__main__":
             #####################
             ##### QATConfig #####
             #####################
-            "method_name": ["disabled"],
+            "qat_method": ["disabled"],
             "hadamard_size": [128],
 
 

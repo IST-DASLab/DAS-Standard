@@ -48,7 +48,7 @@ class ModelConfig: # initialized via model ladders
 
 @dataclass
 class QATConfig:
-    method_name: Literal["quartet2", "disabled"] = "disabled"
+    qat_method: Literal["quartet2", "disabled"] = "disabled"
     hadamard_size: int = 128
 
 

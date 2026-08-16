@@ -33,7 +33,7 @@ def is_wrapped(model):
     return False
 
 def wrap_model_for_qat(model, cfg: ArgParseNamespace, except_modules=None):
-    if cfg.qat.method_name == "disabled":
+    if cfg.qat.qat_method == "disabled":
         return
 
     if except_modules is None:
@@ -51,10 +51,10 @@ def wrap_model_for_qat(model, cfg: ArgParseNamespace, except_modules=None):
                 print(f"skipped wrapping {name}")
                 continue
 
-            if cfg.qat.method_name == 'quartet2':
+            if cfg.qat.qat_method == 'quartet2':
                 wrapped_module = Quartet_II_Linear.from_unquantized(module, name=name, hadamard_dim=cfg.qat.hadamard_size)
             else:
-                raise RuntimeError(f"Unknown qat.method_name value: {cfg.qat.method_name}")
+                raise RuntimeError(f"Unknown qat.qat_method value: {cfg.qat.qat_method}")
             # setattr(wrapped_module, 'layer_name', name)
             swap_module(model, name, wrapped_module)
             print(f"wrapped {name}")
