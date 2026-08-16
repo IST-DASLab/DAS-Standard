@@ -15,7 +15,6 @@ from models.feedforward import GPTFeedForward, LlamaFeedForward
 @dataclass
 class TrainingConfig: # mainly set by user
     model_name_size: str = "llama3-1b"
-    linear_type: Literal["quantized", "linear"] = "linear"
     seed: int = 42
     tokens_count: float = 0 # zero means disabled (lower priority than `chinchilla_token_ratio`)
     chinchilla_token_ratio: int = 1 # how many chinchillas to train the model for (higher priorith than `tokens_count`)
