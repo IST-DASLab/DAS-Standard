@@ -5,7 +5,8 @@ from argparse import Namespace as ArgParseNamespace
 
 from backends import BaseBackend
 from lr_schedulers import get_lr_cos_warmup
-from optimizers.kj_muon import SingleDeviceMuon, Muon
+
+from .muon import MuonSingle, MuonDDP, MuonFSDP2
 
 
 class MultiOptimizer:
@@ -37,7 +38,14 @@ class MultiOptimizer:
                         eps=cfg.optimizer.adamw_eps),
                 ]
             case "muon":
-                muon_fn = SingleDeviceMuon if self.backend.world_size == 1 else Muon
+                match cfg.training.backend:
+                    case "single":
+                        muon_fn = MuonSingle
+                    case "ddp":
+                        muon_fn = MuonDDP
+                    case "fsdp2":
+                        muon_fn = MuonFSDP2
+
                 return [
                     muon_fn(
                         params=self._get_linear_layers(),
