@@ -59,11 +59,25 @@ class BaseBackend:
     def is_master(self):
         return self.rank == 0
 
-    def wrap_model(self, model):
+    def wrap_model_then_compile(self, model):
+        # no wrapping in the base function
         if self.cfg.training.compile_model:
             return torch.compile(model.to(self.device))
         return model.to(self.device)
 
+class SingleBackend(BaseBackend):
+    def __init__(self, cfg: ArgParseNamespace):
+        super().__init__(
+            cfg=cfg,
+            rank=0,
+            local_rank=0,
+            world_size=1
+        )
+        if self.is_master:
+            print(f"\n=== Using Single GPU backend ===\n")
+
+    def get_device(self):
+        return "cuda:0"
 
 class DDPBackend(BaseBackend):
     def __init__(self, cfg: ArgParseNamespace):
@@ -79,15 +93,15 @@ class DDPBackend(BaseBackend):
             Settings:
             - world_size = 8
             - grad_acc_steps = 64
-            For DDP, the grad acc_steps will be changed form 64 to 8 because we
-            have 8 processes running in parallel
+            For DDP, the grad acc_steps will be changed form 64 to 8 because we have 8 processes running in parallel
         """
         self.cfg.training.grad_acc_steps //= self.world_size
         if self.is_master:
             print(f"\n=== Using DDP backend ===\n")
 
-    def wrap_model(self, model):
+    def wrap_model_then_compile(self, model):
         wrapped = DDP(model.to(self.device), device_ids=[self.local_rank])
+
         if self.cfg.training.compile_model:
             return torch.compile(wrapped)
         return wrapped
@@ -97,18 +111,3 @@ class DDPBackend(BaseBackend):
 
     def get_device(self):
         return f"cuda:{self.local_rank}"
-
-
-class SingleBackend(BaseBackend):
-    def __init__(self, cfg: ArgParseNamespace):
-        super().__init__(
-            cfg=cfg,
-            rank=0,
-            local_rank=0,
-            world_size=1
-        )
-        if self.is_master:
-            print(f"\n=== Using Single GPU backend ===\n")
-
-    def get_device(self):
-        return "cuda:0"
