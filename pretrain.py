@@ -37,12 +37,13 @@ def main():
     logger = LoggingManager(cfg)
     timer = TimingManager()
 
-    model = get_model(cfg)
-    wrap_model_for_qat(model, cfg, except_modules=None)
-    optimizer = MultiOptimizer(cfg, model, backend) # use raw model before wrapping
-    logger.log_model_info(model, backend.world_size) # use raw model before wrapping
+    raw_model = get_model(cfg)
+    wrap_model_for_qat(raw_model, cfg, except_modules=None)
+    logger.log_model_info(raw_model, backend.world_size)  # use raw model before wrapping
 
-    model = backend.wrap_model(model)
+    model = backend.wrap_model_then_compile(raw_model) # wrap the model first, so the params are now DTensors
+    optimizer = MultiOptimizer(cfg, model, backend) # build optimizer: params are now DTensors
+
     train_reader, val_reader = get_data_readers(cfg)
 
     logger.log_console(f"Dataset tokens", data=OrderedDict(train=f"{train_reader.num_toks:_}", val=f"{val_reader.num_toks:_}"))
@@ -64,7 +65,8 @@ def main():
         total_step_loss = 0.0
         for acc_step in range(cfg.training.grad_acc_steps):
             # all-reduce gradients only at the last grad acc step
-            model.require_backward_grad_sync = (acc_step == cfg.training.grad_acc_steps - 1)
+            should_sync_grad = (acc_step == cfg.training.grad_acc_steps - 1)
+            backend.set_grad_sync(model, enabled=should_sync_grad)
             x, y = train_reader.sample_batch()
 
             #####
@@ -89,10 +91,7 @@ def main():
         #####
         ##### Gradient clipping
         #####
-        if cfg.optimizer.grad_clipping > 0: # clip gradient if needed
-            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.optimizer.grad_clipping).item()
-        else: # otherwise, compute the global gradient norm
-            grad_norm = math.sqrt(sum(p.grad.norm(p=2) ** 2 for p in model.parameters() if p.grad is not None))
+        grad_norm = backend.clip_grad_norm_(model, max_norm=cfg.training.clip_grad_norm)
 
         #####
         ##### Optimizer step
