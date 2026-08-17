@@ -19,8 +19,8 @@ class GPTBlock(nn.Module):
         self.norm1 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
         self.norm2 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
 
-    def forward(self, x):
-        x = x + self.attn(self.norm1(x))
+    def forward(self, x, mask):
+        x = x + self.attn(self.norm1(x), mask, cos=None, sin=None)
         x = x + self.mlp(self.norm2(x))
         return x
 
@@ -54,9 +54,9 @@ class GPT(nn.Module):
             if name.endswith("Wo.weight"):
                 torch.nn.init.normal_(p, mean=0, std=0.02 / math.sqrt(2 * L))
 
-        cos, sin = precompute_rope(cfg)
-        self.register_buffer(name="cos", tensor=cos, persistent=False)
-        self.register_buffer(name="sin", tensor=sin, persistent=False)
+        # cos, sin = precompute_rope(cfg)
+        # self.register_buffer(name="cos", tensor=cos, persistent=False)
+        # self.register_buffer(name="sin", tensor=sin, persistent=False)
         self.register_buffer(
             name="mask",
             tensor=torch.triu(torch.ones(S, S), diagonal=1).bool().view(1, 1, S, S),
@@ -81,7 +81,7 @@ class GPT(nn.Module):
 
         x = self.dropout(tok_emb + pos_emb)
         for block in self.blocks:
-            x = block(x)
+            x = block(x, self.mask)
         x = self.norm(x)
         logits = self.lm_head(x)
 
