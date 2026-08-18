@@ -1,3 +1,6 @@
+import torch
+
+
 def zeropower_via_newtonschulz5(G, steps: int):
     """
     Newton-Schulz iteration to compute the zeroth power / orthogonalization of G. We opt to use a
@@ -34,3 +37,11 @@ def muon_ddp_update(grad, momentum, beta=0.95, ns_steps=5, nesterov=True):
         update = update.view(len(update), -1)
     update = zeropower_via_newtonschulz5(update, steps=ns_steps)
     return update
+
+def shard_size_dim0(num_rows: int, world_size: int):
+    """
+    Split `num_rows` rows into chunks of size `world_size`
+    """
+    chunks = torch.arange(num_rows).chunk(world_size)
+    sizes = [len(c) for c in chunks]
+    return sizes + [0] * (world_size - len(sizes))
