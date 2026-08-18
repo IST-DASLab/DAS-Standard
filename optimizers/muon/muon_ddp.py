@@ -50,11 +50,14 @@ class MuonDDP(torch.optim.Optimizer):
                         # continue
                         p.grad = torch.zeros_like(p)  # Force synchronization
                     state = self.state[p]
+                    lr = group["lr"]
+                    wd = group["weight_decay"]
                     if len(state) == 0:
                         state["momentum_buffer"] = torch.zeros_like(p)
                     update = muon_ddp_update(p.grad, state["momentum_buffer"], beta=group["momentum"])
-                    p.mul_(1 - group["lr"] * group["weight_decay"])
-                    p.add_(update.reshape(p.shape), alpha=-group["lr"])
+                    coef = max(1, update.size(-2) / update.size(-1)) ** 0.5
+                    p.mul_(1 - lr * wd)
+                    p.add_(update.reshape(p.shape), alpha=-lr * coef)
                 dist.all_gather(params_pad[base_i:base_i + dist.get_world_size()], params_pad[base_i + dist.get_rank()])
 
         return loss
