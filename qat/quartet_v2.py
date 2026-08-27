@@ -250,7 +250,7 @@ class Quartet_II_fn(torch.autograd.Function):
     @staticmethod
     def forward(ctx,
                 input, weight,
-                G_bf16, optim_step, layer_name,
+                optim_step, layer_name,
                 amax_storage: AmaxStorage, delayed_amax: bool, disable_forward_quant: bool, disable_backward_quant: bool, four_over_six: bool):
         ctx.batch = input.shape[0]
         ctx.seq = input.shape[1]
@@ -269,14 +269,14 @@ class Quartet_II_fn(torch.autograd.Function):
             weight_fp4 = rtn_1x16s_fp4_kernel_wrapper(weight, scale_override=Quartet_II_fn.forward_scale_override, group_size=Quartet_II_fn.group_size,
                                                       four_over_six=four_over_six)
 
-        ctx.save_for_backward(G_bf16, input, input_fp4, weight_fp4)
+        ctx.save_for_backward(input, input_fp4, weight_fp4)
         return F.linear(input_fp4, weight_fp4)
 
     @torch.compile(dynamic=False)
     @staticmethod
     def backward(ctx, grad_output):
         # Load ctx and reshape
-        G_bf16, input, input_fp4, weight_fp4 = ctx.saved_tensors
+        input, input_fp4, weight_fp4 = ctx.saved_tensors
 
         input = input.reshape(ctx.batch * ctx.seq, ctx.in_dim)
         input_fp4 = input_fp4.reshape(ctx.batch * ctx.seq, ctx.in_dim)
@@ -356,9 +356,6 @@ class Quartet_II_Linear(torch.nn.Linear):
         self.four_over_six = four_over_six
         self.amax_storage = AmaxStorage()
 
-        self.G_bf16 = torch.zeros_like(self.weight, dtype=torch.bfloat16, requires_grad=False)
-        self.M_bf16 = torch.zeros_like(self.weight, dtype=torch.bfloat16, requires_grad=False)
-
         self.name = name
         # print(f'Created Quartet_II_Linear module {self.name}')
 
@@ -373,7 +370,7 @@ class Quartet_II_Linear(torch.nn.Linear):
 
     def forward(self, x):
         return Quartet_II_fn.apply(x, self.weight,
-                                   self.G_bf16, self.optim_step, self.name,
+                                   self.optim_step, self.name,
                                    self.amax_storage, self.delayed_amax, self.disable_forward_quant, self.disable_backward_quant, self.four_over_six)
 
     @staticmethod
