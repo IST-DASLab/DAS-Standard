@@ -15,8 +15,8 @@ class LlamaBlock(nn.Module):
         E = cfg.model.embed_size
         self.attn = attn_factory(cfg)
         self.mlp = LlamaFeedForward(cfg)
-        self.norm1 = RMSNorm(ndim=E)
-        self.norm2 = RMSNorm(ndim=E)
+        self.norm1 = RMSNorm(ndim=E, bias=False)
+        self.norm2 = RMSNorm(ndim=E, bias=False)
 
     def forward(self, x, mask, cos, sin):
         shortcut = x

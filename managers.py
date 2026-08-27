@@ -129,26 +129,28 @@ class LoggingManager:
             params_all = sum(p.numel() for p in model.parameters())
 
             if is_tied: params_all -= params_out_embed
-            params_embed = params_inp_embed * (2 - int(is_tied)) # if is_tied else params_inp_embed + params_out_embed
+            # params_embed = params_inp_embed * (2 - int(is_tied)) # if is_tied else params_inp_embed + params_out_embed
 
-            T = (params_linear + params_embed) * CTR * 20
+            T = (params_linear + params_layer_norm) * CTR * 20
             print("-" * 50)
             print("Model:")
             print(str(model))
             print("-" * 50)
             print(f"Model summary:")
-            print(f"\t Input Embedding params: {params_inp_embed:_}") # (1 - int(is_tied)) * params_out_embed (tied: {is_tied})
-            print(f"\t   Pos Embedding params: {params_pos_embed:_}")
-            print(f"\tOutput Embedding params: {params_out_embed * (1 - int(is_tied)):_} (tied: {is_tied})")
-            print(f"\t          Linear params: {params_linear:_}")
-            print(f"\t     Layer norms params: {params_layer_norm:_}")
+            print(f"\t Input Embedding params: {params_inp_embed:_} (excluded from total param count)")
+            if params_pos_embed > 0:
+                print(f"\t   Pos Embedding params: {params_pos_embed:_} (excluded from total param count)")
+            print(f"\tOutput Embedding params: {params_out_embed * (1 - int(is_tied)):_} (tied: {is_tied}) (excluded from total param count)")
+            print(f"\t          Linear params: {params_linear:_} (included from total param count)")
+            print(f"\t     Layer norms params: {params_layer_norm:_} (included from total param count)")
             print(f"\t             All params: {params_all:_}")
             print("-" * 50)
-            print(f"Tokens info:")
+            print(f"Total tokens are computed using linear+norms:")
             print(f"\t             Linear params (P): {params_linear:_}")
-            print(f"\t Embedding params (EMB=in+out): {params_embed:_}")
+            print(f"\t               Norm params (N): {params_layer_norm:_}")
+            # print(f"\t Embedding params (EMB=in+out): {params_embed:_}")
             print(f"\t  Chinchilla Token Ratio (CTR): {CTR * 20}x")
-            print(f"\t  Tokens (T = CTR * (P + EMB)): {T:_}")
+            print(f"\t    Tokens (T = CTR * (P + N)): {T:_}")
             print(f"\t           Sequence Length (S): {S}")
             print(f"\t         Device Batch Size (B): {B}")
             print(f"\t            Grad Acc Steps (A): {A}")
