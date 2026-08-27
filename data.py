@@ -1,5 +1,5 @@
 """
-    Inspired from src/data/utils.py from llm-baselines
+    Inspired from src/data/config_utils.py from llm-baselines
 """
 
 import os
