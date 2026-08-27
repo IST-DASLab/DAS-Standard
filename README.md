@@ -155,39 +155,39 @@ Total tokens & training steps:
 	     Steps (T / (B * S * A * W)): 1_041
 ==================================================
 Dataset tokens: train=197_980_429_805 | val=99_126_266
-Training:   0%|                                                   | 0/1041 [00:00<?, ?it/s]
+Training:   0%|                       | 0/1041 [00:00<?, ?it/s]
 Evaluation: step=0 | num_batches=32 | loss=10.5625 | ppl=38657.6514
-Training:   1%|█▎                                                  | 9/1041 [00:46<1:26:21,  5.02s/it, loss=9.8594]
+Training:   1%|█▎                     | 9/1041 [00:46<1:26:21,  5.02s/it, loss=9.8594]
 Evaluation: step=10 | num_batches=32 | loss=9.6348 | ppl=15287.1154
-Training:   2%|██▋                                                | 19/1041 [01:05<56:13,  3.30s/it, loss=8.9688]
+Training:   2%|██▋                    | 19/1041 [01:05<56:13,  3.30s/it, loss=8.9688]
 Evaluation: step=20 | num_batches=32 | loss=8.7344 | ppl=6212.8500
-Training:   3%|████                                               | 29/1041 [01:24<46:42,  2.77s/it, loss=7.9688]
+Training:   3%|████                   | 29/1041 [01:24<46:42,  2.77s/it, loss=7.9688]
 Evaluation: step=30 | num_batches=32 | loss=7.8027 | ppl=2447.2846
-Training:   4%|█████▍                                             | 39/1041 [01:43<41:52,  2.51s/it, loss=7.4531]
+Training:   4%|█████▍                  | 39/1041 [01:43<41:52,  2.51s/it, loss=7.4531]
 Evaluation: step=40 | num_batches=32 | loss=7.4219 | ppl=1672.1659
-Training:   5%|██████▊                                           | 49/1041 [02:02<38:59,  2.36s/it, loss=7.2891]
+Training:   5%|██████▊                | 49/1041 [02:02<38:59,  2.36s/it, loss=7.2891]
 Evaluation: step=50 | num_batches=32 | loss=7.2588 | ppl=1420.5353
-Training:   6%|████████▎                                          | 59/1041 [02:21<36:58,  2.26s/it, loss=7.1406]
+Training:   6%|████████▎               | 59/1041 [02:21<36:58,  2.26s/it, loss=7.1406]
 Evaluation: step=60 | num_batches=32 | loss=7.0498 | ppl=1152.6336
-Training:   7%|█████████▋                                        | 69/1041 [02:40<35:30,  2.19s/it, loss=6.9297]
+Training:   7%|█████████▋             | 69/1041 [02:40<35:30,  2.19s/it, loss=6.9297]
 Evaluation: step=70 | num_batches=32 | loss=6.8682 | ppl=961.1823
-Training:   8%|███████████                                       | 79/1041 [02:59<34:17,  2.14s/it, loss=6.6328]
+Training:   8%|███████████            | 79/1041 [02:59<34:17,  2.14s/it, loss=6.6328]
 Evaluation: step=80 | num_batches=32 | loss=6.5508 | ppl=699.7907
-Training:   9%|████████████▍                                      | 89/1041 [03:18<33:21,  2.10s/it, loss=6.3906]
+Training:   9%|████████████▍           | 89/1041 [03:18<33:21,  2.10s/it, loss=6.3906]
 Evaluation: step=90 | num_batches=32 | loss=6.3525 | ppl=573.9482
-Training:  10%|█████████████▉                                    | 99/1041 [03:37<32:30,  2.07s/it, loss=6.2656]
+Training:  10%|█████████████▉         | 99/1041 [03:37<32:30,  2.07s/it, loss=6.2656]
 Evaluation: step=100 | num_batches=32 | loss=6.1982 | ppl=491.8836
-Training:  10%|███████████████▏                                   | 109/1041 [03:56<31:47,  2.05s/it, loss=6.1250]
+Training:  10%|███████████████▏         | 109/1041 [03:56<31:47,  2.05s/it, loss=6.1250]
 Evaluation: step=110 | num_batches=32 | loss=6.1074 | ppl=449.1792
-Training:  11%|████████████████▌                                  | 119/1041 [04:15<31:07,  2.03s/it, loss=6.0000]
+Training:  11%|████████████████▌       | 119/1041 [04:15<31:07,  2.03s/it, loss=6.0000]
 Evaluation: step=120 | num_batches=32 | loss=5.9727 | ppl=392.5470
-Training:  12%|█████████████████▉                                 | 129/1041 [04:34<30:31,  2.01s/it, loss=5.8516]
+Training:  12%|█████████████████▉      | 129/1041 [04:34<30:31,  2.01s/it, loss=5.8516]
 Evaluation: step=130 | num_batches=32 | loss=5.8584 | ppl=350.1629
-Training:  13%|███████████████████▎                                | 139/1041 [04:54<30:00,  2.00s/it, loss=5.8047]
+Training:  13%|███████████████████▎     | 139/1041 [04:54<30:00,  2.00s/it, loss=5.8047]
 Evaluation: step=140 | num_batches=32 | loss=5.7832 | ppl=324.7979
-Training:  14%|████████████████████▊                              | 149/1041 [05:13<29:31,  1.99s/it, loss=5.7344]
+Training:  14%|████████████████████▊   | 149/1041 [05:13<29:31,  1.99s/it, loss=5.7344]
 Evaluation: step=150 | num_batches=32 | loss=5.7002 | ppl=298.9258
-Training:  15%|██████████████████████▏                             | 159/1041 [05:32<29:02,  1.98s/it, loss=5.6172]
+Training:  15%|██████████████████████▏  | 159/1041 [05:32<29:02,  1.98s/it, loss=5.6172]
 Evaluation: step=160 | num_batches=32 | loss=5.6104 | ppl=273.2403
-Training:  16%|██████████████████████▌                            | 162/1041 [05:39<29:06,  1.99s/it, loss=5.6172]
+Training:  16%|██████████████████████▌ | 162/1041 [05:39<29:06,  1.99s/it, loss=5.6172]
 ```
