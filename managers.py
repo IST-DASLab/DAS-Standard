@@ -128,7 +128,6 @@ class LoggingManager:
             params_layer_norm = sum(p.numel() for p in model.parameters() if p.ndim == 1)
             params_all = sum(p.numel() for p in model.parameters())
 
-            if is_tied: params_all -= params_out_embed
             # params_embed = params_inp_embed * (2 - int(is_tied)) # if is_tied else params_inp_embed + params_out_embed
 
             T = (params_linear + params_layer_norm) * CTR * 20
