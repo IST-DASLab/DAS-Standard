@@ -75,6 +75,11 @@ class OptimizerConfig:
     muon_lr: float = 1e-2
     muon_momentum: float = 0.95
 
+    # MicroAdam parameters
+    microadam_m: int = 10 # number of gradients in the sliding window
+    microadam_q_block: int = 100_000 # quantization block size for error feedback
+    microadam_k: float = 0.01 # gradient density (sparsity = 1 - k)
+
 
 @dataclass
 class DatasetConfig:

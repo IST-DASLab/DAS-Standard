@@ -6,7 +6,9 @@ from argparse import Namespace as ArgParseNamespace
 from backends import BaseBackend
 from lr_schedulers import get_lr_cos_warmup
 
-from .muon import MuonSingle, MuonDDP, MuonFSDP2
+from ista_daslab_optimizers import MicroAdam
+
+# from .muon import MuonSingle, MuonDDP, MuonFSDP2
 
 
 class MultiOptimizer:
@@ -33,7 +35,7 @@ class MultiOptimizer:
                         weight_decay=cfg.optimizer.weight_decay,
                         betas=(
                             cfg.optimizer.adamw_beta1,
-                            cfg.optimizer.adamw_beta2
+                            cfg.optimizer.adamw_beta2,
                         ),
                         eps=cfg.optimizer.adamw_eps),
                 ]
@@ -59,7 +61,55 @@ class MultiOptimizer:
                         weight_decay=cfg.optimizer.weight_decay,
                         betas=(
                             cfg.optimizer.adamw_beta1,
-                            cfg.optimizer.adamw_beta2
+                            cfg.optimizer.adamw_beta2,
+                        ),
+                        eps=cfg.optimizer.adamw_eps,
+                    )
+                ]
+            case "microadam-paper":
+                # the version that optimizes all layers wih MicroAdam
+                return [
+                    MicroAdam(
+                        params=self.model.parameters(),
+                        lr=cfg.optimizer.adamw_lr,
+                        m=cfg.optimizer.microadam_m,
+                        quant_block_size=cfg.optimizer.microadam_q_block,
+                        k_init=cfg.optimizer.microadam_k,
+                        alpha=0, # 0 means sparse update
+                        betas=(
+                            cfg.optimizer.adamw_beta1,
+                            cfg.optimizer.adamw_beta2,
+                        ),
+                        weight_decay=cfg.optimizer.weight_decay,
+                        eps=cfg.optimizer.adamw_eps,
+                    )
+                ]
+            case "microadam-new":
+                # the version that optimizes only the linear layers with MicroAdam
+                # and the other layers (embeds, layer norms) with AdamW
+                # implemented after discussing with Frederik Kunstner
+                return [
+                    MicroAdam(
+                        params=self._get_linear_layers(),
+                        lr=cfg.optimizer.adamw_lr,
+                        m=cfg.optimizer.microadam_m,
+                        quant_block_size=cfg.optimizer.microadam_q_block,
+                        k_init=cfg.optimizer.microadam_k,
+                        alpha=0, # 0 means sparse update
+                        betas=(
+                            cfg.optimizer.adamw_beta1,
+                            cfg.optimizer.adamw_beta2,
+                        ),
+                        weight_decay=cfg.optimizer.weight_decay,
+                        eps=cfg.optimizer.adamw_eps,
+                    ),
+                    AdamW(
+                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
+                        lr=cfg.optimizer.adamw_lr,
+                        weight_decay=cfg.optimizer.weight_decay,
+                        betas=(
+                            cfg.optimizer.adamw_beta1,
+                            cfg.optimizer.adamw_beta2,
                         ),
                         eps=cfg.optimizer.adamw_eps,
                     )
