@@ -6,8 +6,8 @@
 from .configs import ModelConfig
 
 
-def config_llama2_35m():
-    # 10.6M non-embedding / 35M total.
+def config_llama2_23m():
+    # 10.6M non-embedding / 23M total (tied embeds)
     return ModelConfig(
         dtype="bf16",
         attn_type="mhsa",
@@ -27,8 +27,8 @@ def config_llama2_35m():
     )
 
 
-def config_llama2_60m():
-    # 27.3M non-embedding / 60M total.
+def config_llama2_44m():
+    # 27.3M non-embedding / 44M total (tied embeds)
     return ModelConfig(
         dtype="bf16",
         attn_type="mhsa",
