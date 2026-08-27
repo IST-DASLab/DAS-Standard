@@ -7,8 +7,8 @@
 from .configs import ModelConfig
 
 
-def config_gpt_3m():
-    # 3.1M non-embedding / 29M total. Debug / unit-test scale.
+def config_gpt_12m():
+    # 3.1M non-embedding / 11.6M total. Debug / unit-test scale.
     return ModelConfig(
         dtype="fp32",
         attn_type="mhsa",
@@ -28,8 +28,8 @@ def config_gpt_3m():
     )
 
 
-def config_gpt_11m():
-    # 10.6M non-embedding / 50M total.
+def config_gpt_23m():
+    # 10.6M non-embedding / 23M total.
     return ModelConfig(
         dtype="fp32",
         attn_type="mhsa",
@@ -49,8 +49,8 @@ def config_gpt_11m():
     )
 
 
-def config_gpt_25m():
-    # 25.2M non-embedding / 77M total.
+def config_gpt_42m():
+    # 25.2M non-embedding / 42M total (tied embeds)
     return ModelConfig(
         dtype="fp32",
         attn_type="mhsa",
@@ -70,8 +70,8 @@ def config_gpt_25m():
     )
 
 
-def config_gpt_49m():
-    # 49.2M non-embedding / 114M total.
+def config_gpt_90m():
+    # 49.2M non-embedding / 90M total.
     return ModelConfig(
         dtype="fp32",
         attn_type="mhsa",
@@ -91,8 +91,8 @@ def config_gpt_49m():
     )
 
 
-def config_gpt_85m():
-    # 84.9M non-embedding / 163M total. == GPT-2 small. (Your seed config.)
+def config_gpt_135m():
+    # 84.9M non-embedding / 135M total. == GPT-2 small. (Your seed config.)
     return ModelConfig(
         dtype="fp32",
         attn_type="mhsa",
@@ -112,8 +112,8 @@ def config_gpt_85m():
     )
 
 
-def config_gpt_200m():
-    # 201M non-embedding / 305M total. Interpolated between GPT-2 small/medium.
+def config_gpt_268m():
+    # 201M non-embedding / 268M total. Interpolated between GPT-2 small/medium.
     return ModelConfig(
         dtype="fp32",
         attn_type="mhsa",
@@ -133,8 +133,8 @@ def config_gpt_200m():
     )
 
 
-def config_gpt_300m():
-    # 302M non-embedding / 406M total. == GPT-2 medium.
+def config_gpt_368m():
+    # 302M non-embedding / 368M total. == GPT-2 medium.
     return ModelConfig(
         dtype="fp32",
         attn_type="mhsa",
@@ -154,8 +154,8 @@ def config_gpt_300m():
     )
 
 
-def config_gpt_710m():
-    # 708M non-embedding / 838M total. == GPT-2 large.
+def config_gpt_791m():
+    # 708M non-embedding / 791M total. == GPT-2 large.
     return ModelConfig(
         dtype="fp32",
         attn_type="mhsa",
@@ -176,7 +176,7 @@ def config_gpt_710m():
 
 
 def config_gpt_1500m():
-    # 1.47B non-embedding / 1.64B total. == GPT-2 XL.
+    # 1.47B non-embedding / 1.58B total. == GPT-2 XL.
     # num_heads=25 is the canonical GPT-2 XL value (1600/25 = 64). It's an odd
     # number and will annoy any tensor-parallel sharding; use num_heads=20 with
     # head_dim=80 if you need it to divide cleanly.
@@ -199,8 +199,8 @@ def config_gpt_1500m():
     )
 
 
-def config_gpt_2500m():
-    # 2.52B non-embedding / 2.78B total. == GPT-3 "2.7B" shape (head_dim=80).
+def config_gpt_2700m():
+    # 2.52B non-embedding / 2.68B total. == GPT-3 "2.7B" shape (head_dim=80).
     return ModelConfig(
         dtype="bf16",
         attn_type="mhsa",
@@ -220,8 +220,8 @@ def config_gpt_2500m():
     )
 
 
-def config_gpt_6400m():
-    # 6.44B non-embedding / 6.86B total. == GPT-3 "6.7B" shape.
+def config_gpt_6700m():
+    # 6.44B non-embedding / 6.7B total. == GPT-3 "6.7B" shape.
     return ModelConfig(
         dtype="bf16",
         attn_type="mhsa",
@@ -241,8 +241,8 @@ def config_gpt_6400m():
     )
 
 
-def config_gpt_12600m():
-    # 12.58B non-embedding / 13.10B total. == GPT-3 "13B" shape.
+def config_gpt_12900m():
+    # 12.58B non-embedding / 12.90B total. == GPT-3 "13B" shape.
     return ModelConfig(
         dtype="bf16",
         attn_type="mhsa",

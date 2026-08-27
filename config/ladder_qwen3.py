@@ -74,8 +74,8 @@ from .configs import ModelConfig
 # ##########   rather than forking the configs.
 # #############################################################################
 
-def config_qwen3_43m():
-    # 3.9M non-embedding / 42.8M total. Debug / unit-test scale.
+def config_qwen3_11m():
+    # 3.15M non-embedding / 11.3M total. Debug / unit-test scale.
     # H*head_dim = 512 = 2x embed_size, so this rung exercises the non-square
     # q_proj/o_proj path. Good smoke test.
     return ModelConfig(
@@ -97,8 +97,8 @@ def config_qwen3_43m():
     )
 
 
-def config_qwen3_71m():
-    # 12.7M non-embedding / 71.0M total.
+def config_qwen3_23m():
+    # 10M non-embedding / 22.6M total.
     return ModelConfig(
         dtype="bf16",
         attn_type="gqa",
@@ -118,8 +118,8 @@ def config_qwen3_71m():
     )
 
 
-def config_qwen3_110m():
-    # 31.5M non-embedding / 109.3M total.
+def config_qwen3_42m():
+    # 31.5M non-embedding / 41.56M total.
     return ModelConfig(
         dtype="bf16",
         attn_type="gqa",
@@ -139,8 +139,8 @@ def config_qwen3_110m():
     )
 
 
-def config_qwen3_220m():
-    # 101.5M non-embedding / 218.2M total. First rung where non-embedding
+def config_qwen3_107m():
+    # 82.6M non-embedding / 107M total. First rung where non-embedding
     # params outweigh the embedding table.
     return ModelConfig(
         dtype="bf16",
@@ -161,8 +161,8 @@ def config_qwen3_220m():
     )
 
 
-def config_qwen3_407m():
-    # 251.7M non-embedding / 407.3M total. Identical to the real 0.6B in every
+def config_qwen3_234m():
+    # 201M non-embedding / 234M total. Identical to the real 0.6B in every
     # dimension except depth (16 layers vs 28), so it is the cleanest
     # depth-only ablation against a released checkpoint.
     return ModelConfig(
@@ -184,8 +184,8 @@ def config_qwen3_407m():
     )
 
 
-def config_qwen3_600m():
-    # 440.5M non-embedding / 596.0M total. == Qwen3-0.6B.
+def config_qwen3_385m():
+    # 352.3M non-embedding / 385.2M total. == Qwen3-0.6B. (tied embeds)
     return ModelConfig(
         dtype="bf16",
         attn_type="gqa",
@@ -205,8 +205,8 @@ def config_qwen3_600m():
     )
 
 
-def config_qwen3_1700m():
-    # 1.41B non-embedding / 1.72B total. == Qwen3-1.7B. Same depth and head
+def config_qwen3_1500m():
+    # 1.41B non-embedding / 1.48B total. == Qwen3-1.7B. Same depth and head
     # count as 0.6B, 2x the width.
     return ModelConfig(
         dtype="bf16",
@@ -227,8 +227,8 @@ def config_qwen3_1700m():
     )
 
 
-def config_qwen3_4b():
-    # 3.63B non-embedding / 4.02B total. == Qwen3-4B. Last tied-embedding rung.
+def config_qwen3_3300m():
+    # 3.28B non-embedding / 3.36B total. == Qwen3-4B. Last tied-embedding rung.
     return ModelConfig(
         dtype="bf16",
         attn_type="gqa",
@@ -248,8 +248,8 @@ def config_qwen3_4b():
     )
 
 
-def config_qwen3_8b():
-    # 6.95B non-embedding / 8.19B total. == Qwen3-8B.
+def config_qwen3_7200m():
+    # 6.94B non-embedding / 7.2B total. == Qwen3-8B.
     return ModelConfig(
         dtype="bf16",
         attn_type="gqa",
@@ -269,8 +269,8 @@ def config_qwen3_8b():
     )
 
 
-def config_qwen3_14b():
-    # 13.21B non-embedding / 14.77B total. == Qwen3-14B.
+def config_qwen3_13500m():
+    # 13.21B non-embedding / 13.54B total. == Qwen3-14B.
     return ModelConfig(
         dtype="bf16",
         attn_type="gqa",
@@ -290,8 +290,8 @@ def config_qwen3_14b():
     )
 
 
-def config_qwen3_32b():
-    # 31.21B non-embedding / 32.76B total. == Qwen3-32B. Note the width is
+def config_qwen3_29300m():
+    # 28.94B non-embedding / 29.27B total. == Qwen3-32B. Note the width is
     # unchanged from 14B; the scale comes entirely from depth (40 -> 64), head
     # count (40 -> 64, so H*head_dim = 1.6x the residual stream) and a 5x MLP.
     return ModelConfig(

@@ -7,7 +7,7 @@ from .configs import ModelConfig
 
 
 def config_llama2_23m():
-    # 10.6M non-embedding / 23M total (tied embeds)
+    # 10.6M non-embedding / 22.9M total (tied embeds)
     return ModelConfig(
         dtype="bf16",
         attn_type="mhsa",
@@ -28,7 +28,7 @@ def config_llama2_23m():
 
 
 def config_llama2_44m():
-    # 27.3M non-embedding / 44M total (tied embeds)
+    # 27.3M non-embedding / 43.6M total (tied embeds)
     return ModelConfig(
         dtype="bf16",
         attn_type="mhsa",
@@ -48,7 +48,7 @@ def config_llama2_44m():
     )
 
 
-def config_llama2_135m():
+def config_llama2_134m():
     # 84.9M non-embedding / 134M total.
     return ModelConfig(
         dtype="bf16",
@@ -69,7 +69,7 @@ def config_llama2_135m():
     )
 
 
-def config_llama2_250m():
+def config_llama2_246m():
     # 180M non-embedding / 246M total. First rung with real GQA.
     return ModelConfig(
         dtype="bf16",
@@ -90,7 +90,7 @@ def config_llama2_250m():
     )
 
 
-def config_llama2_700m():
+def config_llama2_702m():
     # 604M non-embedding / 702M total. head_dim=128 from here up.
     return ModelConfig(
         dtype="bf16",
@@ -153,7 +153,7 @@ def config_llama2_2800m():
     )
 
 
-def config_llama2_7b():
+def config_llama2_6700m():
     # 6.48B non-embedding / 6.74B total. (Your seed config; rope_theta corrected.)
     return ModelConfig(
         dtype="bf16",
@@ -195,7 +195,7 @@ def config_llama2_13b():
     )
 
 
-def config_llama2_34b():
+def config_llama2_33700m():
     # 33.22B non-embedding / 33.74B total. == the CodeLlama-34B shape (the
     # Llama-2 34B base model was announced but never released).
     return ModelConfig(
@@ -217,7 +217,7 @@ def config_llama2_34b():
     )
 
 
-def config_llama2_70b():
+def config_llama2_68900m():
     # 68.45B non-embedding / 68.98B total. mlp_size uses ffn_multiplier=1.3
     # with multiple_of=4096, which is why it's 28_672 and not 28_416.
     return ModelConfig(

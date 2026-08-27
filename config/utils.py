@@ -9,52 +9,52 @@ from .ladder_qwen3 import *
 
 def model_config_factory(model_name_size):
     return {
-        "gpt-3m": config_gpt_3m,
-        "gpt-11m": config_gpt_11m,
-        "gpt-25m": config_gpt_25m,
-        "gpt-49m": config_gpt_49m,
-        "gpt-85m": config_gpt_85m,
-        "gpt-200m": config_gpt_200m,
-        "gpt-300m": config_gpt_300m,
-        "gpt-710m": config_gpt_710m,
-        "gpt-1.5b": config_gpt_1500m,
-        "gpt-2.5b": config_gpt_2500m,
-        "gpt-6.4b": config_gpt_6400m,
-        "gpt-12.6b": config_gpt_12600m,
+        "gpt-12m": config_gpt_12m, # checked manually
+        "gpt-23m": config_gpt_23m, # checked manually
+        "gpt-42m": config_gpt_42m, # checked manually
+        "gpt-90m": config_gpt_90m, # checked manually
+        "gpt-135m": config_gpt_135m, # checked manually
+        "gpt-268m": config_gpt_268m, # checked manually
+        "gpt-368m": config_gpt_368m, # checked manually
+        "gpt-791m": config_gpt_791m, # checked manually
+        "gpt-1.5b": config_gpt_1500m, # checked manually
+        "gpt-2.7b": config_gpt_2700m, # checked manually
+        "gpt-6.7b": config_gpt_6700m, # checked manually
+        "gpt-12.9b": config_gpt_12900m, # checked manually
 
-        "llama2-23m": config_llama2_23m, # checked
-        "llama2-44m": config_llama2_44m, # checked
-        "llama2-135m": config_llama2_135m, # checked
-        "llama2-250m": config_llama2_250m, # checked
-        "llama2-700m": config_llama2_700m, # checked
-        "llama2-1.1b": config_llama2_1100m, # checked
-        "llama2-2.8b": config_llama2_2800m, # checked
-        "llama2-7b": config_llama2_7b, # checked
-        "llama2-13b": config_llama2_13b, # checked
-        "llama2-34b": config_llama2_34b, # checked
-        "llama2-70b": config_llama2_70b, # checked
+        "llama2-23m": config_llama2_23m, # checked manually
+        "llama2-44m": config_llama2_44m, # checked manually
+        "llama2-134m": config_llama2_134m, # checked manually
+        "llama2-246m": config_llama2_246m, # checked manually
+        "llama2-702m": config_llama2_702m, # checked manually
+        "llama2-1.1b": config_llama2_1100m, # checked manually
+        "llama2-2.8b": config_llama2_2800m, # checked manually
+        "llama2-6.7b": config_llama2_6700m, # checked manually
+        "llama2-13b": config_llama2_13b, # checked manually
+        "llama2-33.7b": config_llama2_33700m, # checked manually
+        "llama2-68.9b": config_llama2_68900m, # checked manually
 
-        "llama3-90m": config_llama3_90m,
-        "llama3-200m": config_llama3_200m,
-        "llama3-350m": config_llama3_350m,
-        "llama3-1b": config_llama3_1b,
-        "llama3-3b": config_llama3_3b,
-        "llama3-8b": config_llama3_8b,
-        "llama3-17b": config_llama3_17b,
-        "llama3-70b": config_llama3_70b,
+        "llama3-44m": config_llama3_44m, # checked manually
+        "llama3-121m": config_llama3_121m, # checked manually
+        "llama3-251m": config_llama3_251m, # checked manually
+        "llama3-1b": config_llama3_1b, # checked manually
+        "llama3-2.9b": config_llama3_2900m, # checked manually
+        "llama3-7.2b": config_llama3_7200m, # checked manually
+        "llama3-16.5b": config_llama3_16500m, # checked manually
+        "llama3-69b": config_llama3_69b, # checked manually
         "llama3-405b": config_llama3_405b,
 
-        "qwen3-43m": config_qwen3_43m,
-        "qwen3-71m": config_qwen3_71m,
-        "qwen3-110m": config_qwen3_110m,
-        "qwen3-220m": config_qwen3_220m,
-        "qwen3-407m": config_qwen3_407m,
-        "qwen3-600m": config_qwen3_600m,
-        "qwen3-1.7b": config_qwen3_1700m,
-        "qwen3-4b": config_qwen3_4b,
-        "qwen3-8b": config_qwen3_8b,
-        "qwen3-14b": config_qwen3_14b,
-        "qwen3-32b": config_qwen3_32b,
+        "qwen3-11m": config_qwen3_11m, # checked manually
+        "qwen3-23m": config_qwen3_23m, # checked manually
+        "qwen3-42m": config_qwen3_42m, # checked manually
+        "qwen3-107m": config_qwen3_107m, # checked manually
+        "qwen3-234m": config_qwen3_234m, # checked manually
+        "qwen3-385m": config_qwen3_385m, # checked manually
+        "qwen3-1.5b": config_qwen3_1500m, # checked manually
+        "qwen3-3.3b": config_qwen3_3300m, # checked manually
+        "qwen3-7.2b": config_qwen3_7200m, # checked manually
+        "qwen3-13.5b": config_qwen3_13500m, # checked manually
+        "qwen3-29.3b": config_qwen3_29300m, # checked manually
     }[model_name_size.lower()]()
 
 def compute_num_iters_and_tokens(cfg, attn_fn, mlp_fn):
