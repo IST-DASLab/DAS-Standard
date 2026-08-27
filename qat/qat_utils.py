@@ -48,7 +48,7 @@ def wrap_model_for_qat(model, cfg: ArgParseNamespace, except_modules=None):
     for name, module in model.named_modules():
         if isinstance(module, nn.Linear):
             if any([exc in name for exc in except_modules]):
-                print(f"skipped wrapping {name}")
+                # print(f"skipped wrapping {name}")
                 continue
 
             if cfg.qat.qat_method == 'quartet2':
