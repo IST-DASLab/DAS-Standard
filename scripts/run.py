@@ -19,7 +19,7 @@ def main(dist, gpus, params):
             rdzv_backend='static' if 'gpu413' in socket.gethostname() else 'c10d',
         ),
         cfg_sched=SchedulingConfig(
-            distributed_training=True,
+            distributed_training=dist,
             max_jobs_per_gpu=1,
             gpus=gpus,
             params_values=params
