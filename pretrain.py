@@ -8,7 +8,6 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import math
-import torch
 from collections import OrderedDict
 
 from backends import get_backend, BaseBackend
