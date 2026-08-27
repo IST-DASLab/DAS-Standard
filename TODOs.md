@@ -7,25 +7,30 @@
 
 ### Command Line Arguments
 - **[done]** configs with dataclasses and simple-parsing
-- **[ ]** create a single config class and use prefixes for fields, such as "model_attn_type"
 
 ### Distributed Backend
 - **[2 / 3]** distributed backend file for:
   - **[done]**  single-gpu 
   - **[done]** DDP
-  - **[ ]** FSDP support
+  - **[done]** FSDP support
+    - **[ ]** use meta-device for large models
+    - **[done]** test FSDP 
 
 ### Matmuls Precision
 - **[ ]** integrate Quartet-II
+  - **[ ]** test Quartet-II
 
 ### Dataset
 - **[done]** sharded data reader
+- **[ ]** sequence packing to move away from `llm-baselines` design (build a new dataset)
+  - **[ ]** how to integrate this with RoPE in attention?
 
 ### Models
 - **[done]** GPT model and model factory
-- **[ ]** Llama
+- **[done]** Llama2/3
+- **[done]** Qwen
 - **[ ]** OLMo
-- **[ ]** custom models with different number of params
+- **[done]** custom models with different number of params for each family
 - **[ ]** add option to use custom attention implementation or FlashAttention from PyTorch. See comparison in [LLM-from-scratch](https://github.com/rasbt/LLMs-from-scratch/blob/main/ch03/02_bonus_efficient-multihead-attention/mha-implementations.ipynb)
 - **[ ]** implement KV-cache for inference
 - **[done]** allocate only one mask (for attention) and sin/cos (for RoPE) in the model class and not for each attention module 
@@ -36,10 +41,10 @@
   - **[done]** cosine
   - **[ ]** linear
   - **[ ]** trapezoidal
-  - **[done]** renamed params related to lr scheduling
   - **[ ]** interpret warmup as percentage of total steps if in [0, 1] and absolute number of steps if between (1, +oo)
   - **[ ]** add option to perform gradient clipping only when on the lr decay period (no clipping during warmup) - from 2402.00838 
     (OLMo-v1) section 3.2-Optimizer
+- **[done]** integrate `MicroAdam`
 
 ### Managers
 - **[done]** file with constants
