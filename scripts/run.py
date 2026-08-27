@@ -1,6 +1,10 @@
 import socket
+import random
+from datetime import datetime
 from string import Template
 from gridsearcher import GridSearcher, SchedulingConfig, TorchRunConfig
+
+random.seed(datetime.now().timestamp())
 
 def main(dist, gpus, params):
     gs = GridSearcher(script="/nfs/scistore19/alistgrp/imodoran/workplace/DAS-Standard/pretrain.py")
@@ -11,7 +15,7 @@ def main(dist, gpus, params):
             launch_blocking=0,
             torchrun=dist,
             master_addr='127.0.0.1',
-            master_port=29500 + gpus[0],  # heuristic
+            master_port=29000 + random.randint(0,500),  # heuristic
             rdzv_backend='static' if 'gpu413' in socket.gethostname() else 'c10d',
         ),
         cfg_sched=SchedulingConfig(
@@ -26,6 +30,7 @@ if __name__ == "__main__":
     DATASETS_DIR = '/localhome/imodoran/datasets/' if socket.gethostname().startswith('gpu') else '/home/imodoran/datasets/'
 
     main(
+        # dist=False,
         dist=True,
         gpus=[
             0,
@@ -40,27 +45,54 @@ if __name__ == "__main__":
         params={
             ##########################
             ##### TrainingConfig #####
-            ##########################
-            "model_name_size": ["llama2"],
+            ##########################0
+            "model_name_size": [
+                # "gpt-42m",
+                "llama2-44m",
+                # "llama3-44m",
+                # "qwen3-42m",
+            ],
             "seed": [42],
             # "num_tokens": [0], # lower priority over chinchilla_token_ratio
             "chinchilla_token_ratio": [1],
             "local_batch_size": [16],
             "grad_acc_steps": [32],
             # "max_iters": [-1], # not needed, automatically determined
-            "backend": ["ddp"],
+            "backend": [
+                # "single",
+                "ddp",
+                # "fsdp2",
+            ],
             "amp_dtype": ["bf16"],
             "compile_model": [True],
-            "eval_interval": [100],
+            "eval_interval": [
+                10,
+                # 100,
+            ],
             "eval_batches": [32],
+
+
+
+            ################################################
+            ##### Overrides to the default ModelConfig #####
+            ################################################
+            "seq_len": [1024],
+            "vocab_size": [32_000],
 
 
 
             #####################
             ##### QATConfig #####
             #####################
-            "qat_method": ["disabled"],
-            "hadamard_size": [128],
+            "qat_method": [
+                # "disabled",
+                "quartet2",
+            ],
+            "hadamard_size": [
+                # 32,
+                # 64,
+                128,
+            ],
 
 
 
@@ -106,12 +138,15 @@ if __name__ == "__main__":
             "entity": ["ist"],
             "project": ["das-standard"],
             "group": [
-                # Template("${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}"), # AdamW
-                Template("${model_name_size}_${optimizer_name}_wd=${weight_decay}_mu=${muon_momentum}"), # Muon
+                ### AdamW
+                Template("qat=${qat_method}_H=${hadamard_size}_${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}"),
+
+                ### Muon
+                # Template("qat=${qat_method}_${model_name_size}_${optimizer_name}_wd=${weight_decay}_mu=${muon_momentum}"),
             ],
             "job_type": [
-                # Template("lr=${adamw_lr}"), # AdamW
-                Template("lr-muon=${muon_lr}_lr-adamw=${adamw_lr}"),  # Muon
+                Template("lr=${adamw_lr}"), # AdamW
+                # Template("lr-muon=${muon_lr}_lr-adamw=${adamw_lr}"),  # Muon
             ],
             "run_name": [Template("${group}_${job_type}_seed=${seed}")],
         }
