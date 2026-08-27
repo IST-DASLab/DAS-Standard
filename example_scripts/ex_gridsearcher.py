@@ -10,7 +10,7 @@ def main(dist, gpus, params):
     gs = GridSearcher(script="/tmp/DAS-Standard/pretrain.py")
     gs.run(
         param_name_for_exp_root_folder="output_folder",
-        exp_folder=Template("results/${run_name}"),
+        exp_folder=Template("/tmp/DAS-Standard/results/${run_name}"),
         cfg_torchrun=TorchRunConfig(
             launch_blocking=0,
             torchrun=dist,
