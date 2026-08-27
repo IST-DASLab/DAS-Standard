@@ -54,7 +54,7 @@ class QATConfig:
 
 @dataclass
 class OptimizerConfig:
-    optimizer_name: Literal["adamw", "muon"] = "adamw"
+    optimizer_name: str = "adamw" # see the match-case from the function `_create_optimizers_list` from `multi_optimizer.py` for all supported optimizers
     weight_decay: float = 0.0
 
     grad_clipping: float = 1.0 # rescale the global gradient to have this norm. Set to 0 to disable
