@@ -22,17 +22,17 @@ def model_config_factory(model_name_size):
         "gpt-6.4b": config_gpt_6400m,
         "gpt-12.6b": config_gpt_12600m,
 
-        "llama2-35m": config_llama2_35m,
-        "llama2-60m": config_llama2_60m,
-        "llama2-135m": config_llama2_135m,
-        "llama2-250m": config_llama2_250m,
-        "llama2-700m": config_llama2_700m,
-        "llama2-1.1b": config_llama2_1100m,
-        "llama2-2.8b": config_llama2_2800m,
-        "llama2-7b": config_llama2_7b,
-        "llama2-13b": config_llama2_13b,
-        "llama2-34b": config_llama2_34b,
-        "llama2-70b": config_llama2_70b,
+        "llama2-23m": config_llama2_23m, # checked
+        "llama2-44m": config_llama2_44m, # checked
+        "llama2-135m": config_llama2_135m, # checked
+        "llama2-250m": config_llama2_250m, # checked
+        "llama2-700m": config_llama2_700m, # checked
+        "llama2-1.1b": config_llama2_1100m, # checked
+        "llama2-2.8b": config_llama2_2800m, # checked
+        "llama2-7b": config_llama2_7b, # checked
+        "llama2-13b": config_llama2_13b, # checked
+        "llama2-34b": config_llama2_34b, # checked
+        "llama2-70b": config_llama2_70b, # checked
 
         "llama3-90m": config_llama3_90m,
         "llama3-200m": config_llama3_200m,
