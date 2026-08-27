@@ -118,6 +118,9 @@ def print_config(cfg: ArgParseNamespace):
 
         # Print each field aligned for readability
         for key, value in config_dict.items():
-            print(f"  {key:<25} : {value}")
+            if isinstance(value, (int, float)):
+                print(f"  {key:<25} : {value:_}")
+            else:
+                print(f"  {key:<25} : {value:}")
 
     print("\n" + "=" * 60)
