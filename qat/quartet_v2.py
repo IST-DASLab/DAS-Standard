@@ -340,8 +340,6 @@ class Quartet_II_fn(torch.autograd.Function):
             None,
         )
 
-        G_bf16.add_(grad_output.T @ input)
-
         return grad_input, grad_weight, None, None, None, None, None, None, None, None
 
 
