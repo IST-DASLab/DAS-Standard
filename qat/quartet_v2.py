@@ -360,7 +360,7 @@ class Quartet_II_Linear(torch.nn.Linear):
         if Quartet_II_fn.hadamard_matrix is None:
             Quartet_II_fn.hadamard_matrix = torch.tensor(
                 hadamard(self.hadamard_dim) * (self.hadamard_dim ** -0.5),
-                dtype=torch.float32,
+                dtype=self.weight.dtype,
                 device="cuda",
                 requires_grad=False)
 
