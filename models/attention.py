@@ -36,6 +36,8 @@ class MultiHeadSelfAttention(nn.Module):
         self.cfg = cfg
 
         E = cfg.model.embed_size
+        Nh = cfg.model.num_heads
+        H = E // Nh # head size
         bias = cfg.model.bias
         drp = cfg.model.dropout
         qk_norm = cfg.model.qk_norm
@@ -48,8 +50,8 @@ class MultiHeadSelfAttention(nn.Module):
         self.dropout_out = nn.Dropout(p=drp)
 
         if qk_norm:
-            self.q_norm = RMSNorm(ndim=E, bias=False)
-            self.k_norm = RMSNorm(ndim=E, bias=False)
+            self.q_norm = RMSNorm(ndim=H, bias=False)
+            self.k_norm = RMSNorm(ndim=H, bias=False)
 
     def forward(self, x, mask, cos, sin):
         assert mask is not None, "Found mask=None in MHSA!"
@@ -132,8 +134,8 @@ class GroupedQueryAttention(nn.Module):
         self.dropout_out = nn.Dropout(p=drp)
 
         if qk_norm:
-            self.q_norm = RMSNorm(ndim=E, bias=False)
-            self.k_norm = RMSNorm(ndim=E, bias=False)
+            self.q_norm = RMSNorm(ndim=H, bias=False)
+            self.k_norm = RMSNorm(ndim=H, bias=False)
 
     def forward(self, x, mask, cos, sin):
         assert mask is not None, "Found mask=None in GQA!"

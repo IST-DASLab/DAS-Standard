@@ -12,5 +12,5 @@ class Qwen3(Llama):
     def __init__(self, cfg: ArgParseNamespace):
         super().__init__(cfg)
 
-    def forward(self, x):
-        return super().forward(x)
+    def forward(self, inputs, targets):
+        return super().forward(inputs, targets)
