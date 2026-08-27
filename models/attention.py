@@ -166,8 +166,8 @@ class GroupedQueryAttention(nn.Module):
         ##### RoPE
         #####
         if (cos is not None) and (sin is not None):
-            Q = apply_rope(Q, self.cos, self.sin)
-            K = apply_rope(K, self.cos, self.sin)
+            Q = apply_rope(Q, cos, sin)
+            K = apply_rope(K, cos, sin)
 
         # (B, Nkvg, T, H) => (B, Nkvg*Gs, T, H): [x1, x2] becomes [x1, x1, x2, x2]
         K = K.repeat_interleave(Gs, dim=1)
@@ -175,7 +175,7 @@ class GroupedQueryAttention(nn.Module):
 
         # (B, Nh, T, H) @ (B, Nkvg*Gs=Nh, T, H).T(2,3) = (B, Nh, T, T)
         A = Q @ K.transpose(2, 3) / math.sqrt(K.shape[-1])
-        A = A.masked_fill(self.mask[:, :, :T, :T], float('-inf'))
+        A = A.masked_fill(mask[:, :, :T, :T], float('-inf'))
         A = F.softmax(A, dim=-1)
         A = self.dropout_attn(A)
 

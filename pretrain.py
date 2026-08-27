@@ -1,4 +1,5 @@
 import os
+
 # Suppress C++ backend warnings and Dynamo internal logs
 os.environ["TORCH_CPP_LOG_LEVEL"] = "ERROR"
 os.environ["TORCH_LOGS"] = "-all"
@@ -31,7 +32,6 @@ from constants import (
 
 def main():
     cfg = get_dynamic_arg_parser()
-
     backend: BaseBackend = get_backend(cfg) # must be created first
 
     logger = LoggingManager(cfg)
@@ -39,7 +39,7 @@ def main():
 
     raw_model = get_model(cfg)
     wrap_model_for_qat(raw_model, cfg, except_modules=None)
-    logger.log_model_info(raw_model, backend.world_size)  # use raw model before wrapping
+    logger.log_config_and_model(raw_model, backend.world_size)  # use raw model before wrapping
 
     model = backend.wrap_model_then_compile(raw_model) # wrap the model first, so the params are now DTensors
     optimizer = MultiOptimizer(cfg, model, backend) # build optimizer: params are now DTensors
@@ -91,7 +91,7 @@ def main():
         #####
         ##### Gradient clipping
         #####
-        grad_norm = backend.clip_grad_norm_(model, max_norm=cfg.training.clip_grad_norm)
+        grad_norm = backend.clip_grad_norm_(model, max_norm=cfg.optimizer.grad_clipping)
 
         #####
         ##### Optimizer step

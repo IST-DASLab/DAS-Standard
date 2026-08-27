@@ -113,7 +113,7 @@ def get_dynamic_arg_parser():
     For example, this is useful when we want to use llama2-1B with a smaller sequence length: the default sequence length will be 4096, but the user can
     override this field with 1024 by specifying --seq_len=1024 in the command line
     """
-    from .utils import model_config_factory, print_config
+    from .utils import model_config_factory
 
     ##### step 1: build a temporary parser and extract `model_name_size`
     temp_parser = ArgumentParser(add_help=False)
@@ -136,7 +136,6 @@ def get_dynamic_arg_parser():
             # print(f'Found config "{name}": all fields are available in the "{dest_name}" object')
 
     cfg = preprocess(full_parser.parse_args())
-    print_config(cfg)
     return cfg
 
 

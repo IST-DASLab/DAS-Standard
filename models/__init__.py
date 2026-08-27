@@ -7,10 +7,15 @@ from models.qwen import Qwen3
 
 def get_model(cfg: ArgParseNamespace):
     model_name_size = cfg.training.model_name_size
+    dtype = cfg.model.dtype
+
     if "gpt" in model_name_size:
-        return GPT(cfg)
-    if "llama" in model_name_size:
-        return Llama(cfg)
-    if "qwen3" in model_name_size:
-        return Qwen3(cfg)
-    raise NotImplementedError
+        model = GPT(cfg)
+    elif "llama" in model_name_size:
+        model = Llama(cfg)
+    elif "qwen3" in model_name_size:
+        model = Qwen3(cfg)
+    else:
+        raise NotImplementedError
+
+    return model.to(dtype)

@@ -62,8 +62,7 @@ class BaseBackend:
         pass # do nothing by default
 
     def get_device(self):
-        raise NotImplementedError
-
+        return f"cuda:{self.local_rank}"
 
     def set_grad_sync(self, model, enabled: bool):
         pass
@@ -91,9 +90,6 @@ class SingleBackend(BaseBackend):
         )
         if self.is_master:
             print(f"\n=== Using Single GPU backend ===\n")
-
-    def get_device(self):
-        return f"cuda:{self.local_rank}"
 
 class DDPBackend(BaseBackend):
     def __init__(self, cfg: ArgParseNamespace):
@@ -147,7 +143,7 @@ class FSDP2Backend(BaseBackend):
     def wrap_model_then_compile(self, model):
         model = model.to(self.device) # TODO: use meta-device for large models
 
-        policy = MixedPrecisionPolicy(param_dtype=torch.bfloat16, reduce_dtype=torch.float32)
+        policy = MixedPrecisionPolicy(param_dtype=self.cfg.model.dtype, reduce_dtype=torch.float32)
         for block in model.blocks:
             fully_shard(block, mesh=self.mesh, mp_policy=policy)
         fully_shard(model, mesh=self.mesh, mp_policy=policy)

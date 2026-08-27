@@ -9,7 +9,7 @@ from typing import Optional
 from contextlib import contextmanager
 from argparse import Namespace as ArgParseNamespace
 from tqdm.auto import tqdm  # Use auto to support both terminal and Jupyter
-
+from config import print_config
 from constants import (
     TEXT_LRS_ITER,
 
@@ -112,7 +112,7 @@ class LoggingManager:
     ##### Different statistics
     #####
     @torch.no_grad()
-    def log_model_info(self, model, world_size):
+    def log_config_and_model(self, model, world_size):
         if self.is_master:
             cfg = self.cfg
             is_tied = cfg.model.tie_embeds
@@ -120,6 +120,8 @@ class LoggingManager:
             S = cfg.model.seq_len
             B = cfg.training.local_batch_size
             A = cfg.training.grad_acc_steps
+
+            print_config(cfg)
 
             params_inp_embed = model.token_embed.weight.numel()
             params_pos_embed = model.pos_embed.weight.numel() if hasattr(model, "pos_embed") else 0
@@ -129,10 +131,10 @@ class LoggingManager:
             params_all = sum(p.numel() for p in model.parameters())
 
             T = (params_linear + params_layer_norm) * CTR * 20
-            print("-" * 50)
+
             print("Model:")
             print(str(model))
-            print("-" * 50)
+            print("=" * 50)
             print(f"Model summary:")
             print(f"\t Input Embedding params: {params_inp_embed:_} (tied: {is_tied})")
             if params_pos_embed > 0:
@@ -141,8 +143,8 @@ class LoggingManager:
             print(f"\t          Linear params: {params_linear:_}")
             print(f"\t     Layer norms params: {params_layer_norm:_}")
             print(f"\t             All params: {params_all:_}")
-            print("-" * 50)
-            print(f"Total tokens are computed using linear+norms:")
+            print("=" * 50)
+            print(f"Total tokens & training steps:")
             print(f"\t               Linear params (P): {params_linear:_}")
             print(f"\t                 Norm params (N): {params_layer_norm:_}")
             print(f"\t Total params for tokens (P + N): {params_linear + params_layer_norm:_}")
@@ -153,7 +155,7 @@ class LoggingManager:
             print(f"\t              Grad Acc Steps (A): {A}")
             print(f"\t                  World Size (W): {world_size}")
             print(f"\t     Steps (T / (B * S * A * W)): {math.ceil(T / (B * S * A * world_size)):_}")
-            print("-" * 50)
+            print("=" * 50)
 
     #####
     ##### Logging methods
