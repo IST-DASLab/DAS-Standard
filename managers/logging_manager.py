@@ -1,51 +1,18 @@
 import math
 import os
-import gpustat
-import wandb
-import torch
-import torch.distributed as dist
-from collections import defaultdict, OrderedDict
-from typing import Optional
-from contextlib import contextmanager
 from argparse import Namespace as ArgParseNamespace
-from tqdm.auto import tqdm  # Use auto to support both terminal and Jupyter
+from collections import OrderedDict
+from typing import Optional
+
+import gpustat
+import torch
+import wandb
+from torch import distributed as dist
+from tqdm.asyncio import tqdm
+
 from config import print_config
-from constants import (
-    TEXT_LRS_ITER,
+from constants import TEXT_GPU_MEM_MIN, TEXT_GPU_MEM_AVG, TEXT_GPU_MEM_MAX, TEXT_LRS_ITER, TEXT_TRAIN_ITER, TEXT_VAL_ITER, TEXT_ELAPSED_ITER, TEXT_GPU_MEM_ITER
 
-    TEXT_TRAIN_ITER,
-    TEXT_VAL_ITER,
-    TEXT_ELAPSED_ITER,
-    TEXT_GPU_MEM_ITER,
-
-    TEXT_GPU_MEM_MIN,
-    TEXT_GPU_MEM_AVG,
-    TEXT_GPU_MEM_MAX,
-)
-
-class TimingManager:
-    def __init__(self):
-        self.metrics = defaultdict(float)
-
-    @contextmanager
-    def record(self, block_name: str):
-        start_event = torch.cuda.Event(enable_timing=True)
-        end_event = torch.cuda.Event(enable_timing=True)
-
-        start_event.record()
-
-        yield # at this point __enter__ ends and python executes the code in the "with record('block')" clause
-
-        # the code below runs after the code in with clause ends - this part of the function is equivalent to __exit__
-        end_event.record()
-
-        torch.cuda.synchronize()
-        self.metrics[block_name] += start_event.elapsed_time(end_event)
-
-    def get_then_reset(self):
-        crt_metrics = self.metrics.copy()
-        self.metrics.clear()
-        return crt_metrics
 
 class LoggingManager:
     def __init__(self, cfg: ArgParseNamespace):
