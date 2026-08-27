@@ -17,7 +17,7 @@ from data import get_data_readers
 from evaluation import eval_and_log
 from models import get_model
 from optimizers import MultiOptimizer
-from managers import TimingManager, LoggingManager
+from managers import LoggingManager, TimingManager
 from qat import wrap_model_for_qat
 from constants import (
     TEXT_TRAIN_LOSS,
