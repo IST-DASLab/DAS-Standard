@@ -50,6 +50,9 @@ class Llama(nn.Module):
         self.norm = RMSNorm(ndim=E)
         self.lm_head = nn.Linear(in_features=E, out_features=V, bias=False, dtype=dtype)
 
+        if cfg.model.tie_embeds:
+            self.token_embed.weight = self.lm_head.weight
+
         cos, sin = precompute_rope(cfg)
         self.register_buffer(name="cos", tensor=cos, persistent=False)
         self.register_buffer(name="sin", tensor=sin, persistent=False)
