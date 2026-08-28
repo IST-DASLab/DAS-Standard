@@ -7,6 +7,7 @@ from backends import BaseBackend
 from lr_schedulers import get_lr_cos_warmup
 
 from ista_daslab_optimizers import MicroAdam
+from experimental_optimizers import MicroAdamTorch
 
 # from .muon import MuonSingle, MuonDDP, MuonFSDP2
 
@@ -102,6 +103,36 @@ class MultiOptimizer:
                         ),
                         weight_decay=cfg.optimizer.weight_decay,
                         eps=cfg.optimizer.adamw_eps,
+                    ),
+                    AdamW(
+                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
+                        lr=cfg.optimizer.adamw_lr,
+                        weight_decay=cfg.optimizer.weight_decay,
+                        betas=(
+                            cfg.optimizer.adamw_beta1,
+                            cfg.optimizer.adamw_beta2,
+                        ),
+                        eps=cfg.optimizer.adamw_eps,
+                    )
+                ]
+            case "microadam-torch":
+                return [
+                    MicroAdamTorch(
+                        params=self._get_linear_layers(),
+                        lr=cfg.optimizer.adamw_lr,
+                        weight_decay=cfg.optimizer.weight_decay,
+                        betas=(
+                            cfg.optimizer.adamw_beta1,
+                            cfg.optimizer.adamw_beta2,
+                        ),
+                        eps=cfg.optimizer.adamw_eps,
+                        # *
+                        num_grads=cfg.optimizer.microadam_m,
+                        density=cfg.optimizer.microadam_k,
+                        ef_num_bits=cfg.optimizer.microadam_ef_num_bits,
+                        ef_quant_block_size=cfg.optimizer.microadam_q_block,
+                        dtype_scales={"bf16": torch.bfloat16, "fp16": torch.float16}[cfg.optimizer.microadam_dtype_scales],
+                        dtype_values={"bf16": torch.bfloat16, "fp16": torch.float16}[cfg.optimizer.microadam_dtype_values],
                     ),
                     AdamW(
                         params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),

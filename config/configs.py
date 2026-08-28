@@ -77,8 +77,11 @@ class OptimizerConfig:
 
     # MicroAdam parameters
     microadam_m: int = 10 # number of gradients in the sliding window
-    microadam_q_block: int = 100_000 # quantization block size for error feedback
     microadam_k: float = 0.01 # gradient density (sparsity = 1 - k)
+    microadam_ef_num_bits: int = 4 # 4 or 8
+    microadam_q_block: int = 32 # quantization block size for error feedback
+    microadam_dtype_scales: Literal["bf16", "fp16"] = "bf16"
+    microadam_dtype_values: Literal["bf16", "fp16"] = "bf16"
 
 
 @dataclass
