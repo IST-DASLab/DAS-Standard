@@ -10,7 +10,7 @@ def main(dist, gpus, params):
     gs = GridSearcher(script="/nfs/scistore19/alistgrp/imodoran/workplace/DAS-Standard/pretrain.py")
     gs.run(
         param_name_for_exp_root_folder="output_folder",
-        exp_folder=Template("results/${run_name}"),
+        exp_folder=Template("results/${project}/${run_name}"),
         cfg_torchrun=TorchRunConfig(
             launch_blocking=0,
             torchrun=dist,
@@ -19,7 +19,7 @@ def main(dist, gpus, params):
             rdzv_backend='static' if 'gpu413' in socket.gethostname() else 'c10d',
         ),
         cfg_sched=SchedulingConfig(
-            distributed_training=True,
+            distributed_training=dist,
             max_jobs_per_gpu=1,
             gpus=gpus,
             params_values=params
@@ -29,9 +29,12 @@ def main(dist, gpus, params):
 if __name__ == "__main__":
     DATASETS_DIR = '/localhome/imodoran/datasets/' if socket.gethostname().startswith('gpu') else '/home/imodoran/datasets/'
 
+    OPTIMIZER = "adamw"
+    # OPTIMIZER = "microadam-torch"
+
     main(
-        # dist=False,
-        dist=True,
+        dist=False,
+        # dist=True,
         gpus=[
             0,
             1,
@@ -59,14 +62,15 @@ if __name__ == "__main__":
             "grad_acc_steps": [32],
             # "max_iters": [-1], # not needed, automatically determined
             "backend": [
-                # "single",
+                "single",
                 # "ddp",
-                "fsdp2",
+                # "fsdp2",
             ],
             "amp_dtype": ["bf16"],
             "compile_model": [True],
             "eval_interval": [
-                10,
+                # 10,
+                50,
                 # 100,
             ],
             "eval_batches": [32],
@@ -85,8 +89,8 @@ if __name__ == "__main__":
             ##### QATConfig #####
             #####################
             "qat_method": [
-                # "disabled",
-                "quartet2",
+                "disabled",
+                # "quartet2",
             ],
             "hadamard_size": [128],
 
@@ -96,8 +100,12 @@ if __name__ == "__main__":
             ##### OptimizerConfig #####
             ###########################
             "optimizer_name": [
-                "adamw",
                 # "muon",
+
+                # "adamw",
+                # "microadam-paper",
+                # "microadam-new",
+                "microadam-torch",
             ],
             "weight_decay": ["0.0"],
             "grad_clipping": ["1.0"],
@@ -109,7 +117,9 @@ if __name__ == "__main__":
             "lr_sched_end_ratio": ["0.1"],
 
             # AdamW parameters
-            "adamw_lr": ["1e-3"],
+            "adamw_lr": [
+                "1e-3",
+            ],
             "adamw_beta1": ["0.9"],
             "adamw_beta2": ["0.95"],
             "adamw_eps": ["1e-8"],
@@ -118,6 +128,33 @@ if __name__ == "__main__":
             "muon_lr": ["4e-2"],
             "muon_momentum": ["0.95"],
 
+            # MicroAdam parameters
+            "microadam_m": [
+                # 1,
+                # 5,
+                10,
+            ],
+            "microadam_k": [
+                # "0.01",
+                # "0.02",
+                "0.10",
+            ],
+            "microadam_ef_num_bits": [4],
+            "microadam_q_block": [
+                # 16,
+                32,
+                # 64,
+                # 128,
+                # 256,
+            ],
+            "microadam_dtype_scales": [
+                "bf16",
+                # "fp16",
+            ],
+            "microadam_dtype_values": [
+                "bf16",
+                # "fp16",
+            ],
 
 
             #########################
@@ -132,17 +169,26 @@ if __name__ == "__main__":
             ##### WandbConfig #####
             #######################
             "entity": ["ist"],
-            "project": ["das-standard"],
+            "project": [f"das-standard"],
             "group": [
                 ### AdamW
                     # backend
                     # Template("backend=${backend}_${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}"),
+                    # Template("${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}"),
 
                     # QAT
-                    Template("qat=${qat_method}_H=${hadamard_size}_${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}"),
+                    # Template("qat=${qat_method}_H=${hadamard_size}_${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}"),
 
                 ### Muon
-                # Template("qat=${qat_method}_${model_name_size}_${optimizer_name}_wd=${weight_decay}_mu=${muon_momentum}"),
+                    # Template("qat=${qat_method}_${model_name_size}_${optimizer_name}_wd=${weight_decay}_mu=${muon_momentum}"),
+
+                ### MicroAdam
+                    ### torch
+                    Template("${model_name_size}_${optimizer_name}_m=${microadam_m}_k=${microadam_k}_ef-v=${microadam_dtype_scales}-${microadam_dtype_values}_q=${microadam_q_block}"),
+                    # Template("${model_name_size}-${dtype}_${optimizer_name}_qsize=${microadam_q_block}"),
+
+                    ### paper/new
+                    # Template("${model_name_size}_${optimizer_name}_m=${microadam_m}_k=${microadam_k}_q=${microadam_q_block}"),
             ],
             "job_type": [
                 Template("lr=${adamw_lr}"), # AdamW
