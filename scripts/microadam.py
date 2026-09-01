@@ -2,16 +2,17 @@ import socket
 import random
 from datetime import datetime
 from string import Template
-from gridsearcher import GridSearcher, SchedulingConfig, TorchRunConfig
+from gridsearcher import GridSearcher, SchedulingConfig, TorchRunConfig, wait_for_resources
 
 random.seed(datetime.now().timestamp())
 
 
 def main(dist, gpus, params):
-    gs = GridSearcher(script="/nfs/scistore19/alistgrp/imodoran/workplace/DAS-Standard/pretrain.py")
+    PROJECT_FOLDER = "/localhome" if socket.gethostname() == "gpu413" else "/nfs/scistore19/alistgrp/"
+    gs = GridSearcher(script=f"{PROJECT_FOLDER}/imodoran/workplace/DAS-Standard/pretrain.py")
     gs.run(
         param_name_for_exp_root_folder="output_folder",
-        exp_folder=Template("results/${run_name}"),
+        exp_folder=Template("results/${project}/${run_name}"),
         cfg_torchrun=TorchRunConfig(
             launch_blocking=0,
             torchrun=dist,
@@ -29,6 +30,7 @@ def main(dist, gpus, params):
 
 
 if __name__ == "__main__":
+    wait_for_resources()
     DATASETS_DIR = '/localhome/imodoran/datasets/' if socket.gethostname().startswith('gpu') else '/home/imodoran/datasets/'
 
     OPTIMIZER = "adamw"
@@ -68,7 +70,10 @@ if __name__ == "__main__":
             # "fsdp2",
         ],
         "amp_dtype": ["bf16"],
-        "compile_model": [False],
+        "compile_model": [
+            0,
+            1,
+        ],
         "eval_interval": [
             # 10,
             50,
@@ -81,7 +86,10 @@ if __name__ == "__main__":
         ################################################
         "seq_len": [1024],
         "vocab_size": [32_000],
-        "dtype": ["bf16"],
+        "dtype": [
+            # "bf16",
+            "fp32",
+        ],
 
         #####################
         ##### QATConfig #####
@@ -117,7 +125,7 @@ if __name__ == "__main__":
             "2e-3",
             "4e-3",
             "6e-3",
-            # "8e-3",
+            "8e-3",
         ],
         "adamw_beta1": ["0.9"],
         "adamw_beta2": ["0.95"],
@@ -170,9 +178,20 @@ if __name__ == "__main__":
 
     match OPTIMIZER:
         case "adamw":
-            params["group"] = [Template("${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}")]
+            params["group"] = [
+                Template("compile=${compile_model}_${model_name_size}_${optimizer_name}")
+            ]
         case "microadam-torch":
-            Template("${model_name_size}_${optimizer_name}_m=${microadam_m}_k=${microadam_k}_ef-v=${microadam_dtype_scales}-${microadam_dtype_values}_q=${microadam_q_block}"),
+            params["group"] = [
+                Template(
+                    "compile=${compile_model}_"
+                    "${model_name_size}_"
+                    "${optimizer_name}_"
+                    "m=${microadam_m}_"
+                    "k=${microadam_k}_"
+                    "ef-v=${microadam_dtype_scales}-${microadam_dtype_values}_"
+                    "info=${microadam_quant_info}"),
+            ]
         case _:
             raise RuntimeError(f"Unknown OPTIMIZER: {OPTIMIZER}")
 
