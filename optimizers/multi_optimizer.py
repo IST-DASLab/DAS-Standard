@@ -7,7 +7,7 @@ from backends import BaseBackend
 from lr_schedulers import get_lr_cos_warmup
 
 from ista_daslab_optimizers import MicroAdam
-from experimental_optimizers import MicroAdamTorch
+from experimental_optimizers import MicroAdamTorch, Trion
 
 # from .muon import MuonSingle, MuonDDP, MuonFSDP2
 
@@ -129,10 +129,32 @@ class MultiOptimizer:
                         # *
                         num_grads=cfg.optimizer.microadam_m,
                         density=cfg.optimizer.microadam_k,
-                        ef_num_bits=cfg.optimizer.microadam_ef_num_bits,
-                        ef_quant_block_size=cfg.optimizer.microadam_q_block,
+                        quant_info=cfg.optimizer.microadam_quant_info,
                         dtype_scales={"bf16": torch.bfloat16, "fp16": torch.float16}[cfg.optimizer.microadam_dtype_scales],
                         dtype_values={"bf16": torch.bfloat16, "fp16": torch.float16}[cfg.optimizer.microadam_dtype_values],
+                    ),
+                    AdamW(
+                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
+                        lr=cfg.optimizer.adamw_lr,
+                        weight_decay=cfg.optimizer.weight_decay,
+                        betas=(
+                            cfg.optimizer.adamw_beta1,
+                            cfg.optimizer.adamw_beta2,
+                        ),
+                        eps=cfg.optimizer.adamw_eps,
+                    )
+                ]
+            case "trion":
+                return [
+                    Trion(
+                        params=self._get_linear_layers(),
+                        lr=cfg.optimizer.trion_lr,
+                        weight_decay=cfg.optimizer.weight_decay,
+                        momentum=cfg.optimizer.trion_momentum,
+                        # *
+                        rank=cfg.optimizer.trion_rank,
+                        scaling_type=cfg.optimizer.trion_scaling,
+                        proj_type=cfg.optimizer.trion_proj,
                     ),
                     AdamW(
                         params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),

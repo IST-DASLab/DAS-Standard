@@ -78,10 +78,18 @@ class OptimizerConfig:
     # MicroAdam parameters
     microadam_m: int = 10 # number of gradients in the sliding window
     microadam_k: float = 0.01 # gradient density (sparsity = 1 - k)
-    microadam_ef_num_bits: int = 4 # 4 or 8
-    microadam_q_block: int = 32 # quantization block size for error feedback
+    microadam_quant_info: str = "symm-int4-32" # asymm/symm-int4/fp4-32
+    # microadam_ef_num_bits: int = 4 # 4 or 8
+    # microadam_q_block: int = 32 # quantization block size for error feedback
     microadam_dtype_scales: Literal["bf16", "fp16"] = "bf16"
     microadam_dtype_values: Literal["bf16", "fp16"] = "bf16"
+
+    # Trion parameters
+    trion_lr: float = 1e-2
+    trion_momentum: float = 0.95
+    trion_rank: int = 128
+    trion_scaling: Literal["kj", "none", "kimi", "dion"] = "kj"
+    trion_proj: Literal["dct", "eye"] = "dct"
 
 
 @dataclass
