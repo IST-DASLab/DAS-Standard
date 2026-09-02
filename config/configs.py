@@ -76,6 +76,7 @@ class OptimizerConfig:
     muon_momentum: float = 0.95
 
     # MicroAdam parameters
+    microadam_lr: float = 1e-3
     microadam_m: int = 10 # number of gradients in the sliding window
     microadam_k: float = 0.01 # gradient density (sparsity = 1 - k)
     microadam_quant_info: str = "symm-int4-32" # asymm/symm-int4/fp4-32

@@ -119,7 +119,7 @@ class MultiOptimizer:
                 return [
                     MicroAdamTorch(
                         params=self._get_linear_layers(),
-                        lr=cfg.optimizer.adamw_lr,
+                        lr=cfg.optimizer.microadam_lr,
                         weight_decay=cfg.optimizer.weight_decay,
                         betas=(
                             cfg.optimizer.adamw_beta1,
