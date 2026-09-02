@@ -33,8 +33,8 @@ if __name__ == "__main__":
     wait_for_resources()
     DATASETS_DIR = '/localhome/imodoran/datasets/' if socket.gethostname().startswith('gpu') else '/home/imodoran/datasets/'
 
-    # OPTIMIZER = "adamw"
-    OPTIMIZER = "trion"
+    OPTIMIZER = "adamw"
+    # OPTIMIZER = "trion"
 
     dist = False
     gpus = [
@@ -42,6 +42,7 @@ if __name__ == "__main__":
         1,
         2,
         3,
+
         # 4,
         # 5,
         # 6,
@@ -59,21 +60,16 @@ if __name__ == "__main__":
             # "qwen3-42m",
         ],
         "seed": [42],
-        # "num_tokens": [0], # lower priority over chinchilla_token_ratio
         "chinchilla_token_ratio": [1],
         "local_batch_size": [16],
         "grad_acc_steps": [32],
-        # "max_iters": [-1], # not needed, automatically determined
         "backend": [
             "single",
             # "ddp",
             # "fsdp2",
         ],
         "amp_dtype": ["bf16"],
-        "compile_model": [
-            0,
-            1,
-        ],
+        "compile_model": [True],
         "eval_interval": [
             # 10,
             50,
@@ -116,6 +112,9 @@ if __name__ == "__main__":
         # AdamW parameters
         "adamw_lr": [
             "1e-3",
+            "2e-3",
+            "3e-3",
+            "4e-3",
         ],
         "adamw_beta1": ["0.9"],
         "adamw_beta2": ["0.95"],
@@ -124,18 +123,21 @@ if __name__ == "__main__":
         # Trion parameters
         "trion_lr": [
             "1e-2",
-            "2e-2",
-            "3e-2",
-            "4e-2",
+            # "2e-2",
+            # "3e-2",
+            # "4e-2",
         ],
         "trion_momentum": ["0.95"],
         "trion_rank": [
-            # 64,
-            128,
-            # 256,
+            64, # 12.5%
+            # 128, # 25%
+            # 256, # 50%
         ],
         "trion_scaling": [
             "kj",
+            # "none",
+            # "kimi",
+            # "dion",
         ],
         "trion_proj": [
             "dct",
@@ -154,25 +156,25 @@ if __name__ == "__main__":
         "entity": ["ist"],
         "project": [f"das-standard-trion-{socket.gethostname()}"],
         "group": ["placeholder"],
-        "job_type": [Template("lr=${adamw_lr}")],
+        "job_type": ["placeholder"],
         "run_name": [Template("${group}_${job_type}_seed=${seed}")],
     }
 
     match OPTIMIZER:
         case "adamw":
-            params["group"] = [
-                Template("compile=${compile_model}_${model_name_size}_${optimizer_name}")
-            ]
+            params["group"] = [Template("${model_name_size}_${optimizer_name}")]
+            params["job_type"] = [Template("lr=${adamw_lr}")]
+
         case "trion":
             params["group"] = [
                 Template(
-                    "compile=${compile_model}_"
                     "${model_name_size}_"
                     "${optimizer_name}_"
                     "r=${trion_rank}_"
                     "s=${trion_scaling}_"
                     "p=${trion_proj}"),
             ]
+            params["job_type"] = [Template("lr-adamw=${adamw_lr}_lr-trion=${trion_lr}")]
         case _:
             raise RuntimeError(f"Unknown OPTIMIZER: {OPTIMIZER}")
 
