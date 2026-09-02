@@ -132,6 +132,7 @@ class MultiOptimizer:
                         quant_info=cfg.optimizer.microadam_quant_info,
                         dtype_scales={"bf16": torch.bfloat16, "fp16": torch.float16}[cfg.optimizer.microadam_dtype_scales],
                         dtype_values={"bf16": torch.bfloat16, "fp16": torch.float16}[cfg.optimizer.microadam_dtype_values],
+                        structured=cfg.optimizer.microadam_structured,
                     ),
                     AdamW(
                         params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),

@@ -159,6 +159,10 @@ if __name__ == "__main__":
             "bf16",
             # "fp16",
         ],
+        "microadam_structured": [
+            # 0,
+            1,
+        ],
 
         #########################
         ##### DatasetConfig #####
@@ -190,7 +194,8 @@ if __name__ == "__main__":
                     "m=${microadam_m}_"
                     "k=${microadam_k}_"
                     "ef-v=${microadam_dtype_scales}-${microadam_dtype_values}_"
-                    "info=${microadam_quant_info}"),
+                    "info=${microadam_quant_info}_"
+                    "struc=${microadam_structured}"),
             ]
         case _:
             raise RuntimeError(f"Unknown OPTIMIZER: {OPTIMIZER}")
