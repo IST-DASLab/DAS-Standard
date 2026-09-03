@@ -92,7 +92,7 @@ class MultiOptimizer:
                 return [
                     MicroAdam(
                         params=self._get_linear_layers(),
-                        lr=cfg.optimizer.adamw_lr,
+                        lr=cfg.optimizer.microadam_lr,
                         m=cfg.optimizer.microadam_m,
                         quant_block_size=cfg.optimizer.microadam_q_block,
                         k_init=cfg.optimizer.microadam_k,
