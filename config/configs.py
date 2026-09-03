@@ -81,7 +81,7 @@ class OptimizerConfig:
     microadam_k: float = 0.01 # gradient density (sparsity = 1 - k)
     microadam_quant_info: str = "symm-int4-32" # asymm/symm-int4/fp4-32
     # microadam_ef_num_bits: int = 4 # 4 or 8
-    # microadam_q_block: int = 32 # quantization block size for error feedback
+    microadam_q_block: int = 32 # quantization block size for error feedback
     microadam_dtype_scales: Literal["bf16", "fp16"] = "bf16"
     microadam_dtype_values: Literal["bf16", "fp16"] = "bf16"
     microadam_structured: bool = False
