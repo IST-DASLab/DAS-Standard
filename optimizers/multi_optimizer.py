@@ -219,6 +219,13 @@ class MultiOptimizer:
             lrs[f"lrs/{opt_name}"] = opt.param_groups[0]["lr"]
         return lrs
 
+    def get_optimzier_stats(self):
+        stats = {}
+        for opt in self.optimizers:
+            if hasattr(opt, "logging_data"):
+                stats = {**stats, **opt.logging_data}
+        return stats
+
     @torch.no_grad()
     def step(self, closure=None):
         loss = None
@@ -231,7 +238,6 @@ class MultiOptimizer:
 
         for opt in self.optimizers:
             opt.step()
-
 
         return loss
 
