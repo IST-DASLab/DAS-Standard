@@ -116,7 +116,7 @@ class MultiOptimizer:
                     )
                 ]
             case "microadam-torch":
-                return [
+                 opts = [
                     MicroAdamTorch(
                         params=self._get_linear_layers(),
                         lr=cfg.optimizer.microadam_lr,
@@ -145,6 +145,8 @@ class MultiOptimizer:
                         eps=cfg.optimizer.adamw_eps,
                     )
                 ]
+                 opts[0].set_param_name_mapping(mapping={p: name for name, p in self.model.named_parameters()})
+                 return opts
             case "trion":
                 return [
                     Trion(
