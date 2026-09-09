@@ -84,7 +84,7 @@ class OptimizerConfig:
     microadam_q_block: int = 32 # quantization block size for error feedback
     microadam_dtype_scales: Literal["bf16", "fp16"] = "bf16"
     microadam_dtype_values: Literal["bf16", "fp16"] = "bf16"
-    microadam_structured: bool = False
+    microadam_structured: int = 0
 
     # Trion parameters
     trion_lr: float = 1e-2
