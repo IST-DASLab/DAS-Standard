@@ -194,7 +194,7 @@ def preprocess(cfg: ArgParseNamespace):
     ##### LR Schedule
     #####
     assert 0 <= cfg.optimizer.lr_sched_warmup <= 1
-    if cfg.optimizer.lr_sched_type == "wsd":
+    if cfg.optimizer.lr_sched_name == "wsd":
         W = cfg.optimizer.lr_sched_warmup
         D = cfg.optimizer.lr_sched_wsd_decay
         assert W <= D

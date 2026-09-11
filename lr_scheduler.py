@@ -55,7 +55,7 @@ class LRScheduler:
 
         a = (t - W) / max(1, T - W)
         alpha = 0.5 * (1 + math.cos(math.pi * a))
-        return interp(start=peak, end=end, alpha=alpha)
+        return interp(start=end, end=peak, alpha=alpha)
 
     def _get_wsd_lr_w_linear_warmup(self, t, peak):
         start, end, T, W = self._compute_info(peak)
@@ -87,9 +87,9 @@ class LRScheduler:
         :param t: optimization step
         :param peak: peak learning rate
         """
-        sched_type = self.cfg.optimizer.lr_sched_type
+        sched_name = self.cfg.optimizer.lr_sched_name
 
-        match sched_type:
+        match sched_name:
             case "linear":
                 return self._get_linear_lr_w_linear_warmup(t, peak)
             case "cosine":
@@ -97,4 +97,4 @@ class LRScheduler:
             case "wsd":
                 return self._get_wsd_lr_w_linear_warmup(t, peak)
             case _:
-                raise NotImplementedError(f"Unknown schedule type {sched_type}")
+                raise NotImplementedError(f"Unknown schedule type {sched_name}")

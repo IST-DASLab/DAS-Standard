@@ -20,7 +20,7 @@ def main(dist, gpus, params):
         ),
         cfg_sched=SchedulingConfig(
             distributed_training=dist,
-            max_jobs_per_gpu=1,
+            max_jobs_per_gpu=2,
             gpus=gpus,
             params_values=params
         )
@@ -35,14 +35,14 @@ if __name__ == "__main__":
         dist=False,
         # dist=True,
         gpus=[
-            0,
-            1,
+            # 0,
+            # 1,
             2,
-            3,
-            4,
-            5,
-            6,
-            7,
+            # 3,
+            # 4,
+            # 5,
+            # 6,
+            # 7,
         ],
         params={
             ##########################
@@ -118,7 +118,11 @@ if __name__ == "__main__":
             "adamw_beta2": ["0.95"],
             "adamw_eps": ["1e-8"],
 
-            "lr_sched_name": ["cosine", "linear", "wsd"],
+            "lr_sched_name": [
+                "cosine",
+                # "linear",
+                # "wsd",
+            ],
             "lr_sched_warmup": ["0.1"],
             "lr_sched_wsd_decay": ["0.9"],
             "lr_sched_start_ratio": ["0.01"],
