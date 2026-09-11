@@ -33,15 +33,20 @@ if __name__ == "__main__":
     wait_for_resources()
     DATASETS_DIR = '/localhome/imodoran/datasets/' if socket.gethostname().startswith('gpu') else '/home/imodoran/datasets/'
 
-    OPTIMIZER = "adamw"
-    # OPTIMIZER = "trion"
+    # OPTIMIZER = "adamw"
+    OPTIMIZER = "trion"
 
     dist = False
     gpus = [
         0,
         1,
-        2,
         3,
+        6,
+
+        # 0,
+        # 1,
+        # 2,
+        # 3,
 
         # 4,
         # 5,
@@ -115,6 +120,7 @@ if __name__ == "__main__":
             "2e-3",
             "3e-3",
             "4e-3",
+            "5e-3",
         ],
         "adamw_beta1": ["0.9"],
         "adamw_beta2": ["0.95"],
@@ -123,13 +129,19 @@ if __name__ == "__main__":
         # Trion parameters
         "trion_lr": [
             "1e-2",
-            # "2e-2",
-            # "3e-2",
-            # "4e-2",
+            "2e-2",
+            "3e-2",
+            "4e-2",
+            "5e-2",
         ],
         "trion_momentum": ["0.95"],
         "trion_rank": [
-            64, # 12.5%
+            # 1,
+            # 2,
+            # 4,
+            8,
+
+            # 64, # 12.5%
             # 128, # 25%
             # 256, # 50%
         ],
@@ -141,7 +153,7 @@ if __name__ == "__main__":
         ],
         "trion_proj": [
             "dct",
-            # "eye",
+            "eye",
         ],
 
         #########################
@@ -164,7 +176,6 @@ if __name__ == "__main__":
         case "adamw":
             params["group"] = [Template("${model_name_size}_${optimizer_name}")]
             params["job_type"] = [Template("lr=${adamw_lr}")]
-
         case "trion":
             params["group"] = [
                 Template(

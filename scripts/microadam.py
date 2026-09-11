@@ -33,25 +33,33 @@ if __name__ == "__main__":
     wait_for_resources()
     DATASETS_DIR = '/localhome/imodoran/datasets/' if socket.gethostname().startswith('gpu') else '/home/imodoran/datasets/'
 
-    OPTIMIZER = "adamw"
+    # OPTIMIZER = "adamw"
+    OPTIMIZER = "adamw8b"
     # OPTIMIZER = "microadam-torch"
+    # OPTIMIZER = "microadam-new"
 
     dist = False
     gpus = [
         0,
         1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
+        # 3,
+        # 6,
+
+        # 0,
+        # 1,
+        # 2,
+        # 3,
+
+        # 4,
+        # 5,
+        # 6,
+        # 7,
     ]
 
     params = {
         ##########################
         ##### TrainingConfig #####
-        ##########################0
+        ##########################
         "model_name_size": [
             # "gpt-42m",
             "llama2-44m",
@@ -71,7 +79,7 @@ if __name__ == "__main__":
         ],
         "amp_dtype": ["bf16"],
         "compile_model": [
-            0,
+            # 0,
             1,
         ],
         "eval_interval": [
@@ -123,9 +131,14 @@ if __name__ == "__main__":
 
             "1e-3",
             "2e-3",
+            "3e-3",
             "4e-3",
+            "5e-3",
             "6e-3",
-            "8e-3",
+            # "7e-3",
+            # "8e-3",
+            # "9e-3",
+            # "1e-2",
         ],
         "adamw_beta1": ["0.9"],
         "adamw_beta2": ["0.95"],
@@ -136,20 +149,43 @@ if __name__ == "__main__":
         "muon_momentum": ["0.95"],
 
         # MicroAdam parameters
+        "microadam_lr": [
+            # "1e-4",
+            # "2e-4",
+            # "3e-4",
+            # "4e-4",
+
+            "1e-3",
+            # "2e-3",
+            # "3e-3",
+            # "4e-3",
+            # "5e-3",
+
+            # "6e-3",
+            # "7e-3",
+            # "8e-3",
+            # "9e-3",
+            # "1e-2",
+        ],
         "microadam_m": [
             # 1,
+            2,
             # 5,
-            10,
+            # 10,
         ],
         "microadam_k": [
-            "0.01",
+            # "0.01",
             # "0.02",
+            "0.05",
             # "0.10",
         ],
-        "microadam_ef_num_bits": [4],
         "microadam_q_block": [
             32,
             # 100_000,
+        ],
+        "microadam_quant_info": [
+            "symm-int4-32",
+            # "symm-fp4-32",
         ],
         "microadam_dtype_scales": [
             "bf16",
@@ -160,8 +196,9 @@ if __name__ == "__main__":
             # "fp16",
         ],
         "microadam_structured": [
-            # 0,
-            1,
+            0,
+            # 1,
+            # 2,
         ],
 
         #########################
@@ -176,15 +213,14 @@ if __name__ == "__main__":
         "entity": ["ist"],
         "project": [f"das-standard-microadam-{socket.gethostname()}"],
         "group": ["placeholder"],
-        "job_type": [Template("lr=${adamw_lr}")],
+        "job_type": ["placeholder"],
         "run_name": [Template("${group}_${job_type}_seed=${seed}")],
     }
 
     match OPTIMIZER:
-        case "adamw":
-            params["group"] = [
-                Template("compile=${compile_model}_${model_name_size}_${optimizer_name}")
-            ]
+        case "adamw" | "adamw8b":
+            params["group"] = [Template("compile=${compile_model}_${model_name_size}_${optimizer_name}")]
+            params["job_type"] = [Template("lr=${adamw_lr}")]
         case "microadam-torch":
             params["group"] = [
                 Template(
@@ -197,6 +233,18 @@ if __name__ == "__main__":
                     "info=${microadam_quant_info}_"
                     "struc=${microadam_structured}"),
             ]
+            params["job_type"] = [Template("lr-adamw=${adamw_lr}_lr-microadam=${microadam_lr}")]
+        case "microadam-new":
+            params["group"] = [
+                Template(
+                    "compile=${compile_model}_"
+                    "${model_name_size}_"
+                    "${optimizer_name}_"
+                    "m=${microadam_m}_"
+                    "k=${microadam_k}_"
+                    "q=${microadam_q_block}"),
+            ]
+            params["job_type"] = [Template("lr-adamw=${adamw_lr}_lr-microadam=${microadam_lr}")]
         case _:
             raise RuntimeError(f"Unknown OPTIMIZER: {OPTIMIZER}")
 
