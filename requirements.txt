@@ -11,3 +11,4 @@ gridsearcher
 simple-parsing
 gpustat
 ista-daslab-optimizers
+bitsandbytes

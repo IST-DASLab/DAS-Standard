@@ -8,6 +8,7 @@ from lr_schedulers import get_lr_cos_warmup
 
 from ista_daslab_optimizers import MicroAdam
 from experimental_optimizers import MicroAdamTorch, Trion
+from bitsandbytes.optim import AdamW8bit
 
 # from .muon import MuonSingle, MuonDDP, MuonFSDP2
 
@@ -28,6 +29,18 @@ class MultiOptimizer:
         cfg = self.cfg
 
         match cfg.optimizer.optimizer_name:
+            case "adamw8b":
+                return [
+                    AdamW8bit(
+                        params=self._get_all_params(),
+                        lr=cfg.optimizer.adamw_lr,
+                        weight_decay=cfg.optimizer.weight_decay,
+                        betas=(
+                            cfg.optimizer.adamw_beta1,
+                            cfg.optimizer.adamw_beta2,
+                        ),
+                        eps=cfg.optimizer.adamw_eps),
+                ]
             case "adamw":
                 return [
                     AdamW(
