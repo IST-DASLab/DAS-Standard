@@ -4,7 +4,7 @@ from torch.optim import AdamW
 from argparse import Namespace as ArgParseNamespace
 
 from backends import BaseBackend
-from lr_schedulers import get_lr_cos_warmup
+from lr_scheduler import LRScheduler
 
 from ista_daslab_optimizers import MicroAdam
 from experimental_optimizers import MicroAdamTorch, Trion
@@ -19,172 +19,13 @@ class MultiOptimizer:
         self.model = model
         self.backend = backend
 
+        self.lr_scheduler = LRScheduler(cfg)
+
         self.optim_iter = 0
         self.optimizers = self._create_optimizers_list()
         self._set_lr_init()
 
         self.zero_grad(set_to_none=True)
-
-    def _create_optimizers_list(self):
-        cfg = self.cfg
-
-        match cfg.optimizer.optimizer_name:
-            case "adamw8b":
-                return [
-                    AdamW8bit(
-                        params=self._get_all_params(),
-                        lr=cfg.optimizer.adamw_lr,
-                        weight_decay=cfg.optimizer.weight_decay,
-                        betas=(
-                            cfg.optimizer.adamw_beta1,
-                            cfg.optimizer.adamw_beta2,
-                        ),
-                        eps=cfg.optimizer.adamw_eps),
-                ]
-            case "adamw":
-                return [
-                    AdamW(
-                        params=self._get_all_params(),
-                        lr=cfg.optimizer.adamw_lr,
-                        weight_decay=cfg.optimizer.weight_decay,
-                        betas=(
-                            cfg.optimizer.adamw_beta1,
-                            cfg.optimizer.adamw_beta2,
-                        ),
-                        eps=cfg.optimizer.adamw_eps),
-                ]
-            case "muon":
-                match cfg.training.backend:
-                    case "single":
-                        muon_fn = MuonSingle
-                    case "ddp":
-                        muon_fn = MuonDDP
-                    case "fsdp2":
-                        muon_fn = MuonFSDP2
-
-                return [
-                    muon_fn(
-                        params=self._get_linear_layers(),
-                        lr=cfg.optimizer.muon_lr,
-                        weight_decay=cfg.optimizer.weight_decay,
-                        momentum=cfg.optimizer.muon_momentum
-                    ),
-                    AdamW(
-                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
-                        lr=cfg.optimizer.adamw_lr,
-                        weight_decay=cfg.optimizer.weight_decay,
-                        betas=(
-                            cfg.optimizer.adamw_beta1,
-                            cfg.optimizer.adamw_beta2,
-                        ),
-                        eps=cfg.optimizer.adamw_eps,
-                    )
-                ]
-            case "microadam-paper":
-                # the version that optimizes all layers wih MicroAdam
-                return [
-                    MicroAdam(
-                        params=self.model.parameters(),
-                        lr=cfg.optimizer.adamw_lr,
-                        m=cfg.optimizer.microadam_m,
-                        quant_block_size=cfg.optimizer.microadam_q_block,
-                        k_init=cfg.optimizer.microadam_k,
-                        alpha=0, # 0 means sparse update
-                        betas=(
-                            cfg.optimizer.adamw_beta1,
-                            cfg.optimizer.adamw_beta2,
-                        ),
-                        weight_decay=cfg.optimizer.weight_decay,
-                        eps=cfg.optimizer.adamw_eps,
-                    )
-                ]
-            case "microadam-new":
-                # the version that optimizes only the linear layers with MicroAdam
-                # and the other layers (embeds, layer norms) with AdamW
-                # implemented after discussing with Frederik Kunstner
-                return [
-                    MicroAdam(
-                        params=self._get_linear_layers(),
-                        lr=cfg.optimizer.microadam_lr,
-                        m=cfg.optimizer.microadam_m,
-                        quant_block_size=cfg.optimizer.microadam_q_block,
-                        k_init=cfg.optimizer.microadam_k,
-                        alpha=0, # 0 means sparse update
-                        betas=(
-                            cfg.optimizer.adamw_beta1,
-                            cfg.optimizer.adamw_beta2,
-                        ),
-                        weight_decay=cfg.optimizer.weight_decay,
-                        eps=cfg.optimizer.adamw_eps,
-                    ),
-                    AdamW(
-                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
-                        lr=cfg.optimizer.adamw_lr,
-                        weight_decay=cfg.optimizer.weight_decay,
-                        betas=(
-                            cfg.optimizer.adamw_beta1,
-                            cfg.optimizer.adamw_beta2,
-                        ),
-                        eps=cfg.optimizer.adamw_eps,
-                    )
-                ]
-            case "microadam-torch":
-                 opts = [
-                    MicroAdamTorch(
-                        params=self._get_linear_layers(),
-                        lr=cfg.optimizer.microadam_lr,
-                        weight_decay=cfg.optimizer.weight_decay,
-                        betas=(
-                            cfg.optimizer.adamw_beta1,
-                            cfg.optimizer.adamw_beta2,
-                        ),
-                        eps=cfg.optimizer.adamw_eps,
-                        # *
-                        num_grads=cfg.optimizer.microadam_m,
-                        density=cfg.optimizer.microadam_k,
-                        quant_info=cfg.optimizer.microadam_quant_info,
-                        dtype_scales={"bf16": torch.bfloat16, "fp16": torch.float16}[cfg.optimizer.microadam_dtype_scales],
-                        dtype_values={"bf16": torch.bfloat16, "fp16": torch.float16}[cfg.optimizer.microadam_dtype_values],
-                        structured=cfg.optimizer.microadam_structured,
-                    ),
-                    AdamW(
-                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
-                        lr=cfg.optimizer.adamw_lr,
-                        weight_decay=cfg.optimizer.weight_decay,
-                        betas=(
-                            cfg.optimizer.adamw_beta1,
-                            cfg.optimizer.adamw_beta2,
-                        ),
-                        eps=cfg.optimizer.adamw_eps,
-                    )
-                ]
-                 opts[0].set_param_name_mapping(mapping={p: name for name, p in self.model.named_parameters()})
-                 return opts
-            case "trion":
-                return [
-                    Trion(
-                        params=self._get_linear_layers(),
-                        lr=cfg.optimizer.trion_lr,
-                        weight_decay=cfg.optimizer.weight_decay,
-                        momentum=cfg.optimizer.trion_momentum,
-                        # *
-                        rank=cfg.optimizer.trion_rank,
-                        scaling_type=cfg.optimizer.trion_scaling,
-                        proj_type=cfg.optimizer.trion_proj,
-                    ),
-                    AdamW(
-                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
-                        lr=cfg.optimizer.adamw_lr,
-                        weight_decay=cfg.optimizer.weight_decay,
-                        betas=(
-                            cfg.optimizer.adamw_beta1,
-                            cfg.optimizer.adamw_beta2,
-                        ),
-                        eps=cfg.optimizer.adamw_eps,
-                    )
-                ]
-            case _:
-                raise NotImplementedError(f'Optimizer {cfg.optimizer.optimizer_name} is not implemented!')
 
     def _get_input_embedding(self):
         return [self.model.token_embed.weight]
@@ -217,15 +58,7 @@ class MultiOptimizer:
         cfg = self.cfg
         for opt in self.optimizers:
             for group in opt.param_groups:
-                match cfg.optimizer.lr_sched_name:
-                    case "cosine":
-                        group["lr"] = get_lr_cos_warmup(
-                            cfg=cfg,
-                            lr_init=group["lr_init"],
-                            step=self.optim_iter,
-                        )
-                    case _:
-                        raise NotImplementedError(f"Scheduler {cfg.optimizer.lr_sched_name} is not implemented")
+                group["lr"] = self.lr_scheduler(t=self.optim_iter, peak=group["lr_init"])
 
     def extract_learning_rates(self):
         lrs = {}
@@ -259,3 +92,165 @@ class MultiOptimizer:
     def zero_grad(self, set_to_none=True):
         for opt in self.optimizers:
             opt.zero_grad(set_to_none=set_to_none)
+
+
+    def _create_optimizers_list(self):
+        oc = self.cfg.optimizer # oc = optimizer config
+
+        match oc.optimizer_name:
+            case "adamw8b":
+                return [
+                    AdamW8bit(
+                        params=self._get_all_params(),
+                        lr=oc.adamw_lr,
+                        weight_decay=oc.weight_decay,
+                        betas=(
+                            oc.adamw_beta1,
+                            oc.adamw_beta2,
+                        ),
+                        eps=oc.adamw_eps),
+                ]
+            case "adamw":
+                return [
+                    AdamW(
+                        params=self._get_all_params(),
+                        lr=oc.adamw_lr,
+                        weight_decay=oc.weight_decay,
+                        betas=(
+                            oc.adamw_beta1,
+                            oc.adamw_beta2,
+                        ),
+                        eps=oc.adamw_eps),
+                ]
+            case "muon":
+                match cfg.training.backend:
+                    case "single":
+                        muon_fn = MuonSingle
+                    case "ddp":
+                        muon_fn = MuonDDP
+                    case "fsdp2":
+                        muon_fn = MuonFSDP2
+
+                return [
+                    muon_fn(
+                        params=self._get_linear_layers(),
+                        lr=oc.muon_lr,
+                        weight_decay=oc.weight_decay,
+                        momentum=oc.muon_momentum
+                    ),
+                    AdamW(
+                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
+                        lr=oc.adamw_lr,
+                        weight_decay=oc.weight_decay,
+                        betas=(
+                            oc.adamw_beta1,
+                            oc.adamw_beta2,
+                        ),
+                        eps=oc.adamw_eps,
+                    )
+                ]
+            case "microadam-paper":
+                # the version that optimizes all layers wih MicroAdam
+                return [
+                    MicroAdam(
+                        params=self.model.parameters(),
+                        lr=oc.adamw_lr,
+                        m=oc.microadam_m,
+                        quant_block_size=oc.microadam_q_block,
+                        k_init=oc.microadam_k,
+                        alpha=0, # 0 means sparse update
+                        betas=(
+                            oc.adamw_beta1,
+                            oc.adamw_beta2,
+                        ),
+                        weight_decay=oc.weight_decay,
+                        eps=oc.adamw_eps,
+                    )
+                ]
+            case "microadam-new":
+                # the version that optimizes only the linear layers with MicroAdam
+                # and the other layers (embeds, layer norms) with AdamW
+                # implemented after discussing with Frederik Kunstner
+                return [
+                    MicroAdam(
+                        params=self._get_linear_layers(),
+                        lr=oc.microadam_lr,
+                        m=oc.microadam_m,
+                        quant_block_size=oc.microadam_q_block,
+                        k_init=oc.microadam_k,
+                        alpha=0, # 0 means sparse update
+                        betas=(
+                            oc.adamw_beta1,
+                            oc.adamw_beta2,
+                        ),
+                        weight_decay=oc.weight_decay,
+                        eps=oc.adamw_eps,
+                    ),
+                    AdamW(
+                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
+                        lr=oc.adamw_lr,
+                        weight_decay=oc.weight_decay,
+                        betas=(
+                            oc.adamw_beta1,
+                            oc.adamw_beta2,
+                        ),
+                        eps=oc.adamw_eps,
+                    )
+                ]
+            case "microadam-torch":
+                 opts = [
+                    MicroAdamTorch(
+                        params=self._get_linear_layers(),
+                        lr=oc.microadam_lr,
+                        weight_decay=oc.weight_decay,
+                        betas=(
+                            oc.adamw_beta1,
+                            oc.adamw_beta2,
+                        ),
+                        eps=oc.adamw_eps,
+                        # *
+                        num_grads=oc.microadam_m,
+                        density=oc.microadam_k,
+                        quant_info=oc.microadam_quant_info,
+                        dtype_scales={"bf16": torch.bfloat16, "fp16": torch.float16}[oc.microadam_dtype_scales],
+                        dtype_values={"bf16": torch.bfloat16, "fp16": torch.float16}[oc.microadam_dtype_values],
+                        structured=oc.microadam_structured,
+                    ),
+                    AdamW(
+                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
+                        lr=oc.adamw_lr,
+                        weight_decay=oc.weight_decay,
+                        betas=(
+                            oc.adamw_beta1,
+                            oc.adamw_beta2,
+                        ),
+                        eps=oc.adamw_eps,
+                    )
+                ]
+                 opts[0].set_param_name_mapping(mapping={p: name for name, p in self.model.named_parameters()})
+                 return opts
+            case "trion":
+                return [
+                    Trion(
+                        params=self._get_linear_layers(),
+                        lr=oc.trion_lr,
+                        weight_decay=oc.weight_decay,
+                        momentum=oc.trion_momentum,
+                        # *
+                        rank=oc.trion_rank,
+                        scaling_type=oc.trion_scaling,
+                        proj_type=oc.trion_proj,
+                    ),
+                    AdamW(
+                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
+                        lr=oc.adamw_lr,
+                        weight_decay=oc.weight_decay,
+                        betas=(
+                            oc.adamw_beta1,
+                            oc.adamw_beta2,
+                        ),
+                        eps=oc.adamw_eps,
+                    )
+                ]
+            case _:
+                raise NotImplementedError(f'Optimizer {oc.optimizer_name} is not implemented!')
