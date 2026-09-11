@@ -62,9 +62,9 @@ class OptimizerConfig:
     # Learning Rate scheduling
     lr_sched_name: Literal["cosine", "linear", "wsd"] = "cosine" # wsd = warmup-stable-decay
     lr_sched_warmup: float = 0.1 # percentage of number of steps at the beginning of training, e.g. first 10% steps we do linear lr warmup
+    lr_sched_wsd_decay: float = 0.9  # percentage of number of steps to do decay (0 => W => D => end)
     lr_sched_start_ratio: float = 0.01 # for warmup, start the lr value from lr * lr_sched_start_ratio
     lr_sched_end_ratio: float = 0.1 # for the decay part (after warmup), decay the lr value from lr to lr * lr_sched_end_ratio
-    lr_sched_wsd_decay: float = 0.9 # percentage of number of steps to do decay (0 => W => D => end)
 
     # AdamW parameters
     adamw_lr: float = 1e-3
@@ -193,6 +193,7 @@ def preprocess(cfg: ArgParseNamespace):
     #####
     ##### LR Schedule
     #####
+    assert 0 <= cfg.optimizer.lr_sched_warmup <= 1
     if cfg.optimizer.lr_sched_type == "wsd":
         W = cfg.optimizer.lr_sched_warmup
         D = cfg.optimizer.lr_sched_wsd_decay
