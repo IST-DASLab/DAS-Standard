@@ -28,20 +28,30 @@ class MultiOptimizer:
 
         self.zero_grad(set_to_none=True)
 
+    def _unwrap_model(self):
+        model = self.model
+        # Unwrap torch.compile wrapper
+        if hasattr(model, "_orig_mod"):
+            model = model._orig_mod
+        # Unwrap DDP wrapper
+        if hasattr(model, "module"):
+            model = model.module
+        return model
+
     def _get_input_embedding(self):
-        return [self.model.token_embed.weight]
+        return [self._unwrap_model().token_embed.weight]
 
     def _get_pos_embedding(self):
-        return [self.model.pos_embed.weight] if hasattr(self.model, "pos_embed") else []
+        return [self._unwrap_model().pos_embed.weight] if hasattr(self.model, "pos_embed") else []
 
     def _get_output_embedding(self):
-        return [self.model.lm_head.weight]
+        return [self._unwrap_model().lm_head.weight]
 
     def _get_layer_norms(self):
-        return [p for p in self.model.parameters() if p.ndim == 1]
+        return [p for p in self._unwrap_model().parameters() if p.ndim == 1]
 
     def _get_linear_layers(self):
-        return [p for p in self.model.blocks.parameters() if p.ndim == 2]
+        return [p for p in self._unwrap_model().blocks.parameters() if p.ndim == 2]
 
     def _get_all_params(self):
         return self.model.parameters()
