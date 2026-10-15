@@ -118,6 +118,7 @@ def block_muon_update(grad, momentum, block_size, beta=0.95, ns_steps=5, nestero
 
         R, C = update.shape # for DTensor, R will be the sharded dimension (num rows on the current worker)
         assert C % R == 0, f"For FSDP2, the local tensors should have C % R == 0, but got {C=} and {R=}"
+        block_size = min(R, C)
 
     blocks_3d = extract_all_blocks(update, B=block_size)
     ortho_blocks_3d = zeropower_via_newtonschulz5_bmm(blocks_3d, steps=ns_steps)
