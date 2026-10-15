@@ -148,7 +148,7 @@ if __name__ == "__main__":
         "trion_scaling": [
             "kj",
             # "none",
-            # "kimi",
+            # "rms",
             # "dion",
         ],
         "trion_proj": [

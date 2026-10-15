@@ -93,7 +93,7 @@ class OptimizerConfig:
     trion_lr: float = 1e-2
     trion_momentum: float = 0.95
     trion_rank: int = 128
-    trion_scaling: Literal["kj", "none", "kimi", "dion"] = "kj"
+    trion_scaling: Literal["kj", "none", "rms", "dion"] = "kj"
     trion_proj: Literal["dct", "eye"] = "dct"
 
 

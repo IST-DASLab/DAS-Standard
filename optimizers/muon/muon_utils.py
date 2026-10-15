@@ -57,12 +57,12 @@ def muon_scaling(p, scaling_type):
             return max(1, R / C) ** 0.5
         case 'none':
             return 1
-        case 'kimi':
+        case 'rms':
             return 0.2 * math.sqrt(max(R, C))
         case 'dion':
             return (R / C) ** 0.5
         case _:
-            raise RuntimeError(f"Unknown scaling type: {scaling_type}, should be 'kj', 'none', 'kimi' or 'dion'!")
+            raise RuntimeError(f"Unknown scaling type: {scaling_type}, should be 'kj', 'none', 'rms' or 'dion'!")
 
 def extract_all_blocks(layer, B):
     R, C = layer.shape
