@@ -10,7 +10,7 @@ from lr_scheduler import LRScheduler
 # from experimental_optimizers import MicroAdamTorch, Trion
 # from bitsandbytes.optim import AdamW8bit
 
-from experimental_optimizers.custom_muon.block_muon import BlockMuonSingle
+from experimental_optimizers.custom_muon.block_muon import BlockMuonSingle, BlockMuonDDP
 from .muon import MuonSingle, MuonDDP, MuonFSDP2All2All as MuonFSDP2
 
 
@@ -152,8 +152,17 @@ class MultiOptimizer:
                     )
                 ]
             case "block_muon":
+                match self.cfg.training.backend:
+                    case "single":
+                        block_muon_fn = BlockMuonSingle
+                    case "ddp":
+                        block_muon_fn = BlockMuonDDP
+                    case "fsdp2":
+                        raise RuntimeError(f"There is no implementation of BlockMuon for FSDP!")
+                        # block_muon_fn = MuonFSDP2
+
                 return [
-                    BlockMuonSingle(
+                    block_muon_fn(
                         params=self._get_linear_layers(),
                         lr=oc.muon_lr,
                         scaling_type=oc.muon_scaling_type,
