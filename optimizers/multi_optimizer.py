@@ -11,7 +11,7 @@ from lr_scheduler import LRScheduler
 # from bitsandbytes.optim import AdamW8bit
 
 from experimental_optimizers.custom_muon.block_muon import BlockMuonSingle, BlockMuonDDP
-from .muon import MuonSingle, MuonDDP, MuonFSDP2All2All as MuonFSDP2
+from .muon import MuonSingle, MuonDDP, MuonFSDP2All2All as MuonFSDP2, MuonFSDP2Block
 
 
 class MultiOptimizer:
@@ -168,8 +168,7 @@ class MultiOptimizer:
                     case "ddp":
                         block_muon_fn = BlockMuonDDP
                     case "fsdp2":
-                        raise RuntimeError(f"There is no implementation of BlockMuon for FSDP!")
-                        # block_muon_fn = MuonFSDP2
+                        block_muon_fn = MuonFSDP2Block
 
                 return [
                     block_muon_fn(
