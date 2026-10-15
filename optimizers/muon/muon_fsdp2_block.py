@@ -1,5 +1,6 @@
 import torch
-from optimizers.muon.muon_utils import muon_scaling, block_muon_update
+from optimizers.muon.muon_utils import muon_scaling, block_muon_update, muon_ddp_update
+
 
 class MuonFSDP2Block(torch.optim.Optimizer):
     def __init__(self, params, lr, scaling_type, block_size, weight_decay, momentum):
@@ -23,15 +24,17 @@ class MuonFSDP2Block(torch.optim.Optimizer):
 
                 G = p.grad
                 M = state["M"]
-                localR, localC = G.shape
 
-                localU = block_muon_update(grad=G,
-                                           momentum=M,
-                                           block_size=localR,
-                                           beta=mu,
-                                           ns_steps=5,
-                                           nesterov=True)
+                u = muon_ddp_update(grad=G, momentum=M, beta=mu, ns_steps=5, nesterov=True)
+
+                # localR, localC = G.shape
+                # localU = block_muon_update(grad=G,
+                #                            momentum=M,
+                #                            block_size=localR,
+                #                            beta=mu,
+                #                            ns_steps=5,
+                #                            nesterov=True)
 
                 scaling = muon_scaling(p, group["scaling_type"]) # computed using the shapes of the global tensor
                 p.mul_(1 - lr * wd)
-                p.to_local().add_(localU, alpha=-lr * scaling)
+                p.to_local().add_(u, alpha=-lr * scaling)
