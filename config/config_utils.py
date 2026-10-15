@@ -6,6 +6,7 @@ from .ladder_gpt import *
 from .ladder_llama2 import *
 from .ladder_llama3 import *
 from .ladder_qwen3 import *
+from .ladder_custom import *
 
 def model_config_factory(model_name_size):
     return {
@@ -55,6 +56,8 @@ def model_config_factory(model_name_size):
         "qwen3-7.2b": config_qwen3_7200m, # checked manually
         "qwen3-13.5b": config_qwen3_13500m, # checked manually
         "qwen3-29.3b": config_qwen3_29300m, # checked manually
+
+        "llama-custom": config_llama_custom, # checked_manually
     }[model_name_size.lower()]()
 
 def compute_num_iters_and_tokens(cfg, attn_fn, mlp_fn):
