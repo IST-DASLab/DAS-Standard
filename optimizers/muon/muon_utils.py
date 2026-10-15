@@ -1,4 +1,5 @@
 import torch
+import math
 
 
 def zeropower_via_newtonschulz5(G, steps: int):
@@ -29,6 +30,19 @@ def zeropower_via_newtonschulz5(G, steps: int):
         X = X.mT
     return X
 
+def muon_scaling(p, scaling_type):
+    R, C = p.shape
+    match scaling_type:
+        case 'kj':
+            return max(1, R / C) ** 0.5
+        case 'none':
+            return 1
+        case 'kimi':
+            return 0.2 * math.sqrt(max(R, C))
+        case 'dion':
+            return (R / C) ** 0.5
+        case _:
+            raise RuntimeError(f"Unknown scaling type: {scaling_type}, should be 'kj', 'none', 'kimi' or 'dion'!")
 
 def muon_ddp_update(grad, momentum, beta=0.95, ns_steps=5, nesterov=True):
     momentum.lerp_(grad, 1 - beta)

@@ -6,11 +6,12 @@ from argparse import Namespace as ArgParseNamespace
 from backends import BaseBackend
 from lr_scheduler import LRScheduler
 
-from ista_daslab_optimizers import MicroAdam
-from experimental_optimizers import MicroAdamTorch, Trion
-from bitsandbytes.optim import AdamW8bit
+# from ista_daslab_optimizers import MicroAdam
+# from experimental_optimizers import MicroAdamTorch, Trion
+# from bitsandbytes.optim import AdamW8bit
 
-# from .muon import MuonSingle, MuonDDP, MuonFSDP2
+from experimental_optimizers.custom_muon.block_muon import BlockMuonSingle
+from .muon import MuonSingle, MuonDDP, MuonFSDP2All2All as MuonFSDP2
 
 
 class MultiOptimizer:
@@ -123,7 +124,7 @@ class MultiOptimizer:
                         eps=oc.adamw_eps),
                 ]
             case "muon":
-                match cfg.training.backend:
+                match self.cfg.training.backend:
                     case "single":
                         muon_fn = MuonSingle
                     case "ddp":
@@ -135,6 +136,28 @@ class MultiOptimizer:
                     muon_fn(
                         params=self._get_linear_layers(),
                         lr=oc.muon_lr,
+                        scaling_type=oc.muon_scaling_type,
+                        weight_decay=oc.weight_decay,
+                        momentum=oc.muon_momentum
+                    ),
+                    AdamW(
+                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
+                        lr=oc.adamw_lr,
+                        weight_decay=oc.weight_decay,
+                        betas=(
+                            oc.adamw_beta1,
+                            oc.adamw_beta2,
+                        ),
+                        eps=oc.adamw_eps,
+                    )
+                ]
+            case "block_muon":
+                return [
+                    BlockMuonSingle(
+                        params=self._get_linear_layers(),
+                        lr=oc.muon_lr,
+                        scaling_type=oc.muon_scaling_type,
+                        block_size=oc.muon_block_size,
                         weight_decay=oc.weight_decay,
                         momentum=oc.muon_momentum
                     ),

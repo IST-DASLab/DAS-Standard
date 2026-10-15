@@ -2,13 +2,13 @@ import torch
 import torch.distributed as dist
 from torch.distributed.tensor import distribute_tensor
 
-from optimizers.muon.muon_utils import zeropower_via_newtonschulz5, shard_size_dim0
+from optimizers.muon.muon_utils import zeropower_via_newtonschulz5, shard_size_dim0, muon_scaling
 
 
 class MuonFSDP2All2All(torch.optim.Optimizer):
-    def __init__(self, params, lr, weight_decay, momentum):
+    def __init__(self, params, lr, scaling_type, weight_decay, momentum):
         params = sorted(params, key=lambda p: p.numel(), reverse=True) # sort to have balanced groups
-        super().__init__(params, dict(lr=lr, weight_decay=weight_decay, momentum=momentum))
+        super().__init__(params, dict(lr=lr, weight_decay=weight_decay, momentum=momentum, scaling_type=scaling_type))
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -56,7 +56,7 @@ class MuonFSDP2All2All(torch.optim.Optimizer):
                 if rank < len(chunk):
                     Z = torch.cat(recv, dim=0)
                     U = zeropower_via_newtonschulz5(Z, steps=5)
-                    U *= max(1, U.size(-2) / U.size(-1)) ** 0.5
+                    U *= muon_scaling(U, group["scaling_type"])
                     back_send = list(U.to(dtype=send[rank].dtype).split(sizes, dim=0)) # split the result according to the sizes
                 else:
                     back_send = [torch.empty(0, device=device) for _ in range(world_size)]

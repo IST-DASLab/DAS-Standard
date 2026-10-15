@@ -75,6 +75,8 @@ class OptimizerConfig:
     # Muon parameters
     muon_lr: float = 1e-2
     muon_momentum: float = 0.95
+    muon_block_size: int = 128
+    muon_scaling_type: str = 'kj'
 
     # MicroAdam parameters
     microadam_lr: float = 1e-3

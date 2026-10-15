@@ -1,12 +1,12 @@
 import torch
 from torch.distributed.tensor import distribute_tensor
 
-from optimizers.muon.muon_utils import zeropower_via_newtonschulz5
+from optimizers.muon.muon_utils import zeropower_via_newtonschulz5, muon_scaling
 
 
 class MuonFSDP2Redundant(torch.optim.Optimizer):
-    def __init__(self, params, lr, weight_decay, momentum):
-        super().__init__(params, dict(lr=lr, weight_decay=weight_decay, momentum=momentum))
+    def __init__(self, params, lr, scaling_type, weight_decay, momentum):
+        super().__init__(params, dict(lr=lr, weight_decay=weight_decay, momentum=momentum, scaling_type=scaling_type))
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -33,7 +33,7 @@ class MuonFSDP2Redundant(torch.optim.Optimizer):
 
                 U = zeropower_via_newtonschulz5(Z, steps=5) # this is the redundancy: all ranks perform exactly the same computation (simple solution)
 
-                coef = max(1, U.size(-2) / U.size(-1)) ** 0.5 # scaling constant
+                scaling = muon_scaling(U, group["scaling_type"])
                 # U.mul_(coef) # intentionally skip this operation and pack it into the learning rate
 
                 p.mul_(1 - lr * wd)
@@ -44,5 +44,5 @@ class MuonFSDP2Redundant(torch.optim.Optimizer):
                         placements=p.placements,
                         src_data_rank=None, # this means "no broadcasting, just take my local slice",
                     ),
-                    alpha=-lr * coef
+                    alpha=-lr * scaling
                 )
