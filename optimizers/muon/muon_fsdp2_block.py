@@ -34,4 +34,4 @@ class MuonFSDP2Block(torch.optim.Optimizer):
 
                 scaling = muon_scaling(p, group["scaling_type"]) # computed using the shapes of the global tensor
                 p.mul_(1 - lr * wd)
-                p.add_(localU, alpha=-lr * scaling)
+                p.to_local().add_(localU, alpha=-lr * scaling)
