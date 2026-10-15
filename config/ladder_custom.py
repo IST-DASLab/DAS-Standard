@@ -1,8 +1,9 @@
 from .configs import ModelConfig
 
-def config_llama_custom():
+def config_llama_1b_custom():
     # 973M non-embedding / 1.04B total. == Llama-3.2-1B (head_dim=64,
     # mlp_size=8192 is off-formula; that's the published value).
+    # This is a combination of hyper-params from Llama2-1b and Llama3-1b
     return ModelConfig(
         dtype="bf16",
         attn_type="gqa",

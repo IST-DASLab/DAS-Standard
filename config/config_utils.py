@@ -57,7 +57,7 @@ def model_config_factory(model_name_size):
         "qwen3-13.5b": config_qwen3_13500m, # checked manually
         "qwen3-29.3b": config_qwen3_29300m, # checked manually
 
-        "llama-custom": config_llama_custom, # checked_manually
+        "llama-1b-custom": config_llama_1b_custom, # checked_manually
     }[model_name_size.lower()]()
 
 def compute_num_iters_and_tokens(cfg, attn_fn, mlp_fn):
