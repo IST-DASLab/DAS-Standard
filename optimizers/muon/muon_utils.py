@@ -104,8 +104,8 @@ def reconstruct_from_blocks(blocks_3d, R, C):
 def muon_ddp_update(grad, momentum, beta=0.95, ns_steps=5, nesterov=True):
     momentum.lerp_(grad, 1 - beta)
     update = grad.lerp_(momentum, beta) if nesterov else momentum
-    if update.ndim == 4:  # for the case of conv filters
-        update = update.view(len(update), -1)
+    # if update.ndim == 4:  # for the case of conv filters
+    #     update = update.view(len(update), -1)
     update = zeropower_via_newtonschulz5(update, steps=ns_steps)
     return update
 
