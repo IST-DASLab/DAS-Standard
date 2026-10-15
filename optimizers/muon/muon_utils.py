@@ -1,5 +1,6 @@
 import torch
 import math
+from torch.distributed.tensor import DTensor
 
 
 def zeropower_via_newtonschulz5(G, steps: int):
@@ -113,7 +114,7 @@ def block_muon_update(grad, momentum, block_size, beta=0.95, ns_steps=5, nestero
     update = grad.lerp_(momentum, beta) if nesterov else momentum
 
     R, C = update.shape
-    if isinstance(update, torch.DTensor):
+    if isinstance(update, DTensor):
         update = update.to_local()
 
         R, C = update.shape # for DTensor, R will be the sharded dimension (num rows on the current worker)
