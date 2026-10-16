@@ -1,5 +1,6 @@
 import torch
 import math
+import torch.distributed as dist
 from torch.distributed.tensor import DTensor
 
 
@@ -60,10 +61,12 @@ def muon_scaling(p, scaling_type):
             return 1
         case 'rms':
             return 0.2 * math.sqrt(max(R, C))
+        case 'block':
+            return 0.2 * math.sqrt(max(R / dist.get_world_size(), C))
         case 'dion':
             return (R / C) ** 0.5
         case _:
-            raise RuntimeError(f"Unknown scaling type: {scaling_type}, should be 'kj', 'none', 'rms' or 'dion'!")
+            raise RuntimeError(f"Unknown scaling type: {scaling_type}, should be 'kj', 'none', 'rms', 'block' or 'dion'!")
 
 def extract_all_blocks(layer, B):
     R, C = layer.shape
