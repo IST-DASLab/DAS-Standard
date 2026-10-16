@@ -8,10 +8,9 @@ from lr_scheduler import LRScheduler
 
 # from ista_daslab_optimizers import MicroAdam
 # from experimental_optimizers import MicroAdamTorch, Trion
-# from bitsandbytes.optim import AdamW8bit
+from bitsandbytes.optim import AdamW8bit
 
-from experimental_optimizers.custom_muon.block_muon import BlockMuonSingle, BlockMuonDDP
-from .muon import MuonSingle, MuonDDP, MuonFSDP2All2All as MuonFSDP2, MuonFSDP2Block
+from .muon import MuonSingle, MuonDDP, MuonSingleBlock, MuonDDPBlock, MuonFSDP2All2All as MuonFSDP2, MuonFSDP2Block
 
 
 class MultiOptimizer:
@@ -164,9 +163,9 @@ class MultiOptimizer:
             case "block_muon":
                 match self.cfg.training.backend:
                     case "single":
-                        block_muon_fn = BlockMuonSingle
+                        block_muon_fn = MuonSingleBlock
                     case "ddp":
-                        block_muon_fn = BlockMuonDDP
+                        block_muon_fn = MuonDDPBlock
                     case "fsdp2":
                         block_muon_fn = MuonFSDP2Block
 
@@ -175,7 +174,6 @@ class MultiOptimizer:
                         params=self._get_linear_layers(),
                         lr=oc.muon_lr,
                         scaling_type=oc.muon_scaling_type,
-                        block_size=oc.muon_block_size,
                         weight_decay=oc.weight_decay,
                         momentum=oc.muon_momentum
                     ),
