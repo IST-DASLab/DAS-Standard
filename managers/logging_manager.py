@@ -155,6 +155,14 @@ class LoggingManager:
             self.metrics[TEXT_ELAPSED_ITER] = iter
             self.metrics[TEXT_GPU_MEM_ITER] = iter
 
+            # log redundant progress percent (step %)
+            training_progress = round(iter / self.cfg.training.max_iters, 4) * 100 # percentage between 0 and 100%
+            self.metrics[TEXT_LRS_PROG_PRCT] = training_progress
+            self.metrics[TEXT_TRAIN_PROG_PRCT] = training_progress
+            self.metrics[TEXT_VAL_PROG_PRCT] = training_progress
+            self.metrics[TEXT_ELAPSED_PROG_PRCT] = training_progress
+            self.metrics[TEXT_GPU_MEM_PROG_PRCT] = training_progress
+
             # log redundant tokens
             self.metrics[TEXT_LRS_TOKENS] = tokens
             self.metrics[TEXT_TRAIN_TOKENS] = tokens

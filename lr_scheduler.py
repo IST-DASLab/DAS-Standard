@@ -96,5 +96,7 @@ class LRScheduler:
                 return self._get_cosine_lr_w_linear_warmup(t, peak)
             case "wsd":
                 return self._get_wsd_lr_w_linear_warmup(t, peak)
+            case "const":
+                return peak
             case _:
                 raise NotImplementedError(f"Unknown schedule type {sched_name}")
