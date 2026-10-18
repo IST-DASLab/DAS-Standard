@@ -34,7 +34,7 @@ class LRScheduler:
     def _compute_info(self, peak):
         cfg = self.cfg
         T = cfg.training.max_iters # total number of steps
-        W = int(T * cfg.optimizer.lr_sched_warmup)
+        W = int(T * cfg.optimizer.lr_sched_warmup) if 0 <= cfg.optimizer.lr_sched_warmup < 1 else int(cfg.optimizer.lr_sched_warmup)
         start = peak * cfg.optimizer.lr_sched_start_ratio
         end = peak * cfg.optimizer.lr_sched_end_ratio
         return start, end, T, W
@@ -69,6 +69,16 @@ class LRScheduler:
 
         return interp(start=peak, end=end, alpha=(t - D) / max(1, T - D))
 
+    def _get_const_lr_w_linear_warmup(self, t, peak):
+        """
+            Similar to WSD with warmup and without decay
+        """
+        start, end, T, W = self._compute_info(peak)
+
+        if t < W:  # warmup
+            return interp(start=start, end=peak, alpha=t / max(1, W))
+
+        return peak
 
     def __call__(self, t, peak):
         """
@@ -97,6 +107,6 @@ class LRScheduler:
             case "wsd":
                 return self._get_wsd_lr_w_linear_warmup(t, peak)
             case "const":
-                return peak
+                return self._get_const_lr_w_linear_warmup(t, peak)
             case _:
                 raise NotImplementedError(f"Unknown schedule type {sched_name}")
