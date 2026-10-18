@@ -11,7 +11,7 @@ from torch import distributed as dist
 from tqdm.asyncio import tqdm
 
 from config import print_config
-from constants import TEXT_GPU_MEM_MIN, TEXT_GPU_MEM_AVG, TEXT_GPU_MEM_MAX, TEXT_LRS_ITER, TEXT_TRAIN_ITER, TEXT_VAL_ITER, TEXT_ELAPSED_ITER, TEXT_GPU_MEM_ITER
+from constants import *
 
 
 class LoggingManager:
@@ -145,13 +145,22 @@ class LoggingManager:
             self.metrics[TEXT_GPU_MEM_AVG] = avg
             self.metrics[TEXT_GPU_MEM_MAX] = M
 
-    def log_redundant_iters(self, crt_iter):
+    def log_redundant_info(self, iter, tokens):
+        # log these info in multiple panel grids redundantly to be used for x-axis inside that panel
         if self.is_master:
-            self.metrics[TEXT_LRS_ITER] = crt_iter
-            self.metrics[TEXT_TRAIN_ITER] = crt_iter
-            self.metrics[TEXT_VAL_ITER] = crt_iter
-            self.metrics[TEXT_ELAPSED_ITER] = crt_iter
-            self.metrics[TEXT_GPU_MEM_ITER] = crt_iter
+            # log current iteration
+            self.metrics[TEXT_LRS_ITER] = iter
+            self.metrics[TEXT_TRAIN_ITER] = iter
+            self.metrics[TEXT_VAL_ITER] = iter
+            self.metrics[TEXT_ELAPSED_ITER] = iter
+            self.metrics[TEXT_GPU_MEM_ITER] = iter
+
+            # log redundant tokens
+            self.metrics[TEXT_LRS_TOKENS] = tokens
+            self.metrics[TEXT_TRAIN_TOKENS] = tokens
+            self.metrics[TEXT_VAL_TOKENS] = tokens
+            self.metrics[TEXT_ELAPSED_TOKENS] = tokens
+            self.metrics[TEXT_GPU_MEM_TOKENS] = tokens
 
     def log(self, key, value):
         if self.is_master:

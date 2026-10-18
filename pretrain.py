@@ -80,6 +80,7 @@ def main():
             #####
             ##### Backward pass
             #####
+            # TODO: use grad scaler for fp16
             with timer.record(TEXT_ELAPSED_BACKWARD):
                 with backend.get_amp_context():
                     scaled_loss.backward()
@@ -119,7 +120,10 @@ def main():
         logger.log_dict(optimizer.extract_learning_rates())
         logger.log_dict(optimizer.get_optimzier_stats())
         logger.log_memory_usage()
-        logger.log_redundant_iters(crt_iter) # log crt_iter for each section in wandb
+        logger.log_redundant_info(
+            iter=crt_iter,
+            tokens=crt_iter * cfg.training.local_batch_size * cfg.training.grad_acc_steps * cfg.model.seq_len,
+        ) # log these values to all panel grids (section) in wandb
         logger.commit(step=crt_iter)
     # end for crt_iter
 
