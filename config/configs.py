@@ -2,7 +2,7 @@ import sys
 import torch
 import inspect
 from typing import Literal
-from simple_parsing import ArgumentParser
+from simple_parsing import ArgumentParser, Serializable
 from dataclasses import dataclass, is_dataclass
 from argparse import Namespace as ArgParseNamespace
 
@@ -110,8 +110,16 @@ class WandbConfig:
     job_type: str = None
     run_name: str = None
 
+@dataclass
+class GlobalConfig(Serializable):
+    training: TrainingConfig = TrainingConfig()
+    model: ModelConfig = ModelConfig()
+    qat: QATConfig = QATConfig()
+    optimizer: OptimizerConfig = OptimizerConfig()
+    dataset: DatasetConfig = DatasetConfig()
+    wandb: WandbConfig = WandbConfig()
 
-def get_dynamic_arg_parser():
+def get_dynamic_arg_parser_old():
     """
     This function iterates through all dataclasses defined in the config.py file
     and creates command line arguments dynamically.
@@ -134,10 +142,11 @@ def get_dynamic_arg_parser():
     temp_parser = ArgumentParser(add_help=False)
     temp_parser.add_arguments(TrainingConfig, dest="training")
     temp_known_args, _ = temp_parser.parse_known_args() # parse only args from TrainingConfig (added, so it's known)
+
     model_name_size = temp_known_args.training.model_name_size
 
     ##### step 2: build the full parser now
-    full_parser = ArgumentParser(description="Arguments are read from the dataclass fields *Config in configs package, such as ModelConfig, OptimizerConfig, etc.")
+    full_parser = ArgumentParser(description="Reads arguments from the dataclass fields *Config in configs package, such as ModelConfig, OptimizerConfig, etc.")
 
     for name, obj in inspect.getmembers(sys.modules[__name__]): # current module
         if inspect.isclass(obj) and is_dataclass(obj) and "config" in name.lower():
@@ -152,6 +161,28 @@ def get_dynamic_arg_parser():
 
     cfg = preprocess(full_parser.parse_args())
     return cfg
+
+def get_dynamic_arg_parser():
+    from .config_utils import model_config_factory
+
+    ##### step 1: build a temporary parser and extract `model_name_size`
+    temp_parser = ArgumentParser(add_help=False)
+    temp_parser.add_arguments(TrainingConfig, dest="training")
+    temp_known_args, _ = temp_parser.parse_known_args()
+
+    ##### step 2: retrieve model defaults based on model_name_size
+    model_ladder = model_config_factory(model_name_size=temp_known_args.training.model_name_size)
+
+    ##### step 3: instantiate base config with the injected model ladder
+    global_cfg = GlobalConfig(model=model_ladder)
+
+    ##### step 4: build full parser using hte initialized base config
+    full_parser = ArgumentParser(description="Reads arguments from the dataclass fields *Config in configs package, such as ModelConfig, OptimizerConfig, etc.")
+    full_parser.add_arguments(GlobalConfig, dest="config")
+
+    ##### step 5: parse and return "config" of type GlobalConfig
+    cfg = full_parser.parse_args().config # because of dest="config" above
+    return preprocess(cfg)
 
 
 def preprocess(cfg: ArgParseNamespace):
