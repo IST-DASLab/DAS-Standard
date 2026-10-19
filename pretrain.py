@@ -42,7 +42,7 @@ def main():
     #####
     ##### Eval for the randomly initialized model
     #####
-    eval_and_log(cfg, backend, model, val_reader, logger, 0)
+    eval_and_log(cfg, backend, model, val_reader, logger, crt_iter=0)
 
     #####
     ##### Training Loop
