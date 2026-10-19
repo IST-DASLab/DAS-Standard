@@ -145,30 +145,12 @@ class LoggingManager:
             self.metrics[TEXT_GPU_MEM_AVG] = avg
             self.metrics[TEXT_GPU_MEM_MAX] = M
 
-    def log_redundant_info(self, iter, tokens):
-        # log these info in multiple panel grids redundantly to be used for x-axis inside that panel
+    def log_xaxis(self, iter, tokens):
         if self.is_master:
-            # log current iteration
-            self.metrics[TEXT_LRS_ITER] = iter
-            self.metrics[TEXT_TRAIN_ITER] = iter
-            self.metrics[TEXT_VAL_ITER] = iter
-            self.metrics[TEXT_ELAPSED_ITER] = iter
-            self.metrics[TEXT_GPU_MEM_ITER] = iter
-
-            # log redundant progress percent (step %)
-            training_progress = round(iter / self.cfg.training.max_iters, 4) * 100 # percentage between 0 and 100%
-            self.metrics[TEXT_LRS_PROG_PRCT] = training_progress
-            self.metrics[TEXT_TRAIN_PROG_PRCT] = training_progress
-            self.metrics[TEXT_VAL_PROG_PRCT] = training_progress
-            self.metrics[TEXT_ELAPSED_PROG_PRCT] = training_progress
-            self.metrics[TEXT_GPU_MEM_PROG_PRCT] = training_progress
-
-            # log redundant tokens
-            self.metrics[TEXT_LRS_TOKENS] = tokens
-            self.metrics[TEXT_TRAIN_TOKENS] = tokens
-            self.metrics[TEXT_VAL_TOKENS] = tokens
-            self.metrics[TEXT_ELAPSED_TOKENS] = tokens
-            self.metrics[TEXT_GPU_MEM_TOKENS] = tokens
+            # log traces that can be used as x-axis in any panel grid
+            self.metrics[TEXT_XAXIS_ITER] = iter
+            self.metrics[TEXT_XAXIS_TOKENS] = tokens
+            self.metrics[TEXT_XAXIS_PROG_PRCT] = round(iter / self.cfg.training.max_iters, 4) * 100 # percentage between 0 and 100%
 
     def log(self, key, value):
         if self.is_master:

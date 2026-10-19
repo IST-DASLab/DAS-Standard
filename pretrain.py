@@ -18,16 +18,7 @@ from models import get_model
 from optimizers import MultiOptimizer
 from managers import LoggingManager, TimingManager
 from qat import wrap_model_for_qat
-from constants import (
-    TEXT_TRAIN_LOSS,
-    TEXT_TRAIN_PPL,
-    TEXT_TRAIN_GRAD_NORM,
-
-    TEXT_ELAPSED_OPTIM_STEP,
-    TEXT_ELAPSED_FORWARD,
-    TEXT_ELAPSED_BACKWARD,
-)
-
+from constants import *
 
 def main():
     cfg = get_dynamic_arg_parser()
@@ -104,7 +95,8 @@ def main():
         #####
         ##### Eval
         #####
-        eval_and_log(cfg, backend, model, val_reader, logger, crt_iter)
+        with timer.record(TEXT_ELAPSED_EVAL):
+            eval_and_log(cfg, backend, model, val_reader, logger, crt_iter)
 
         #####
         ##### Logging
@@ -120,7 +112,7 @@ def main():
         logger.log_dict(optimizer.extract_learning_rates())
         logger.log_dict(optimizer.get_optimzier_stats())
         logger.log_memory_usage()
-        logger.log_redundant_info(
+        logger.log_xaxis(
             iter=crt_iter,
             tokens=crt_iter * cfg.training.local_batch_size * cfg.training.grad_acc_steps * cfg.model.seq_len,
         ) # log these values to all panel grids (section) in wandb
