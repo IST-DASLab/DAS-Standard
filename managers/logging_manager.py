@@ -29,9 +29,9 @@ class LoggingManager:
                 name=cfg.wandb.run_name,
                 config=cfg,
             )
+            wandb.define_metric("*", step_metric=TEXT_XAXIS_ITER)
 
         self.cfg = cfg
-
         self.metrics = {}
         self.train_pbar = None
         self.eval_pbar = None
