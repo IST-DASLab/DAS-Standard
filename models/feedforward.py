@@ -1,5 +1,5 @@
 from argparse import Namespace as ArgParseNamespace
-
+import torch
 from torch import nn as nn
 
 
@@ -43,7 +43,7 @@ class LlamaFeedForward(nn.Module):
 
         E = cfg.model.embed_size
         Hdim = cfg.model.llama_mlp_size
-        dtype = cfg.model.dtype
+        dtype = dict(bf16=torch.bfloat16, fp16=torch.float16, fp32=torch.float32)[cfg.model.dtype]
 
         self.fc1 = nn.Linear(in_features=E, out_features=Hdim, dtype=dtype, bias=False)
         self.fc2 = nn.Linear(in_features=E, out_features=Hdim, dtype=dtype, bias=False)

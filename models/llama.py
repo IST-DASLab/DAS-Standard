@@ -41,7 +41,7 @@ class Llama(nn.Module):
         V = cfg.model.vocab_size
         L = cfg.model.num_layers
         S = cfg.model.seq_len
-        dtype = cfg.model.dtype
+        dtype = dict(bf16=torch.bfloat16, fp16=torch.float16, fp32=torch.float32)[cfg.model.dtype]
 
         assert not cfg.model.bias, "Llama model needs bias=False, but found bias=True"
 
@@ -62,7 +62,7 @@ class Llama(nn.Module):
             persistent=False)
 
     def forward(self, inputs, targets):
-        dtype = self.cfg.model.dtype
+        dtype = dict(bf16=torch.bfloat16, fp16=torch.float16, fp32=torch.float32)[self.cfg.model.dtype]
 
         x = self.token_embed(inputs)
         for block in self.blocks:

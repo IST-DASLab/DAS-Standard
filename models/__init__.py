@@ -1,3 +1,4 @@
+import torch
 from argparse import Namespace as ArgParseNamespace
 
 from models.gpt import GPT
@@ -7,7 +8,6 @@ from models.qwen import Qwen3
 
 def get_model(cfg: ArgParseNamespace):
     model_name_size = cfg.training.model_name_size
-    dtype = cfg.model.dtype
 
     if "gpt" in model_name_size:
         model = GPT(cfg)
@@ -18,4 +18,4 @@ def get_model(cfg: ArgParseNamespace):
     else:
         raise NotImplementedError
 
-    return model.to(dtype)
+    return model.to(dtype=dict(bf16=torch.bfloat16, fp16=torch.float16, fp32=torch.float32)[cfg.model.dtype])

@@ -29,7 +29,10 @@ class FSDP2Backend(BaseBackend):
     def wrap_model_then_compile(self, model):
         model = model.to(self.device) # TODO: use meta-device for large models
 
-        policy = MixedPrecisionPolicy(param_dtype=self.cfg.model.dtype, reduce_dtype=torch.float32)
+        policy = MixedPrecisionPolicy(
+            param_dtype=dict(bf16=torch.bfloat16, fp16=torch.float16, fp32=torch.float32)[self.cfg.model.dtype],
+            reduce_dtype=torch.float32,
+        )
         for block in model.blocks:
             fully_shard(block, mesh=self.mesh, mp_policy=policy)
         fully_shard(model, mesh=self.mesh, mp_policy=policy)

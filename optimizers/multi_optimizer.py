@@ -251,8 +251,8 @@ class MultiOptimizer:
                         num_grads=oc.microadam_m,
                         density=oc.microadam_k,
                         quant_info=oc.microadam_quant_info,
-                        dtype_scales={"bf16": torch.bfloat16, "fp16": torch.float16}[oc.microadam_dtype_scales],
-                        dtype_values={"bf16": torch.bfloat16, "fp16": torch.float16}[oc.microadam_dtype_values],
+                        dtype_scales=dict(bf16=torch.bfloat16, fp16=torch.float16)[oc.microadam_dtype_scales],
+                        dtype_values=dict(bf16=torch.bfloat16, fp16=torch.float16)[oc.microadam_dtype_values],
                         structured=oc.microadam_structured,
                     ),
                     AdamW(

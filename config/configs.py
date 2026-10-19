@@ -186,12 +186,6 @@ def preprocess(cfg: ArgParseNamespace):
     assert cfg.model.embed_size % cfg.model.num_heads == 0
 
     #####
-    ##### Map model dtype from string to torch dtype
-    #####
-    cfg.model.dtype = { "bf16": torch.bfloat16, "fp16": torch.float16, "fp32": torch.float32, }[cfg.model.dtype]
-
-
-    #####
     ##### LR Schedule
     #####
     if cfg.optimizer.lr_sched_name == "wsd":
