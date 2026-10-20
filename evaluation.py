@@ -43,7 +43,7 @@ def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
         text_loss = TEXT_FINAL_VAL_LOSS if is_last_step else TEXT_VAL_LOSS
         text_ppl = TEXT_FINAL_VAL_PPL if is_last_step else TEXT_VAL_PPL
 
-        logger.log_dict({text_loss: loss, text_ppl: total_ppl})
+        logger.log_dict({text_loss: total_loss, text_ppl: total_ppl})
         logger.log_console(
             f"\nEvaluation",
             data=OrderedDict(
