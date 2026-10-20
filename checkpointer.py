@@ -79,8 +79,7 @@ class Checkpointer:
                         os.remove(p)
                         print(f"Deleted file {p}")
 
-    def save(self, step: int, backend_type: str, config, reader, model, multi_optimizer):
-        assert backend_type in ["single", "ddp", "fsdp2"]
+    def save(self, step: int, config, reader, model, multi_optimizer):
         step_str = f"{step:08d}"
 
         paths = {
@@ -118,8 +117,7 @@ class Checkpointer:
         self.history[step] = paths
         self._trim_chkpts()
 
-    def load(self, step: int, backend_type: str, model, multi_optimizer):
-        assert backend_type in ["single", "ddp", "fsdp2"]
+    def load(self, step: int, model, multi_optimizer):
         step_str = f"{step:08d}"
 
         paths = {

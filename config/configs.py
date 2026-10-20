@@ -11,20 +11,15 @@ from models.feedforward import GPTFeedForward, LlamaFeedForward
 
 
 @dataclass
-class TrainingConfig: # mainly set by user
-    model_name_size: str = "llama3-1b"
-    seed: int = 42
-    num_tokens: float = 0 # do not set it explicitly because it will be computed in based on `chinchilla_token_ratio`
-    chinchilla_token_ratio: int = 1 # how many chinchillas to train the model for (sets num_tokens)
-    local_batch_size: int = 64 # per device batch size
-    grad_acc_steps: int = 8
-    max_iters: int = -1 # will be automatically determined based on number of tokens, seq len, device batch size and number of workers
-    backend: Literal["single", "ddp", "fsdp2"] = "ddp"
-    amp_dtype: Literal["bf16", "fp16", "fp32"] = "bf16"
-    compile_model: bool = False
-    eval_interval: int = 200
-    eval_batches: int = 32
-    output_folder: str = "./output"
+class CheckpointingConfig:
+    resume_folder: str = None
+    resume_step: int = None
+
+
+@dataclass
+class DatasetConfig:
+    dataset_path: str = "./data"
+    dataset_name: Literal["c4"] = "c4"
 
 
 @dataclass
@@ -44,12 +39,6 @@ class ModelConfig: # initialized via model ladders
     tie_embeds: bool = False
     gpt_mlp_exp_factor: int = 4
     llama_mlp_size: int = 11_008
-
-
-@dataclass
-class QATConfig:
-    qat_method: Literal["quartet2", "disabled"] = "disabled"
-    hadamard_size: int = 128
 
 
 @dataclass
@@ -97,9 +86,26 @@ class OptimizerConfig:
 
 
 @dataclass
-class DatasetConfig:
-    dataset_path: str = "./data"
-    dataset_name: Literal["c4"] = "c4"
+class QATConfig:
+    qat_method: Literal["quartet2", "disabled"] = "disabled"
+    hadamard_size: int = 128
+
+
+@dataclass
+class TrainingConfig: # mainly set by user
+    model_name_size: str = "llama3-1b"
+    seed: int = 42
+    num_tokens: float = 0 # do not set it explicitly because it will be computed in based on `chinchilla_token_ratio`
+    chinchilla_token_ratio: int = 1 # how many chinchillas to train the model for (sets num_tokens)
+    local_batch_size: int = 64 # per device batch size
+    grad_acc_steps: int = 8
+    max_iters: int = -1 # will be automatically determined based on number of tokens, seq len, device batch size and number of workers
+    backend: Literal["single", "ddp", "fsdp2"] = "ddp"
+    amp_dtype: Literal["bf16", "fp16", "fp32"] = "bf16"
+    compile_model: bool = False
+    eval_interval: int = 200
+    eval_batches: int = 32
+    output_folder: str = "./output"
 
 
 @dataclass
@@ -112,11 +118,12 @@ class WandbConfig:
 
 @dataclass
 class GlobalConfig(Serializable):
-    training: TrainingConfig = TrainingConfig()
-    model: ModelConfig = ModelConfig()
-    qat: QATConfig = QATConfig()
-    optimizer: OptimizerConfig = OptimizerConfig()
+    # checkpointing: CheckpointingConfig = CheckpointingConfig()
     dataset: DatasetConfig = DatasetConfig()
+    model: ModelConfig = ModelConfig()
+    optimizer: OptimizerConfig = OptimizerConfig()
+    qat: QATConfig = QATConfig()
+    training: TrainingConfig = TrainingConfig()
     wandb: WandbConfig = WandbConfig()
 
 def get_dynamic_arg_parser_old():

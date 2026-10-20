@@ -5,8 +5,8 @@ from optimizers.muon.muon_utils import muon_scaling, zeropower_via_newtonschulz5
 
 
 class MuonFSDP2Block(torch.optim.Optimizer):
-    def __init__(self, params, lr, scaling_type, block_size, weight_decay, momentum):
-        super().__init__(params, dict(lr=lr, weight_decay=weight_decay, momentum=momentum, scaling_type=scaling_type, block_size=block_size))
+    def __init__(self, params, lr, scaling_type, weight_decay, momentum):
+        super().__init__(params, dict(lr=lr, weight_decay=weight_decay, momentum=momentum, scaling_type=scaling_type))
 
     @torch.no_grad()
     def step(self, closure=None):

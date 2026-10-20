@@ -11,14 +11,15 @@ import math
 from collections import OrderedDict
 
 from backends import get_backend, BaseBackend
+from checkpointer import Checkpointer
 from config import get_dynamic_arg_parser
+from constants import *
 from data import get_data_readers
 from evaluation import eval_and_log
 from models import get_model
-from optimizers import MultiOptimizer
 from managers import LoggingManager, TimingManager
+from optimizers import MultiOptimizer
 from qat import wrap_model_for_qat
-from constants import *
 
 def main():
     cfg = get_dynamic_arg_parser()
