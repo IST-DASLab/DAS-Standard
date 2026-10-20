@@ -3,7 +3,7 @@ import torch
 import inspect
 from typing import Literal
 from simple_parsing import ArgumentParser, Serializable
-from dataclasses import dataclass, is_dataclass
+from dataclasses import dataclass, is_dataclass, field
 from argparse import Namespace as ArgParseNamespace
 
 from models.attention import MultiHeadSelfAttention, GroupedQueryAttention
@@ -104,7 +104,7 @@ class TrainingConfig: # mainly set by user
     amp_dtype: Literal["bf16", "fp16", "fp32"] = "bf16"
     compile_model: bool = False
     eval_interval: int = 200
-    eval_batches: int = 32
+    eval_batches: int = 32 # this is per worker. For 8 GPUs, the evaluation is done on 32x8 = 256 batches
     output_folder: str = "./output"
 
 
@@ -118,13 +118,13 @@ class WandbConfig:
 
 @dataclass
 class GlobalConfig(Serializable):
-    # checkpointing: CheckpointingConfig = CheckpointingConfig()
-    dataset: DatasetConfig = DatasetConfig()
-    model: ModelConfig = ModelConfig()
-    optimizer: OptimizerConfig = OptimizerConfig()
-    qat: QATConfig = QATConfig()
-    training: TrainingConfig = TrainingConfig()
-    wandb: WandbConfig = WandbConfig()
+    checkpointing: CheckpointingConfig = field(default_factory=CheckpointingConfig)
+    dataset:       DatasetConfig       = field(default_factory=DatasetConfig)
+    model:         ModelConfig         = field(default_factory=ModelConfig)
+    optimizer:     OptimizerConfig     = field(default_factory=OptimizerConfig)
+    qat:           QATConfig           = field(default_factory=QATConfig)
+    training:      TrainingConfig      = field(default_factory=TrainingConfig)
+    wandb:         WandbConfig         = field(default_factory=WandbConfig)
 
 def get_dynamic_arg_parser_old():
     """
@@ -185,7 +185,7 @@ def get_dynamic_arg_parser():
 
     ##### step 4: build full parser using hte initialized base config
     full_parser = ArgumentParser(description="Reads arguments from the dataclass fields *Config in configs package, such as ModelConfig, OptimizerConfig, etc.")
-    full_parser.add_arguments(GlobalConfig, dest="config")
+    full_parser.add_arguments(GlobalConfig, dest="config", default=global_cfg)
 
     ##### step 5: parse and return "config" of type GlobalConfig
     cfg = full_parser.parse_args().config # because of dest="config" above
