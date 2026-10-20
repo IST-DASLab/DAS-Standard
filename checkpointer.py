@@ -1,53 +1,66 @@
 import os
+import json
 import shutil
 from pathlib import Path
+from dataclasses import is_dataclass, asdict
+
 import torch
 import torch.distributed as dist
 import torch.distributed.checkpoint as dcp
 from torch.distributed.checkpoint.state_dict import get_state_dict, set_state_dict
-from wandb.sdk.lib import paths
 
 
-def mkdir(folder: Path):
-    if isinstance(folder, Path):
-        folder.mkdir(parents=True, exist_ok=True)
+def _save_config_json(config, path):
+    """Serialize dataclasses, dicts, or custom config objects to JSON."""
+    if is_dataclass(config):
+        data = asdict(config)
+    elif isinstance(config, dict):
+        data = config
+    elif hasattr(config, "__dict__"):
+        data = vars(config)
     else:
-        os.makedirs(folder, exist_ok=True)
+        data = {"config": str(config)}
+
+    with open(path, "w") as f:
+        json.dump(data, f, indent=4)
 
 class Checkpointer:
     def __init__(self, root_dir, max_chkpts: int = 0):
-        self.root_dir = root_dir
+        self.root_dir = Path(root_dir)
         self.max_chkpts = max_chkpts
         self.history = {}
 
         self.is_init = dist.is_initialized()
-        self.is_master = dist.get_rank() == 0
+        self.is_master = not self.is_init or dist.get_rank() == 0
+
+        if self.is_master:
+            self.root_dir.mkdir(parents=True, exist_ok=True)
+
+        if self.is_init:
+            dist.barrier()
 
         self._scan_existing_checkpoints()
 
     def _scan_existing_checkpoints(self):
         """Populate history from disk, so resuming training respects max_chkpts."""""
-        for f in os.listdir(self.cfg.output_folder):
+        if not self.root_dir.exists():
+            return
+
+        for f in os.listdir(self.root_dir):
             if f.startswith("config-") and f.endswith(".pt"):
                 step_str = f.split("-")[-1].split(".")[0]
                 step = int(step_str)
 
-                paths = [
-                    os.path.join(self.root_dir, f"config-{step_str}.pt"),
-                    os.path.join(self.root_dir, f"reader-{step_str}.pt"),
-                ]
+                self.history[step] = {
+                    # files
+                    "config_pt": self.root_dir / f"config-{step_str}.pt",
+                    "config_json": self.root_dir / f"config-{step_str}.json",
+                    "reader": self.root_dir / f"reader-{step_str}.pt",
 
-                if not os.path.isdir(os.path.join(self.root_dir, f"model-{step_str}")): # FSDP2 saves states in folders by default
-                    ext = ""
-                else: # DDP saves states in files with ".pt" extension
-                    ext = ".pt"
-
-                paths.extend([
-                    os.path.join(self.root_dir, f"model-{step_str}{ext}"),
-                    os.path.join(self.root_dir, f"optimizer-{step_str}{ext}"),
-                ])
-
-                self.history[step] = paths
+                    # folders
+                    "model": self.root_dir / f"model-{step_str}",
+                    "optimizer": self.root_dir / f"optimizer-{step_str}",
+                }
 
     def _trim_chkpts(self):
         if self.max_chkpts <= 0:
@@ -58,47 +71,46 @@ class Checkpointer:
             oldest_paths = self.history.pop(oldest_step)
 
             if self.is_master:
-                for p in oldest_paths:
+                for p in oldest_paths.values():
                     if os.path.isdir(p):
                         shutil.rmtree(p)
+                        print(f"Deleted folder {p}")
                     elif os.path.isfile(p):
                         os.remove(p)
+                        print(f"Deleted file {p}")
 
     def save(self, step: int, backend_type: str, config, reader, model, multi_optimizer):
         assert backend_type in ["single", "ddp", "fsdp2"]
         step_str = f"{step:08d}"
 
         paths = {
-            "config": os.path.join(self.root_dir, f"config-{step_str}.pt"),
-            "reader": os.path.join(self.root_dir, f"reader-{step_str}.pt"),
+            # files
+            "config_pt": self.root_dir / f"config-{step_str}.pt",
+            "config_json": self.root_dir / f"config-{step_str}.json",
+            "reader": self.root_dir / f"reader-{step_str}.pt",
+
+            # folders
+            "model": self.root_dir / f"model-{step_str}",
+            "optimizer": self.root_dir / f"optimizer-{step_str}",
         }
 
-        if backend_type == "fsdp2":
-            paths["model"] = os.path.join(self.root_dir, f"model-{step_str}")
-            paths["optim"] = os.path.join(self.root_dir, f"optimizer-{step_str}")
+        model_sd, optim_sd = get_state_dict(model=model, optimizers=tuple(multi_optimizer.optimizers))
 
-            # all ranks are involved in dcp
-            model_sd, optim_sd = get_state_dict(model=model, optimizers=tuple(multi_optimizer.optimizers))
+        print(f'Saving model to {paths["model"]}')
+        dcp.save({"model": model_sd}, checkpoint_id=paths["model"])
 
-            dcp.save({"model": model_sd}, checkpoint_id=paths["model"])
-            dcp.save({"optimizer": optim_sd}, checkpoint_id=paths["optim"])
+        print(f'Saving optimizer to {paths["optimizer"]}')
+        dcp.save({"optimizer": optim_sd}, checkpoint_id=paths["optimizer"])
 
-            if self.is_master:
-                torch.save(config, paths["config"])
-                torch.save(reader, paths["reader"])
-            # end if
-        else: # "single" or "ddp"
-            paths["model"] = os.path.join(self.root_dir, f"model-{step_str}.pt")
-            paths["optim"] = os.path.join(self.root_dir, f"optimizer-{step_str}.pt")
+        if self.is_master:
+            print(f'Saving pt config to {paths["config_pt"]}')
+            torch.save(obj=config, f=paths["config_pt"])
 
-            if self.is_master:
-                unwrapped = model.module if hasattr(model, "module") else model
-                torch.save(obj=unwrapped.state_dict(), f=paths["model"])
-                torch.save(obj=[opt.state_dict() for opt in multi_optimizer.optimizers], f=paths["optim"])
-                torch.save(obj=reader, f=paths["reader"])
-                torch.save(obj=config, f=paths["config"])
-            # end if
-        # end if-else
+            print(f'Saving json config to {paths["config_json"]}')
+            _save_config_json(config=config, path=paths["config_json"])
+
+            print(f'Saving pt reader to {paths["reader_pt"]}')
+            torch.save(obj=reader, f=paths["reader_pt"])
 
         if self.is_init:
             dist.barrier()
@@ -110,33 +122,30 @@ class Checkpointer:
         assert backend_type in ["single", "ddp", "fsdp2"]
         step_str = f"{step:08d}"
 
-        if backend_type == "fsdp2":
-            model_dir = os.path.join(self.root_dir, f"model-{step_str}")
-            optim_dir = os.path.join(self.root_dir, f"optimizer-{step_str}")
+        paths = {
+            # files
+            "config_pt": self.root_dir / f"config-{step_str}.pt",
+            # "config_json": self.root_dir / f"config-{step_str}.json", # not needed
+            "reader": self.root_dir / f"reader-{step_str}.pt",
 
-            model_sd, optim_sd = get_state_dict(model=model, optimizers=tuple(multi_optimizer.optimizers))
+            # folders
+            "model": self.root_dir / f"model-{step_str}",
+            "optimizer": self.root_dir / f"optimizer-{step_str}",
+        }
 
-            dcp.load({"model": model_sd}, checkpoint_id=model_dir) # inplace loading
-            dcp.load({"optimizer": optim_sd}, checkpoint_id=optim_dir) # inplace loading
+        model_sd, optim_sd = get_state_dict(model=model, optimizers=tuple(multi_optimizer.optimizers))
 
-            set_state_dict(model, tuple(multi_optimizer.optimizers), model_state_dict=model_sd, optim_state_dict=optim_sd)
-        else:
-            device = f"cuda:{dist.get_rank()}" if self.is_init else "cuda"
+        print(f'Loading model from {paths["model"]}')
+        dcp.load({"model": model_sd}, checkpoint_id=paths["model"])
 
-            unwrapped = model.module if hasattr(model, "module") else model
+        print(f'Loading optimizer from {paths["optimizer"]}')
+        dcp.load({"optimizer": optim_sd}, checkpoint_id=paths["optimizer"])
+        set_state_dict(model=model, optimizers=tuple(multi_optimizer.optimizers), model_state_dict=model_sd, optim_state_dict=optim_sd)
 
-            model_state = torch.load(os.path.join(self.root_dir, f"model-{step_str}.pt"))
-            optim_states = torch.load(os.path.join(self.root_dir, f"optimizer-{step_str}.pt"))
+        print(f'Loading pt config from {paths["config_pt"]}')
+        config = torch.load(paths["config_pt"], map_location="cpu", weights_only=False)
 
-            unwrapped.load_state_dict(model_state, map_location=device, weights_only=False)
-            for opt, sd in zip(multi_optimizer.optimizers, optim_states):
-                opt.load_state_dict(sd, map_location=device, weights_only=False)
-        # end if-else
-
-        config_path = os.path.join(self.root_dir, f"config-{step_str}.pt")
-        reader_path = os.path.join(self.root_dir, f"reader-{step_str}.pt")
-
-        config = torch.load(config_path, map_location="cpu", weights_only=False)
-        reader = torch.load(reader_path, map_location="cpu", weights_only=False)
+        print(f'Loading pt reader from {paths["reader_pt"]}')
+        reader = torch.load(paths["reader_pt"], map_location="cpu", weights_only=False)
 
         return config, reader
