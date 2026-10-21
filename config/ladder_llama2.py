@@ -10,7 +10,7 @@ def config_llama2_23m():
     # 10.6M non-embedding / 22.9M total (tied embeds)
     return ModelConfig(
         dtype="bf16",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=6,  # == num_heads, i.e. MHSA
         qk_norm=False,
         rope_theta=10_000.0,
@@ -31,7 +31,7 @@ def config_llama2_44m():
     # 27.3M non-embedding / 43.6M total (tied embeds)
     return ModelConfig(
         dtype="bf16",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -52,7 +52,7 @@ def config_llama2_134m():
     # 84.9M non-embedding / 134M total.
     return ModelConfig(
         dtype="bf16",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=12,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -73,7 +73,7 @@ def config_llama2_246m():
     # 180M non-embedding / 246M total. First rung with real GQA.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=4,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -94,7 +94,7 @@ def config_llama2_702m():
     # 604M non-embedding / 702M total. head_dim=128 from here up.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=4,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -115,7 +115,7 @@ def config_llama2_1100m():
     # 969M non-embedding / 1.10B total. == TinyLlama-1.1B shape (head_dim=64).
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=4,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -136,7 +136,7 @@ def config_llama2_2800m():
     # 2.62B non-embedding / 2.81B total. Roughly the OpenLLaMA-3B slot.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -157,7 +157,7 @@ def config_llama2_6700m():
     # 6.48B non-embedding / 6.74B total. (Your seed config; rope_theta corrected.)
     return ModelConfig(
         dtype="bf16",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=32,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -178,7 +178,7 @@ def config_llama2_13b():
     # 12.69B non-embedding / 13.02B total.
     return ModelConfig(
         dtype="bf16",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=40,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -200,7 +200,7 @@ def config_llama2_33700m():
     # Llama-2 34B base model was announced but never released).
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -222,7 +222,7 @@ def config_llama2_68900m():
     # with multiple_of=4096, which is why it's 28_672 and not 28_416.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,

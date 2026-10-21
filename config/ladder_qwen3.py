@@ -80,7 +80,7 @@ def config_qwen3_11m():
     # q_proj/o_proj path. Good smoke test.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=2,
         rope_theta=1_000_000.0,
         vocab_size=151_936,
@@ -101,7 +101,7 @@ def config_qwen3_23m():
     # 10M non-embedding / 22.6M total.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=2,
         rope_theta=1_000_000.0,
         vocab_size=151_936,
@@ -122,7 +122,7 @@ def config_qwen3_42m():
     # 31.5M non-embedding / 41.56M total.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=4,
         rope_theta=1_000_000.0,
         vocab_size=151_936,
@@ -144,7 +144,7 @@ def config_qwen3_107m():
     # params outweigh the embedding table.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=4,
         rope_theta=1_000_000.0,
         vocab_size=151_936,
@@ -167,7 +167,7 @@ def config_qwen3_234m():
     # depth-only ablation against a released checkpoint.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         rope_theta=1_000_000.0,
         vocab_size=151_936,
@@ -188,7 +188,7 @@ def config_qwen3_385m():
     # 352.3M non-embedding / 385.2M total. == Qwen3-0.6B. (tied embeds)
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         rope_theta=1_000_000.0,
         vocab_size=151_936,
@@ -210,7 +210,7 @@ def config_qwen3_1500m():
     # count as 0.6B, 2x the width.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         rope_theta=1_000_000.0,
         vocab_size=151_936,
@@ -231,7 +231,7 @@ def config_qwen3_3300m():
     # 3.28B non-embedding / 3.36B total. == Qwen3-4B. Last tied-embedding rung.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         rope_theta=1_000_000.0,
         vocab_size=151_936,
@@ -252,7 +252,7 @@ def config_qwen3_7200m():
     # 6.94B non-embedding / 7.2B total. == Qwen3-8B.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         rope_theta=1_000_000.0,
         vocab_size=151_936,
@@ -273,7 +273,7 @@ def config_qwen3_13500m():
     # 13.21B non-embedding / 13.54B total. == Qwen3-14B.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         rope_theta=1_000_000.0,
         vocab_size=151_936,
@@ -296,7 +296,7 @@ def config_qwen3_29300m():
     # count (40 -> 64, so H*head_dim = 1.6x the residual stream) and a 5x MLP.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         rope_theta=1_000_000.0,
         vocab_size=151_936,

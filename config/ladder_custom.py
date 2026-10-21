@@ -6,7 +6,7 @@ def config_llama_1b_custom():
     # This is a combination of hyper-params from Llama2-1b and Llama3-1b
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,

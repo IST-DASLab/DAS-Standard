@@ -11,7 +11,7 @@ def config_llama3_44m():
     # 27.26M non-embedding / 43.65M total. Note: 71% of params are the embedding.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=2,
         qk_norm=False,
         rope_theta=500_000.0,
@@ -32,7 +32,7 @@ def config_llama3_121m():
     # 96.7M non-embedding / 121M total.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=4,
         qk_norm=False,
         rope_theta=500_000.0,
@@ -53,7 +53,7 @@ def config_llama3_251m():
     # 218M non-embedding / 250.9M total.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=4,
         qk_norm=False,
         rope_theta=500_000.0,
@@ -75,7 +75,7 @@ def config_llama3_1b():
     # mlp_size=8192 is off-formula; that's the published value).
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=500_000.0,
@@ -96,7 +96,7 @@ def config_llama3_2900m():
     # 2.81B non-embedding / 2.9B total. == Llama-3.2-3B.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=500_000.0,
@@ -117,7 +117,7 @@ def config_llama3_7200m():
     # 6.98B non-embedding / 7.24B total. == Llama-3-8B. (Your seed config.)
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=500_000.0,
@@ -139,7 +139,7 @@ def config_llama3_16500m():
     # sits here. Shape follows the family's 1.3x SwiGLU rule at d=5120.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=500_000.0,
@@ -160,7 +160,7 @@ def config_llama3_69b():
     # 68.45B non-embedding / 68.98B total. == Llama-3-70B.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=500_000.0,
@@ -181,7 +181,7 @@ def config_llama3_405b():
     # 401.65B non-embedding / 405.85B total. == Llama-3.1-405B.
     return ModelConfig(
         dtype="bf16",
-        attn_type="gqa",
+        attn_type="gqa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=500_000.0,

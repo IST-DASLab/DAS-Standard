@@ -11,7 +11,7 @@ def config_gpt_12m():
     # 3.1M non-embedding / 11.6M total. Debug / unit-test scale.
     return ModelConfig(
         dtype="fp32",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=8,  # not used for GPT
         qk_norm=False,
         rope_theta=10_000.0,  # not used for GPT
@@ -32,7 +32,7 @@ def config_gpt_23m():
     # 10.6M non-embedding / 23M total.
     return ModelConfig(
         dtype="fp32",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -53,7 +53,7 @@ def config_gpt_42m():
     # 25.2M non-embedding / 42M total (tied embeds)
     return ModelConfig(
         dtype="fp32",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -74,7 +74,7 @@ def config_gpt_90m():
     # 49.2M non-embedding / 90M total.
     return ModelConfig(
         dtype="fp32",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -95,7 +95,7 @@ def config_gpt_135m():
     # 84.9M non-embedding / 135M total. == GPT-2 small. (Your seed config.)
     return ModelConfig(
         dtype="fp32",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -116,7 +116,7 @@ def config_gpt_268m():
     # 201M non-embedding / 268M total. Interpolated between GPT-2 small/medium.
     return ModelConfig(
         dtype="fp32",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -137,7 +137,7 @@ def config_gpt_368m():
     # 302M non-embedding / 368M total. == GPT-2 medium.
     return ModelConfig(
         dtype="fp32",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -158,7 +158,7 @@ def config_gpt_791m():
     # 708M non-embedding / 791M total. == GPT-2 large.
     return ModelConfig(
         dtype="fp32",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -182,7 +182,7 @@ def config_gpt_1500m():
     # head_dim=80 if you need it to divide cleanly.
     return ModelConfig(
         dtype="bf16",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -203,7 +203,7 @@ def config_gpt_2700m():
     # 2.52B non-embedding / 2.68B total. == GPT-3 "2.7B" shape (head_dim=80).
     return ModelConfig(
         dtype="bf16",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -224,7 +224,7 @@ def config_gpt_6700m():
     # 6.44B non-embedding / 6.7B total. == GPT-3 "6.7B" shape.
     return ModelConfig(
         dtype="bf16",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,
@@ -245,7 +245,7 @@ def config_gpt_12900m():
     # 12.58B non-embedding / 12.90B total. == GPT-3 "13B" shape.
     return ModelConfig(
         dtype="bf16",
-        attn_type="mhsa",
+        attn_type="mhsa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
         rope_theta=10_000.0,
