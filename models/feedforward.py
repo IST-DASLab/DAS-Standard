@@ -20,14 +20,14 @@ class GPTFeedForward(nn.Module):
 
         self.fc = nn.Linear(in_features=E, out_features=E_expanded, bias=bias)
         self.Wo = nn.Linear(in_features=E_expanded, out_features=E, bias=bias)
-        self.dropout = nn.Dropout(cfg.model.dropout)
+        # self.dropout = nn.Dropout(cfg.model.dropout)
         self.activation = nn.GELU()
 
     def forward(self, x):
         x = self.fc(x)
         x = self.activation(x)
         x = self.Wo(x)
-        x = self.dropout(x)
+        # x = self.dropout(x)
         return x
 
 

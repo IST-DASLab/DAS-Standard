@@ -34,7 +34,7 @@ class ModelConfig: # initialized via model ladders
     num_heads: int = 8
     embed_size: int = 1024
     seq_len: int = 1024
-    dropout: float = 0.0
+    # dropout: float = 0.0
     bias: bool = False
     tie_embeds: bool = False
     gpt_mlp_exp_factor: int = 4

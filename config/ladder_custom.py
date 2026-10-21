@@ -15,7 +15,7 @@ def config_llama_1b_custom():
         num_heads=32,
         embed_size=2048,
         seq_len=1024,
-        dropout=0.0,
+        # dropout=0.0,
         bias=False,
         tie_embeds=True,
         gpt_mlp_exp_factor=4,

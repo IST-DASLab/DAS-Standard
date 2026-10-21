@@ -34,12 +34,12 @@ class GPT(nn.Module):
         V = cfg.model.vocab_size
         L = cfg.model.num_layers
         S = cfg.model.seq_len
-        drp = cfg.model.dropout
+        # drp = cfg.model.dropout
         bias = cfg.model.bias
 
         self.token_embed = nn.Embedding(V, E)
         self.pos_embed = nn.Embedding(S, E)
-        self.dropout = nn.Dropout(drp)
+        # self.dropout = nn.Dropout(drp)
         self.blocks = nn.ModuleList([GPTBlock(cfg) for _ in range(L)])
         self.norm = KarpathyLayerNorm(E, bias=bias)
         self.lm_head = nn.Linear(in_features=E, out_features=V, bias=bias)
@@ -79,7 +79,8 @@ class GPT(nn.Module):
         tok_emb = self.token_embed(inputs)
         pos_emb = self.pos_embed(pos)
 
-        x = self.dropout(tok_emb + pos_emb)
+        # x = self.dropout(tok_emb + pos_emb)
+        x = tok_emb + pos_emb
         for block in self.blocks:
             x = block(x, self.mask)
         x = self.norm(x)
