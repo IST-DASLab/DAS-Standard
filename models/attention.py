@@ -140,7 +140,7 @@ class Attention(nn.Module):
         # (B, Nh, T, H).T(1,2) = (B, T, Nh, H) => (B, T, E)
         out = attn_out.transpose(1, 2).contiguous().view_as(x) # .view(B, T, E)
         out = self.Wo(out)
-        out = self.dropout_out(out)
+        # out = self.dropout_out(out)
 
         return out
 
