@@ -32,10 +32,10 @@ if __name__ == "__main__":
     OPTIMIZER = "adamw"
 
     main(
-        # dist=False,
-        dist=True,
+        dist=False,
+        # dist=True,
         gpus=[
-            0,
+            # 0,
             1,
             2,
             3,
@@ -49,8 +49,10 @@ if __name__ == "__main__":
             ##### ModelConfig #####
             ##########################
             "attn_type": [
-                "mhsa",
-                "mhsa-flash"
+                # "mhsa",
+                "mhsa-flash",
+                # "gqa",
+                # "gqa-flash",
             ],
 
             ##########################
@@ -58,7 +60,8 @@ if __name__ == "__main__":
             ##########################
             "model_name_size": [
                 # "gpt-42m",
-                "llama2-44m",
+                # "llama2-44m",
+                "llama-1b-custom",
                 # "llama3-44m",
                 # "qwen3-42m",
             ],
@@ -69,8 +72,8 @@ if __name__ == "__main__":
             "grad_acc_steps": [32],
             # "max_iters": [-1], # not needed, automatically determined
             "backend": [
-                # "single",
-                "ddp",
+                "single",
+                # "ddp",
                 # "fsdp2",
             ],
             "amp_dtype": ["bf16"],
@@ -118,7 +121,7 @@ if __name__ == "__main__":
             "project": [f"das-standard-test"],
             "group": [
                 Template(
-                    "attn=${attn_type}_${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}_sched=${lr_sched_name}"
+                    "attn=${attn_type}_${model_name_size}_${optimizer_name}"
                 )
             ],
             "job_type": [
