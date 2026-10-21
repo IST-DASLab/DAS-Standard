@@ -6,7 +6,7 @@ from simple_parsing import ArgumentParser, Serializable
 from dataclasses import dataclass, is_dataclass, field
 from argparse import Namespace as ArgParseNamespace
 
-from models.attention import MultiHeadSelfAttention, GroupedQueryAttention
+from models.attention import get_MHSA_param_count, get_GQA_param_count # MultiHeadSelfAttention, GroupedQueryAttention
 from models.feedforward import GPTFeedForward, LlamaFeedForward
 
 
@@ -202,13 +202,13 @@ def preprocess(cfg: ArgParseNamespace):
     ##### Set functions to compute params count
     #####
     if "gpt" in model_name_size:
-        attn_params_fn = MultiHeadSelfAttention.get_param_count
+        attn_params_fn = get_MHSA_param_count
         mlp_params_fn = GPTFeedForward.get_param_count
     elif ("llama" in model_name_size) or ("qwen" in model_name_size):
         if "mhsa" in cfg.model.attn_type:
-            attn_params_fn = MultiHeadSelfAttention.get_param_count
+            attn_params_fn = get_MHSA_param_count
         elif "gqa" in cfg.model.attn_type:
-            attn_params_fn = GroupedQueryAttention.get_param_count
+            attn_params_fn = get_GQA_param_count
         else:
             raise RuntimeError(f"Invalid attn_type for attn_params_fn!")
         mlp_params_fn = LlamaFeedForward.get_param_count

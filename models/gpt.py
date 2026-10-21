@@ -5,7 +5,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 from argparse import Namespace as ArgParseNamespace
 
-from models.attention import MultiHeadSelfAttention
+from models.attention import Attention # MultiHeadSelfAttention
 from models.feedforward import GPTFeedForward
 from models.norm import KarpathyLayerNorm
 from models.rope import precompute_rope
@@ -14,7 +14,7 @@ from models.rope import precompute_rope
 class GPTBlock(nn.Module):
     def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
-        self.attn = MultiHeadSelfAttention(cfg)
+        self.attn = Attention(cfg)
         self.mlp = GPTFeedForward(cfg)
         self.norm1 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
         self.norm2 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)

@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 from argparse import Namespace as ArgParseNamespace
 
-from models.attention import attn_factory
+from models.attention import Attention # , attn_factory
 from models.feedforward import LlamaFeedForward
 from models.norm import RMSNorm
 from models.rope import precompute_rope
@@ -13,7 +13,7 @@ class LlamaBlock(nn.Module):
     def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
         E = cfg.model.embed_size
-        self.attn = attn_factory(cfg)
+        self.attn = Attention(cfg)
         self.mlp = LlamaFeedForward(cfg)
         self.norm1 = RMSNorm(ndim=E, bias=False)
         self.norm2 = RMSNorm(ndim=E, bias=False)
