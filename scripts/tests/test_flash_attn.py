@@ -32,8 +32,8 @@ if __name__ == "__main__":
     OPTIMIZER = "adamw"
 
     main(
-        dist=False,
-        # dist=True,
+        # dist=False,
+        dist=True,
         gpus=[
             0,
             1,
@@ -115,7 +115,7 @@ if __name__ == "__main__":
             ##### WandbConfig #####
             #######################
             "entity": ["ist"],
-            "project": [f"das-standard"],
+            "project": [f"das-standard-test"],
             "group": [
                 Template(
                     "attn=${attn_type}_${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}_sched=${lr_sched_name}"
