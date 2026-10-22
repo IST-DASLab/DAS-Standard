@@ -58,7 +58,7 @@ class Attention(nn.Module):
             out_kv = E
             self.KV_view_dim = Nh
         elif self.is_gqa:
-            out_kv = Nkvg * E
+            out_kv = Nkvg * H
             self.KV_view_dim = Nkvg
         else:
             raise NotImplementedError(f"Unknown attention type: {cfg.model.attn_type}")
