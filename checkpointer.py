@@ -83,8 +83,11 @@ class CheckpointManager:
 
 class Checkpointer:
     def __init__(self, load_dir: str, save_dir: str, max_limit: int = 0):
-        self.load_dir = Path(load_dir)
+        assert save_dir is not None, f"save_dir must always be valid!"
+
+        self.load_dir = None if load_dir is None else Path(load_dir)
         self.save_dir = Path(save_dir)
+
         self.max_limit = max_limit
         self.history = {}
 
@@ -102,7 +105,7 @@ class Checkpointer:
 
     def _scan_existing_checkpoints(self):
         """Populate history from disk, so resuming training respects max_limit."""""
-        if not self.load_dir.exists():
+        if self.load_dir is None:
             return
 
         for f in os.listdir(self.load_dir):
@@ -171,6 +174,9 @@ class Checkpointer:
         self._trim_chkpts()
 
     def load(self, step: int, model, multi_optimizer):
+        if self.load_dir is None:
+            return None, None
+
         step_str = f"{step:08d}"
 
         paths = {

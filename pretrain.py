@@ -36,21 +36,23 @@ def main():
     optimizer = MultiOptimizer(cfg, model, backend) # build optimizer: params are now DTensors
 
     train_reader, val_reader = get_data_readers(cfg)
+    logger.log_console(f"Dataset tokens", data=OrderedDict(train=f"{train_reader.num_toks:_}", val=f"{val_reader.num_toks:_}"))
 
+    #####
+    ##### Checkpointer
+    #####
     chkpt_mgr = CheckpointManager(cfg)
     start_iter = chkpt_mgr.setup_resume(model, optimizer, train_reader)
 
-    logger.log_console(f"Dataset tokens", data=OrderedDict(train=f"{train_reader.num_toks:_}", val=f"{val_reader.num_toks:_}"))
-    logger.start_train_pbar(start_iter=start_iter-1, total_iters=cfg.training.max_iters)
-
     #####
-    ##### Eval for the randomly initialized model
+    ##### Eval for the randomly initialized model or the loaded checkpoint
     #####
     eval_and_log(cfg, backend, model, val_reader, logger, crt_iter=0 if start_iter == 1 else start_iter-1)
 
     #####
     ##### Training Loop
     #####
+    logger.start_train_pbar(start_iter=start_iter - 1, total_iters=cfg.training.max_iters)
     for crt_iter in range(start_iter, 1 + cfg.training.max_iters):
         #####
         ##### Training
