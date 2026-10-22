@@ -21,3 +21,24 @@ def config_llama_1b_custom():
         gpt_mlp_exp_factor=4,
         llama_mlp_size=8_192,
     )
+
+def config_llama_8b_custom():
+    # 8B params
+    # config inspired from config_llama3_7200m
+    return ModelConfig(
+        dtype="bf16",
+        attn_type="gqa-flash",
+        attn_gqa_kvg=8,
+        qk_norm=False,
+        rope_theta=10_000.0,
+        vocab_size=32_000,
+        num_layers=32,
+        num_heads=32,
+        embed_size=4096,
+        seq_len=1024,
+        # dropout=0.0,
+        bias=False,
+        tie_embeds=False,
+        gpt_mlp_exp_factor=4,
+        llama_mlp_size=16_384,
+    )
