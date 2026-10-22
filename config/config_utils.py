@@ -58,6 +58,7 @@ def model_config_factory(model_name_size):
         "qwen3-29.3b": config_qwen3_29300m, # checked manually
 
         "llama-1b-custom": config_llama_1b_custom, # checked_manually
+        "llama-4b-custom": config_llama_4b_custom,  # checked_manually
         "llama-8b-custom": config_llama_8b_custom, # checked manually
     }[model_name_size.lower()]()
 
