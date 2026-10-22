@@ -8,16 +8,19 @@
 ### Command Line Arguments
 - **[done]** configs with dataclasses and simple-parsing
 
+### Training Loop
+- **[ ]** gradient checkpointing
+
 ### Distributed Backend
-- **[2 / 3]** distributed backend file for:
+- **[done]** distributed backend file for:
   - **[done]**  single-gpu 
   - **[done]** DDP
   - **[done]** FSDP support
-    - **[ ]** use meta-device for large models
-    - **[done]** test FSDP 
+    - **[done]** test FSDP
+    - **[ ]** use meta-device for large models 
 
 ### Matmuls Precision
-- **[ ]** integrate Quartet-II
+- **[done]** integrate Quartet-II
   - **[ ]** test Quartet-II
 
 ### Dataset
@@ -31,7 +34,8 @@
 - **[done]** Qwen
 - **[ ]** OLMo
 - **[done]** custom models with different number of params for each family
-- **[ ]** add option to use custom attention implementation or FlashAttention from PyTorch. See comparison in [LLM-from-scratch](https://github.com/rasbt/LLMs-from-scratch/blob/main/ch03/02_bonus_efficient-multihead-attention/mha-implementations.ipynb)
+- **[done]** add option to use custom attention implementation or FlashAttention from PyTorch. See comparison in [LLM-from-scratch]
+  (https://github.com/rasbt/LLMs-from-scratch/blob/main/ch03/02_bonus_efficient-multihead-attention/mha-implementations.ipynb)
 - **[ ]** implement KV-cache for inference
 - **[done]** allocate only one mask (for attention) and sin/cos (for RoPE) in the model class and not for each attention module 
 
