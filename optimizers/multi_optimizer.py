@@ -112,7 +112,7 @@ class MultiOptimizer:
                 return [
                     AdamW8bit(
                         params=self._get_all_params(),
-                        lr=oc.adamw_lr,
+                        lr=oc.lr,
                         weight_decay=oc.weight_decay,
                         betas=(
                             oc.adamw_beta1,
@@ -124,7 +124,7 @@ class MultiOptimizer:
                 return [
                     AdamW(
                         params=self._get_all_params(),
-                        lr=oc.adamw_lr,
+                        lr=oc.lr,
                         weight_decay=oc.weight_decay,
                         betas=(
                             oc.adamw_beta1,
@@ -144,14 +144,14 @@ class MultiOptimizer:
                 return [
                     muon_fn(
                         params=self._get_linear_layers(),
-                        lr=oc.muon_lr,
+                        lr=oc.lr,
                         scaling_type=oc.muon_scaling_type,
                         weight_decay=oc.weight_decay,
                         momentum=oc.muon_momentum
                     ),
                     AdamW(
                         params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
-                        lr=oc.adamw_lr,
+                        lr=oc.lr,
                         weight_decay=oc.weight_decay,
                         betas=(
                             oc.adamw_beta1,
@@ -172,14 +172,14 @@ class MultiOptimizer:
                 return [
                     block_muon_fn(
                         params=self._get_linear_layers(),
-                        lr=oc.muon_lr,
+                        lr=oc.lr,
                         scaling_type=oc.muon_scaling_type,
                         weight_decay=oc.weight_decay,
                         momentum=oc.muon_momentum
                     ),
                     AdamW(
                         params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
-                        lr=oc.adamw_lr,
+                        lr=oc.lr,
                         weight_decay=oc.weight_decay,
                         betas=(
                             oc.adamw_beta1,
@@ -193,7 +193,7 @@ class MultiOptimizer:
                 return [
                     MicroAdam(
                         params=self.model.parameters(),
-                        lr=oc.adamw_lr,
+                        lr=oc.lr,
                         m=oc.microadam_m,
                         quant_block_size=oc.microadam_q_block,
                         k_init=oc.microadam_k,
@@ -213,7 +213,7 @@ class MultiOptimizer:
                 return [
                     MicroAdam(
                         params=self._get_linear_layers(),
-                        lr=oc.microadam_lr,
+                        lr=oc.lr,
                         m=oc.microadam_m,
                         quant_block_size=oc.microadam_q_block,
                         k_init=oc.microadam_k,
@@ -227,7 +227,7 @@ class MultiOptimizer:
                     ),
                     AdamW(
                         params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
-                        lr=oc.adamw_lr,
+                        lr=oc.lr,
                         weight_decay=oc.weight_decay,
                         betas=(
                             oc.adamw_beta1,
@@ -240,7 +240,7 @@ class MultiOptimizer:
                  opts = [
                     MicroAdamTorch(
                         params=self._get_linear_layers(),
-                        lr=oc.microadam_lr,
+                        lr=oc.lr,
                         weight_decay=oc.weight_decay,
                         betas=(
                             oc.adamw_beta1,
@@ -257,7 +257,7 @@ class MultiOptimizer:
                     ),
                     AdamW(
                         params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
-                        lr=oc.adamw_lr,
+                        lr=oc.lr,
                         weight_decay=oc.weight_decay,
                         betas=(
                             oc.adamw_beta1,
@@ -272,7 +272,7 @@ class MultiOptimizer:
                 return [
                     Trion(
                         params=self._get_linear_layers(),
-                        lr=oc.trion_lr,
+                        lr=oc.lr,
                         weight_decay=oc.weight_decay,
                         momentum=oc.trion_momentum,
                         # *
@@ -282,7 +282,7 @@ class MultiOptimizer:
                     ),
                     AdamW(
                         params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
-                        lr=oc.adamw_lr,
+                        lr=oc.lr,
                         weight_decay=oc.weight_decay,
                         betas=(
                             oc.adamw_beta1,

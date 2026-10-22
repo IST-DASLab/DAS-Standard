@@ -51,6 +51,7 @@ class OptimizerConfig:
     grad_clipping: float = 1.0 # rescale the global gradient to have this norm. Set to 0 to disable
 
     # Learning Rate scheduling
+    lr: float = 1e-3
     lr_sched_name: Literal["cosine", "linear", "wsd", "const"] = "cosine" # wsd = warmup-stable-decay
     lr_sched_warmup: float = 0.1 # percentage of number of steps at the beginning of training, e.g. first 10% steps we do linear lr warmup
     lr_sched_wsd_decay: float = 0.9  # percentage of number of steps to do decay (0 => W => D => end)
@@ -58,18 +59,16 @@ class OptimizerConfig:
     lr_sched_end_ratio: float = 0.1 # for the decay part (after warmup), decay the lr value from lr to lr * lr_sched_end_ratio
 
     # AdamW parameters
-    adamw_lr: float = 1e-3
     adamw_beta1: float = 0.9
     adamw_beta2: float = 0.95
     adamw_eps: float = 1e-8
 
     # Muon parameters
-    muon_lr: float = 1e-2
     muon_momentum: float = 0.95
     muon_scaling_type: str = 'rms'
 
     # MicroAdam parameters
-    microadam_lr: float = 1e-3
+    # microadam_lr: float = 1e-3
     microadam_m: int = 10 # number of gradients in the sliding window
     microadam_k: float = 0.01 # gradient density (sparsity = 1 - k)
     microadam_quant_info: str = "symm-int4-32" # asymm/symm-int4/fp4-32
@@ -80,7 +79,7 @@ class OptimizerConfig:
     microadam_structured: int = 0
 
     # Trion parameters
-    trion_lr: float = 1e-2
+    # trion_lr: float = 1e-2
     trion_momentum: float = 0.95
     trion_rank: int = 128
     trion_scaling: Literal["kj", "none", "rms", "dion"] = "kj"

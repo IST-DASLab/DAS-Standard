@@ -11,7 +11,7 @@ import math
 from collections import OrderedDict
 
 from backends import get_backend, BaseBackend
-from checkpointer import Checkpointer
+from checkpointer import CheckpointManager
 from config import get_dynamic_arg_parser
 from constants import *
 from data import get_data_readers
@@ -37,6 +37,9 @@ def main():
 
     train_reader, val_reader = get_data_readers(cfg)
 
+    chkpt_mgr = CheckpointManager(cfg)
+    start_iter = chkpt_mgr.setup_resume(model, optimizer, train_reader)
+
     logger.log_console(f"Dataset tokens", data=OrderedDict(train=f"{train_reader.num_toks:_}", val=f"{val_reader.num_toks:_}"))
     logger.start_train_pbar(total_iters=cfg.training.max_iters)
 
@@ -48,7 +51,7 @@ def main():
     #####
     ##### Training Loop
     #####
-    for crt_iter in range(1, 1 + cfg.training.max_iters):
+    for crt_iter in range(start_iter, 1 + cfg.training.max_iters):
         #####
         ##### Training
         #####
@@ -118,6 +121,12 @@ def main():
             tokens=crt_iter * cfg.training.local_batch_size * cfg.training.grad_acc_steps * cfg.model.seq_len,
         ) # log these values to all panel grids (section) in wandb
         logger.commit(step=crt_iter)
+
+        #####
+        ##### Checkpointing
+        #####
+        if (crt_iter % cfg.checkpointing.freq == 0) or (crt_iter == cfg.cfg.training.max_iters):
+            chkpt_mgr.save_checkpoint(crt_iter, model, optimizer, train_reader)
     # end for crt_iter
 
     logger.finish()

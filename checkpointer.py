@@ -24,6 +24,65 @@ def _save_config_json(config, path):
     with open(path, "w") as f:
         json.dump(data, f, indent=4)
 
+
+
+class CheckpointManager:
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.chkpt_dir = cfg.checkpointing.resume_folder or cfg.training.output_folder
+        self.checkpointer = Checkpointer(
+            root_dir=self.chkpt_dir,
+            max_limit=cfg.checkpointing.max_limit,
+        )
+
+    def setup_resume(self, model, multi_optimizer, train_reader):
+        """
+            Loads model and optimizer tensor states while enforcing new CLI runtime configs.
+            Returns the starting iteration index (start_iter).
+        """
+        resume_step = self.cfg.checkpointing.resume_step
+        if resume_step is None:
+            return 1
+
+        if resume_step == -1:
+            if not self.checkpointer.history:
+                raise RuntimeError(f"No valid checkpoints found in {self.chkpt_dir} to resume from.")
+            resume_step = max(self.checkpointer.history.keys())
+
+        print(f"[Checkpointer] Resuming parameter states from step {resume_step} in {self.chkpt_dir}...")
+
+        disk_config, disk_reader = self.checkpointer.load(
+            step=resume_step,
+            model=model,
+            multi_optimizer=multi_optimizer,
+        )
+
+        if disk_reader is not None:
+            train_reader.load_state_dict(disk_reader.load_state_dict())
+
+        self._recompute_optimizer_lrs(multi_optimizer)
+
+        return resume_step + 1
+
+    def _recompute_optimizer_lrs(self, multi_optimizer):
+        oc = self.cfg.optimizer
+
+        for opt in multi_optimizer.optimizers:
+            for group in opt.param_groups:
+                group["weight_decay"] = oc.weight_decay
+                group["lr_init"] = oc.lr
+
+        multi_optimizer._update_learning_rates()
+
+    def save_checkpoint(self, step: int, model, multi_optimizer, train_reader):
+        self.checkpointer.save(
+            step=step,
+            config=self.cfg,
+            reader=train_reader,
+            model=model,
+            multi_optimizer=multi_optimizer,
+        )
+
 class Checkpointer:
     def __init__(self, root_dir, max_limit: int = 0):
         self.root_dir = Path(root_dir)
@@ -55,7 +114,7 @@ class Checkpointer:
                     # files
                     "config_pt": self.root_dir / f"config-{step_str}.pt",
                     "config_json": self.root_dir / f"config-{step_str}.json",
-                    "reader": self.root_dir / f"reader-{step_str}.pt",
+                    "reader_pt": self.root_dir / f"reader-{step_str}.pt",
 
                     # folders
                     "model": self.root_dir / f"model-{step_str}",
@@ -86,7 +145,7 @@ class Checkpointer:
             # files
             "config_pt": self.root_dir / f"config-{step_str}.pt",
             "config_json": self.root_dir / f"config-{step_str}.json",
-            "reader": self.root_dir / f"reader-{step_str}.pt",
+            "reader_pt": self.root_dir / f"reader-{step_str}.pt",
 
             # folders
             "model": self.root_dir / f"model-{step_str}",
@@ -124,7 +183,7 @@ class Checkpointer:
             # files
             "config_pt": self.root_dir / f"config-{step_str}.pt",
             # "config_json": self.root_dir / f"config-{step_str}.json", # not needed
-            "reader": self.root_dir / f"reader-{step_str}.pt",
+            "reader_pt": self.root_dir / f"reader-{step_str}.pt",
 
             # folders
             "model": self.root_dir / f"model-{step_str}",

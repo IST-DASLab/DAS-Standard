@@ -137,3 +137,17 @@ class SimpleDataReader:
             y = y.to(device)
 
         return x, y
+
+    def state_dict(self):
+        return {
+            "step": self.step,
+            "last_epoch": self.last_epoch,
+        }
+
+    def load_state_dict(self, state_dict):
+        self.step = state_dict.get("step", 0)
+        self.last_epoch = state_dict.get("last_epoch", None)
+
+        # deterministically reconstruct self.perm and self.epoch_token_offset
+        if self.last_epoch is not None:
+            self._shuffle_epoch(self.last_epoch)
