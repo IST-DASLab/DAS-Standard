@@ -115,7 +115,7 @@ if __name__ == "__main__":
         "lr_sched_end_ratio": ["0.1"],
 
         # AdamW parameters
-        "adamw_lr": [
+        "lr": [
             "1e-3",
             "2e-3",
             "3e-3",
@@ -127,13 +127,6 @@ if __name__ == "__main__":
         "adamw_eps": ["1e-8"],
 
         # Trion parameters
-        "trion_lr": [
-            "1e-2",
-            "2e-2",
-            "3e-2",
-            "4e-2",
-            "5e-2",
-        ],
         "trion_momentum": ["0.95"],
         "trion_rank": [
             # 1,
@@ -175,7 +168,7 @@ if __name__ == "__main__":
     match OPTIMIZER:
         case "adamw":
             params["group"] = [Template("${model_name_size}_${optimizer_name}")]
-            params["job_type"] = [Template("lr=${adamw_lr}")]
+            params["job_type"] = [Template("lr=${lr}")]
         case "trion":
             params["group"] = [
                 Template(
@@ -185,7 +178,7 @@ if __name__ == "__main__":
                     "s=${trion_scaling}_"
                     "p=${trion_proj}"),
             ]
-            params["job_type"] = [Template("lr-adamw=${adamw_lr}_lr-trion=${trion_lr}")]
+            params["job_type"] = [Template("lr=${lr}")]
         case _:
             raise RuntimeError(f"Unknown OPTIMIZER: {OPTIMIZER}")
 

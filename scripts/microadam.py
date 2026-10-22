@@ -122,7 +122,7 @@ if __name__ == "__main__":
         "lr_sched_end_ratio": ["0.1"],
 
         # AdamW parameters
-        "adamw_lr": [
+        "lr": [
             # "1e-4",
             # "2e-4",
             # "4e-4",
@@ -145,28 +145,9 @@ if __name__ == "__main__":
         "adamw_eps": ["1e-8"],
 
         # Muon parameters
-        "muon_lr": ["4e-2"],
         "muon_momentum": ["0.95"],
 
         # MicroAdam parameters
-        "microadam_lr": [
-            # "1e-4",
-            # "2e-4",
-            # "3e-4",
-            # "4e-4",
-
-            "1e-3",
-            # "2e-3",
-            # "3e-3",
-            # "4e-3",
-            # "5e-3",
-
-            # "6e-3",
-            # "7e-3",
-            # "8e-3",
-            # "9e-3",
-            # "1e-2",
-        ],
         "microadam_m": [
             # 1,
             2,
@@ -220,7 +201,7 @@ if __name__ == "__main__":
     match OPTIMIZER:
         case "adamw" | "adamw8b":
             params["group"] = [Template("compile=${compile_model}_${model_name_size}_${optimizer_name}")]
-            params["job_type"] = [Template("lr=${adamw_lr}")]
+            params["job_type"] = [Template("lr=${lr}")]
         case "microadam-torch":
             params["group"] = [
                 Template(
@@ -233,7 +214,7 @@ if __name__ == "__main__":
                     "info=${microadam_quant_info}_"
                     "struc=${microadam_structured}"),
             ]
-            params["job_type"] = [Template("lr-adamw=${adamw_lr}_lr-microadam=${microadam_lr}")]
+            params["job_type"] = [Template("lr=${lr}")]
         case "microadam-new":
             params["group"] = [
                 Template(
@@ -244,7 +225,7 @@ if __name__ == "__main__":
                     "k=${microadam_k}_"
                     "q=${microadam_q_block}"),
             ]
-            params["job_type"] = [Template("lr-adamw=${adamw_lr}_lr-microadam=${microadam_lr}")]
+            params["job_type"] = [Template("lr=${lr}")]
         case _:
             raise RuntimeError(f"Unknown OPTIMIZER: {OPTIMIZER}")
 

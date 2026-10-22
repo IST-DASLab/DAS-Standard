@@ -68,7 +68,6 @@ class OptimizerConfig:
     muon_scaling_type: str = 'rms'
 
     # MicroAdam parameters
-    # microadam_lr: float = 1e-3
     microadam_m: int = 10 # number of gradients in the sliding window
     microadam_k: float = 0.01 # gradient density (sparsity = 1 - k)
     microadam_quant_info: str = "symm-int4-32" # asymm/symm-int4/fp4-32
@@ -79,7 +78,6 @@ class OptimizerConfig:
     microadam_structured: int = 0
 
     # Trion parameters
-    # trion_lr: float = 1e-2
     trion_momentum: float = 0.95
     trion_rank: int = 128
     trion_scaling: Literal["kj", "none", "rms", "dion"] = "kj"

@@ -117,7 +117,7 @@ if __name__ == "__main__":
             "lr_sched_end_ratio": ["0.1"],
 
             # AdamW parameters
-            "adamw_lr": [
+            "lr": [
                 "1e-3",
             ],
             "adamw_beta1": ["0.9"],
@@ -125,7 +125,6 @@ if __name__ == "__main__":
             "adamw_eps": ["1e-8"],
 
             # Muon parameters
-            "muon_lr": ["4e-2"],
             "muon_momentum": ["0.95"],
 
             # MicroAdam parameters
@@ -191,8 +190,7 @@ if __name__ == "__main__":
                     # Template("${model_name_size}_${optimizer_name}_m=${microadam_m}_k=${microadam_k}_q=${microadam_q_block}"),
             ],
             "job_type": [
-                Template("lr=${adamw_lr}"), # AdamW
-                # Template("lr-muon=${muon_lr}_lr-adamw=${adamw_lr}"),  # Muon
+                Template("lr=${lr}"),
             ],
             "run_name": [Template("${group}_${job_type}_seed=${seed}")],
         }

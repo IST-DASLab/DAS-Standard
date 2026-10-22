@@ -101,7 +101,7 @@ if __name__ == "__main__":
             "lr_sched_end_ratio": ["0.1"],
 
             # AdamW parameters
-            "adamw_lr": [
+            "lr": [
                 "1e-3",
             ],
             "adamw_beta1": ["0.9"],
@@ -125,7 +125,7 @@ if __name__ == "__main__":
                 )
             ],
             "job_type": [
-                Template("lr=${adamw_lr}"), # AdamW
+                Template("lr=${lr}"),
             ],
             "run_name": [Template("${group}_${job_type}_seed=${seed}")],
         }
