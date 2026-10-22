@@ -15,7 +15,7 @@ class CheckpointingConfig:
     resume_folder: str = None
     resume_step: int = None # -1 loads last checkpoint on disk
     max_limit: int = -1 # how many chkpts to keep on disk (<= 0 means "keep all")
-    freq: int = 1000 # save checkpoints at multiples of "freq"
+    chkpt_freq: int = 1000 # save checkpoints at multiples of "freq"
 
 
 @dataclass
