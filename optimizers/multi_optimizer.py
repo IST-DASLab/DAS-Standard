@@ -65,7 +65,6 @@ class MultiOptimizer:
                 group["lr_init"] = group["lr"]
 
     def _update_learning_rates(self):
-        cfg = self.cfg
         for opt in self.optimizers:
             for group in opt.param_groups:
                 group["lr"] = self.lr_scheduler(t=self.optim_iter, peak=group["lr_init"])
@@ -91,9 +90,7 @@ class MultiOptimizer:
             loss = closure()
 
         self.optim_iter += 1
-
         self._update_learning_rates()
-
         for opt in self.optimizers:
             opt.step()
 
@@ -102,7 +99,6 @@ class MultiOptimizer:
     def zero_grad(self, set_to_none=True):
         for opt in self.optimizers:
             opt.zero_grad(set_to_none=set_to_none)
-
 
     def _create_optimizers_list(self):
         oc = self.cfg.optimizer # oc = optimizer config

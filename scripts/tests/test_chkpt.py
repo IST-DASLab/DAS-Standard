@@ -48,10 +48,10 @@ if __name__ == "__main__":
             ##########################
             ##### Checkpointing  #####
             ##########################
-            # "resume_folder": [],
-            # "resume_step": [],
-            # "max_limit": [-1],
-            "freq": [100],
+            "resume_folder": ['/mnt/beegfs/alistgrp/imodoran/results/das-standard-test/chkpt_llama2-44m_adamw_lr=1e-3_seed=42'],
+            "resume_step": [500],
+            "max_limit": [0],
+            "chkpt_freq": [100],
 
             ##########################
             ##### ModelConfig    #####
@@ -129,7 +129,7 @@ if __name__ == "__main__":
             "project": [f"das-standard-test"],
             "group": [
                 Template(
-                    "${model_name_size}_${optimizer_name}"
+                    "chkpt-load-${resume_step}_${model_name_size}_${optimizer_name}" # -load-${resume_step}
                 )
             ],
             "job_type": [

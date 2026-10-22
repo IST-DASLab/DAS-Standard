@@ -41,12 +41,12 @@ def main():
     start_iter = chkpt_mgr.setup_resume(model, optimizer, train_reader)
 
     logger.log_console(f"Dataset tokens", data=OrderedDict(train=f"{train_reader.num_toks:_}", val=f"{val_reader.num_toks:_}"))
-    logger.start_train_pbar(total_iters=cfg.training.max_iters)
+    logger.start_train_pbar(start_iter=start_iter-1, total_iters=cfg.training.max_iters)
 
     #####
     ##### Eval for the randomly initialized model
     #####
-    eval_and_log(cfg, backend, model, val_reader, logger, crt_iter=0)
+    eval_and_log(cfg, backend, model, val_reader, logger, crt_iter=0 if start_iter == 1 else start_iter-1)
 
     #####
     ##### Training Loop
@@ -103,6 +103,12 @@ def main():
             eval_and_log(cfg, backend, model, val_reader, logger, crt_iter)
 
         #####
+        ##### Checkpointing
+        #####
+        if (crt_iter % cfg.checkpointing.chkpt_freq == 0) or (crt_iter == cfg.training.max_iters):
+            chkpt_mgr.save_checkpoint(crt_iter, model, optimizer, train_reader)
+
+        #####
         ##### Logging
         #####
         logger.update_train_pbar(step_inc=1, loss=f"{total_step_loss:.4f}")
@@ -121,12 +127,6 @@ def main():
             tokens=crt_iter * cfg.training.local_batch_size * cfg.training.grad_acc_steps * cfg.model.seq_len,
         ) # log these values to all panel grids (section) in wandb
         logger.commit(step=crt_iter)
-
-        #####
-        ##### Checkpointing
-        #####
-        if (crt_iter % cfg.checkpointing.chkpt_freq == 0) or (crt_iter == cfg.cfg.training.max_iters):
-            chkpt_mgr.save_checkpoint(crt_iter, model, optimizer, train_reader)
     # end for crt_iter
 
     logger.finish()

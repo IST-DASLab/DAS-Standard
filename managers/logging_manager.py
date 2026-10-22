@@ -39,14 +39,16 @@ class LoggingManager:
     #####
     ##### Progress bar methods
     #####
-    def start_train_pbar(self, total_iters: int):
+    def start_train_pbar(self, start_iter: int, total_iters: int):
         if self.is_master:
             self.train_pbar = tqdm(
+                initial=start_iter,
                 total=total_iters,
                 desc="Training",
                 dynamic_ncols=True,
                 smoothing=0.01
             )
+
     def start_eval_pbar(self, total_batches: int):
         if self.is_master:
             self.eval_pbar = tqdm(

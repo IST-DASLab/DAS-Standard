@@ -24,14 +24,12 @@ def _save_config_json(config, path):
     with open(path, "w") as f:
         json.dump(data, f, indent=4)
 
-
-
 class CheckpointManager:
     def __init__(self, cfg):
         self.cfg = cfg
-        self.chkpt_dir = cfg.checkpointing.resume_folder or cfg.training.output_folder
         self.checkpointer = Checkpointer(
-            root_dir=self.chkpt_dir,
+            load_dir=cfg.checkpointing.resume_folder,
+            save_dir=cfg.training.output_folder,
             max_limit=cfg.checkpointing.max_limit,
         )
 
@@ -46,10 +44,10 @@ class CheckpointManager:
 
         if resume_step == -1:
             if not self.checkpointer.history:
-                raise RuntimeError(f"No valid checkpoints found in {self.chkpt_dir} to resume from.")
+                raise RuntimeError(f"No valid checkpoints found in {self.checkpointer.load_dir} to resume from.")
             resume_step = max(self.checkpointer.history.keys())
 
-        print(f"[Checkpointer] Resuming parameter states from step {resume_step} in {self.chkpt_dir}...")
+        print(f"[Checkpointer] Resuming parameter states from step {resume_step} in {self.checkpointer.load_dir}...")
 
         disk_config, disk_reader = self.checkpointer.load(
             step=resume_step,
@@ -58,7 +56,7 @@ class CheckpointManager:
         )
 
         if disk_reader is not None:
-            train_reader.load_state_dict(disk_reader.load_state_dict())
+            train_reader.load_state_dict(disk_reader.state_dict())
 
         self._recompute_optimizer_lrs(multi_optimizer)
 
@@ -84,8 +82,9 @@ class CheckpointManager:
         )
 
 class Checkpointer:
-    def __init__(self, root_dir, max_limit: int = 0):
-        self.root_dir = Path(root_dir)
+    def __init__(self, load_dir: str, save_dir: str, max_limit: int = 0):
+        self.load_dir = Path(load_dir)
+        self.save_dir = Path(save_dir)
         self.max_limit = max_limit
         self.history = {}
 
@@ -93,7 +92,8 @@ class Checkpointer:
         self.is_master = not self.is_init or dist.get_rank() == 0
 
         if self.is_master:
-            self.root_dir.mkdir(parents=True, exist_ok=True)
+            # self.load_dir.mkdir(parents=True, exist_ok=True)
+            self.save_dir.mkdir(parents=True, exist_ok=True)
 
         if self.is_init:
             dist.barrier()
@@ -102,23 +102,23 @@ class Checkpointer:
 
     def _scan_existing_checkpoints(self):
         """Populate history from disk, so resuming training respects max_limit."""""
-        if not self.root_dir.exists():
+        if not self.load_dir.exists():
             return
 
-        for f in os.listdir(self.root_dir):
+        for f in os.listdir(self.load_dir):
             if f.startswith("config-") and f.endswith(".pt"):
                 step_str = f.split("-")[-1].split(".")[0]
                 step = int(step_str)
 
                 self.history[step] = {
                     # files
-                    "config_pt": self.root_dir / f"config-{step_str}.pt",
-                    "config_json": self.root_dir / f"config-{step_str}.json",
-                    "reader_pt": self.root_dir / f"reader-{step_str}.pt",
+                    "config_pt": self.load_dir / f"chkpt-{step_str}" / f"config-{step_str}.pt",
+                    "config_json": self.load_dir / f"chkpt-{step_str}" / f"config-{step_str}.json",
+                    "reader_pt": self.load_dir / f"chkpt-{step_str}" / f"reader-{step_str}.pt",
 
                     # folders
-                    "model": self.root_dir / f"model-{step_str}",
-                    "optimizer": self.root_dir / f"optimizer-{step_str}",
+                    "model": self.load_dir / f"chkpt-{step_str}" / f"model-{step_str}",
+                    "optimizer": self.load_dir / f"chkpt-{step_str}" / f"optimizer-{step_str}",
                 }
 
     def _trim_chkpts(self):
@@ -127,29 +127,23 @@ class Checkpointer:
 
         while len(self.history) > self.max_limit:
             oldest_step = min(self.history.keys())
-            oldest_paths = self.history.pop(oldest_step)
+            _ = self.history.pop(oldest_step)
 
             if self.is_master:
-                for p in oldest_paths.values():
-                    if os.path.isdir(p):
-                        shutil.rmtree(p)
-                        print(f"Deleted folder {p}")
-                    elif os.path.isfile(p):
-                        os.remove(p)
-                        print(f"Deleted file {p}")
+                shutil.rmtree(self.save_dir / f"chkpt-{oldest_step:08d}")
 
     def save(self, step: int, config, reader, model, multi_optimizer):
         step_str = f"{step:08d}"
 
         paths = {
             # files
-            "config_pt": self.root_dir / f"config-{step_str}.pt",
-            "config_json": self.root_dir / f"config-{step_str}.json",
-            "reader_pt": self.root_dir / f"reader-{step_str}.pt",
+            "config_pt": self.save_dir / f"chkpt-{step_str}" / f"config-{step_str}.pt",
+            "config_json": self.save_dir / f"chkpt-{step_str}" / f"config-{step_str}.json",
+            "reader_pt": self.save_dir / f"chkpt-{step_str}" / f"reader-{step_str}.pt",
 
             # folders
-            "model": self.root_dir / f"model-{step_str}",
-            "optimizer": self.root_dir / f"optimizer-{step_str}",
+            "model": self.save_dir / f"chkpt-{step_str}" / f"model-{step_str}",
+            "optimizer": self.save_dir / f"chkpt-{step_str}" / f"optimizer-{step_str}",
         }
 
         model_sd, optim_sd = get_state_dict(model=model, optimizers=tuple(multi_optimizer.optimizers))
@@ -181,13 +175,13 @@ class Checkpointer:
 
         paths = {
             # files
-            "config_pt": self.root_dir / f"config-{step_str}.pt",
-            # "config_json": self.root_dir / f"config-{step_str}.json", # not needed
-            "reader_pt": self.root_dir / f"reader-{step_str}.pt",
+            "config_pt": self.load_dir / f"chkpt-{step_str}" / f"config-{step_str}.pt",
+            # "config_json": self.root_dir /  f"chkpt-{step_str}"f/ "config-{step_str}.json", # not needed
+            "reader_pt": self.load_dir / f"chkpt-{step_str}" / f"reader-{step_str}.pt",
 
             # folders
-            "model": self.root_dir / f"model-{step_str}",
-            "optimizer": self.root_dir / f"optimizer-{step_str}",
+            "model": self.load_dir / f"chkpt-{step_str}" / f"model-{step_str}",
+            "optimizer": self.load_dir / f"chkpt-{step_str}" / f"optimizer-{step_str}",
         }
 
         model_sd, optim_sd = get_state_dict(model=model, optimizers=tuple(multi_optimizer.optimizers))
@@ -198,6 +192,7 @@ class Checkpointer:
         print(f'Loading optimizer from {paths["optimizer"]}')
         dcp.load({"optimizer": optim_sd}, checkpoint_id=paths["optimizer"])
         set_state_dict(model=model, optimizers=tuple(multi_optimizer.optimizers), model_state_dict=model_sd, optim_state_dict=optim_sd)
+        multi_optimizer.optim_iter = step # we need -1 because optim_iter is increased before setting the learning rates
 
         print(f'Loading pt config from {paths["config_pt"]}')
         config = torch.load(paths["config_pt"], map_location="cpu", weights_only=False)
