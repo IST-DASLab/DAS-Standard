@@ -25,9 +25,9 @@ def _save_config_json(config, path):
         json.dump(data, f, indent=4)
 
 class Checkpointer:
-    def __init__(self, root_dir, max_chkpts: int = 0):
+    def __init__(self, root_dir, max_limit: int = 0):
         self.root_dir = Path(root_dir)
-        self.max_chkpts = max_chkpts
+        self.max_limit = max_limit
         self.history = {}
 
         self.is_init = dist.is_initialized()
@@ -42,7 +42,7 @@ class Checkpointer:
         self._scan_existing_checkpoints()
 
     def _scan_existing_checkpoints(self):
-        """Populate history from disk, so resuming training respects max_chkpts."""""
+        """Populate history from disk, so resuming training respects max_limit."""""
         if not self.root_dir.exists():
             return
 
@@ -63,10 +63,10 @@ class Checkpointer:
                 }
 
     def _trim_chkpts(self):
-        if self.max_chkpts <= 0:
+        if self.max_limit <= 0:
             return
 
-        while len(self.history) > self.max_chkpts:
+        while len(self.history) > self.max_limit:
             oldest_step = min(self.history.keys())
             oldest_paths = self.history.pop(oldest_step)
 
