@@ -91,7 +91,7 @@ if __name__ == "__main__":
             # 500,
             1000,
         ],
-        "eval_batches": [128],
+        "eval_batches_per_worker": [128],
 
         ################################################
         ##### Overrides to the default ModelConfig #####

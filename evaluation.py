@@ -18,7 +18,7 @@ def eval_and_log(cfg, backend, model, reader, logger, crt_iter):
 
     if is_random_model or is_middle_step or is_last_step:
         model.eval()
-        num_batches = reader.num_batches if is_last_step else cfg.training.eval_batches
+        num_batches = reader.num_batches if is_last_step else cfg.training.eval_batches_per_worker
         total_loss = torch.tensor(0.0, dtype=torch.float32, device=backend.get_device())
 
         logger.start_eval_pbar(total_batches=num_batches)

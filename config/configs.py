@@ -10,14 +10,6 @@ from models.feedforward import GPTFeedForward, LlamaFeedForward
 
 
 @dataclass
-class CheckpointingConfig:
-    resume_folder: str = None
-    resume_step: int = None # -1 loads last checkpoint on disk
-    max_limit: int = -1 # how many chkpts to keep on disk (<= 0 means "keep all")
-    chkpt_freq: int = 1000 # save checkpoints at multiples of "freq"
-
-
-@dataclass
 class DatasetConfig:
     dataset_path: str = "./data"
     dataset_name: Literal["c4"] = "c4"
@@ -87,8 +79,13 @@ class TrainingConfig: # mainly set by user
     amp_dtype: Literal["bf16", "fp16", "fp32"] = "bf16"
     compile_model: bool = False
     eval_interval: int = 200
-    eval_batches: int = 32 # this is per worker. For 8 GPUs, the evaluation is done on 32x8 = 256 batches
+    eval_batches_per_worker: int = 32 # this is per worker. For 8 GPUs, the evaluation is done on 32x8 = 256 batches
     output_folder: str = "./output"
+
+    chkpt_resume_folder: str = None
+    chkpt_resume_step: int = None # -1 loads last checkpoint on disk
+    chkpt_max_limit: int = -1 # how many chkpts to keep on disk (<= 0 means "keep all")
+    chkpt_freq: int = 1000 # save checkpoints at multiples of "freq"
 
 
 @dataclass
@@ -101,7 +98,6 @@ class WandbConfig:
 
 @dataclass
 class GlobalConfig(Serializable):
-    checkpointing: CheckpointingConfig = field(default_factory=CheckpointingConfig)
     dataset:       DatasetConfig       = field(default_factory=DatasetConfig)
     model:         ModelConfig         = field(default_factory=ModelConfig)
     optimizer:     OptimizerConfig     = field(default_factory=OptimizerConfig)

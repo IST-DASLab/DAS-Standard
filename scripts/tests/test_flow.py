@@ -73,7 +73,7 @@ if __name__ == "__main__":
                 50,
                 # 100,
             ],
-            "eval_batches": [32],
+            "eval_batches_per_worker": [32],
 
 
 

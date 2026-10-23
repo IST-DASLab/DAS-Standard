@@ -28,9 +28,9 @@ class CheckpointManager:
     def __init__(self, cfg):
         self.cfg = cfg
         self.checkpointer = Checkpointer(
-            load_dir=cfg.checkpointing.resume_folder,
+            load_dir=cfg.training.chkpt_resume_folder,
             save_dir=cfg.training.output_folder,
-            max_limit=cfg.checkpointing.max_limit,
+            max_limit=cfg.training.chkpt_max_limit,
         )
 
     def setup_resume(self, model, multi_optimizer, train_reader):
@@ -38,7 +38,7 @@ class CheckpointManager:
             Loads model and optimizer tensor states while enforcing new CLI runtime configs.
             Returns the starting iteration index (start_iter).
         """
-        resume_step = self.cfg.checkpointing.resume_step
+        resume_step = self.cfg.training.chkpt_resume_step
         if resume_step is None:
             return 1
 

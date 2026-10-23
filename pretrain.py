@@ -107,7 +107,7 @@ def main():
         #####
         ##### Checkpointing
         #####
-        if (crt_iter % cfg.checkpointing.chkpt_freq == 0) or (crt_iter == cfg.training.max_iters):
+        if (crt_iter % cfg.training.chkpt_freq == 0) or (crt_iter == cfg.training.max_iters):
             chkpt_mgr.save_checkpoint(crt_iter, model, optimizer, train_reader)
 
         #####

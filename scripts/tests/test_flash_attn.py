@@ -79,7 +79,7 @@ if __name__ == "__main__":
             "amp_dtype": ["bf16"],
             "compile_model": [True],
             "eval_interval": [50],
-            "eval_batches": [32],
+            "eval_batches_per_worker": [32],
 
             ################################################
             ##### Overrides to the default ModelConfig #####

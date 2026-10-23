@@ -32,8 +32,8 @@ if __name__ == "__main__":
     OPTIMIZER = "adamw"
 
     main(
-        dist=False,
-        # dist=True,
+        # dist=False,
+        dist=True,
         gpus=[
             # 0,
             # 1,
@@ -48,9 +48,13 @@ if __name__ == "__main__":
             ##########################
             ##### Checkpointing  #####
             ##########################
-            "resume_folder": ['/mnt/beegfs/alistgrp/imodoran/results/das-standard-test/chkpt_llama2-44m_adamw_lr=1e-3_seed=42'],
-            "resume_step": [500],
-            "max_limit": [0],
+            "chkpt_resume_folder": [
+                '/mnt/beegfs/alistgrp/imodoran/results/das-standard-test/single-chkpt_llama2-44m_adamw_lr=1e-3_seed=42',
+                # '/mnt/beegfs/alistgrp/imodoran/results/das-standard-test/ddp-chkpt_llama2-44m_adamw_lr=1e-3_seed=42',
+                # '/mnt/beegfs/alistgrp/imodoran/results/das-standard-test/fsdp2-chkpt_llama2-44m_adamw_lr=1e-3_seed=42',
+            ],
+            "chkpt_resume_step": [100],
+            "chkpt_max_limit": [0],
             "chkpt_freq": [100],
 
             ##########################
@@ -80,14 +84,14 @@ if __name__ == "__main__":
             "grad_acc_steps": [32],
             # "max_iters": [-1], # not needed, automatically determined
             "backend": [
-                "single",
+                # "single",
                 # "ddp",
-                # "fsdp2",
+                "fsdp2",
             ],
             "amp_dtype": ["bf16"],
             "compile_model": [True],
             "eval_interval": [50],
-            "eval_batches": [32],
+            "eval_batches_per_worker": [32],
 
             ################################################
             ##### Overrides to the default ModelConfig #####
@@ -129,7 +133,14 @@ if __name__ == "__main__":
             "project": [f"das-standard-test"],
             "group": [
                 Template(
-                    "chkpt-load-${resume_step}_${model_name_size}_${optimizer_name}" # -load-${resume_step}
+                    # "single-chkpt_${model_name_size}_${optimizer_name}"
+                    "single-chkpt-load-${resume_step}_${model_name_size}_${optimizer_name}"
+
+                    # "ddp-chkpt_${model_name_size}_${optimizer_name}"
+                    # "ddp-chkpt-load-${resume_step}_${model_name_size}_${optimizer_name}"
+
+                    # "fsdp2-chkpt_${model_name_size}_${optimizer_name}"
+                    # "fsdp2-chkpt-load-${resume_step}_${model_name_size}_${optimizer_name}"
                 )
             ],
             "job_type": [
