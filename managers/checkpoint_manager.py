@@ -108,6 +108,9 @@ class Checkpointer:
         if self.load_dir is None:
             return
 
+        if not os.path.isdir(self.load_dir):
+            raise RuntimeError(f"Checkpoint directory {self.load_dir} does not exist.")
+
         for f in os.listdir(self.load_dir):
             if f.startswith("config-") and f.endswith(".pt"):
                 step_str = f.split("-")[-1].split(".")[0]
