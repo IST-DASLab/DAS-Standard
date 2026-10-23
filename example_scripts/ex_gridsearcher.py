@@ -163,7 +163,7 @@ if __name__ == "__main__":
             #######################
             ##### WandbConfig #####
             #######################
-            "entity": ["your_wandb_entity"],
+            "entity": ["your-wandb-entity"],
             "project": ["das-standard"],
             "group": [ # here you can define a custom template for the wandb group
                 ### AdamW

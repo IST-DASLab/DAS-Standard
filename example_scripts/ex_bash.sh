@@ -1,44 +1,46 @@
 #!/bin/bash
 
-MODEL=llama
+MODEL=llama2-44m
 OPTIMIZER=adamw
-ADAMW_LR=1e-3
-WD=0
+LR=1e-3
+WD=1e-2
 BETA1=0.9
 BETA2=0.95
 EPS=1e-8
 SEED=42
+
 WANDB_GROUP="${MODEL}_${OPTIMIZER}_wd=${WD}_b=${BETA1}-${BETA2}_e=${EPS}"
-WANDB_JOB_TYPE="lr=${ADAMW_LR}"
+WANDB_JOB_TYPE="lr=${LR}"
+WANDB_RUN_NAME="${WANDB_GROUP}_${WANDB_JOB_TYPE}_${SEED}"
 
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 torchrun --nproc-per-node=8 pretrain.py \
     ### model section
-    --model_name_size $MODEL \
-    --num_layers 6 \
-    --num_heads 8 \
-    --embed_size 1024 \
     --seq_len 1024 \
-    --dropout 0.0 \
-    --bias False \
     --weight_tying False \
     --gpt_mlp_exp_factor 4 \
+    --attn_type mhsa-flash \
 
     ### dataset section
     --dataset_path ./data \
     --dataset_name c4 \
 
     ### training section
+    # Checkpointing
+    # --chkpt_resume_folder  \
+    # --chkpt_resume_step 100 \
+    --chkpt_max_limit 0 \
+    --chkpt_freq 100 \
+
+    --model_name_size $MODEL \
     --seed $SEED \
-    --num_tokens 0 \
     --chinchilla_token_ratio 1 \
     --local_batch_size 64 \
     --grad_acc_steps 8 \
     --backend ddp \
-    --dtype bf16 \
-    --compile_model False \
+    --amp_dtype bf16 \
+    --compile_model \
     --eval_interval 100 \
-    --eval_batches 32 \
-    --log_interval 1 \
+    --eval_batches_per_worker 32 \
 
     ### optimizer section
     --optimizer_name adamw \
@@ -46,23 +48,28 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 torchrun --nproc-per-node=8 pretrain.py \
     --grad_clipping 1.0 \
 
     # Learning Rate scheduling
-    --lr_scheduler cosine \
-    --lr_warmup 0.1 \
-    --cos_start_lr_ratio 0.01 \
-    --cos_end_lr_ratio 0.1 \
+    --lr ${LR} \
+    --lr_sched_name cosine \
+    --lr_sched_warmup 0.1 \
+    --lr_sched_wsd_decay 0.9 \
+    --lr_sched_start_ratio 0.01 \
+    --lr_sched_end_ratio 0.1 \
 
     # AdamW parameters
-    --adamw_lr ${ADAMW_LR} \
     --adamw_beta1 $BETA1 \
     --adamw_beta2 $BETA2 \
     --adamw_eps $EPS \
 
     # Muon parameters
-    --muon_lr 1e-3 \
     --muon_momentum 0.95 \
+    --muon_scaling_type rms \
+
+    ### QAT
+    --qat_method quartet2 \
+    --hadamard_size 128 \
 
     ### wandb section
-    --entity ist \
+    --entity your-wandb-entity \
     --project das-standard \
     --group ${WANDB_GROUP} \
     --job_type ${WANDB_JOB_TYPE} \
