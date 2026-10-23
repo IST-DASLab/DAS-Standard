@@ -1,0 +1,14 @@
+torch
+numpy
+scipy
+triton
+transformers
+datasets
+tiktoken
+wandb
+tqdm
+gridsearcher
+simple-parsing
+gpustat
+ista-daslab-optimizers
+bitsandbytes
