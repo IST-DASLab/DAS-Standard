@@ -43,43 +43,52 @@ if __name__ == "__main__":
             7,
         ],
         params={
-            ##########################
-            ##### TrainingConfig #####
-            ##########################0
-            "model_name_size": [
-                # "gpt-42m",
-                "llama2-44m",
-                # "llama3-44m",
-                # "qwen3-42m",
-            ],
-            "seed": [42],
-            # "num_tokens": [0], # lower priority over chinchilla_token_ratio
-            "chinchilla_token_ratio": [1],
-            "local_batch_size": [16],
-            "grad_acc_steps": [32],
-            # "max_iters": [-1], # not needed, automatically determined
-            "backend": [
-                # "single",
-                "ddp",
-                # "fsdp2",
-            ],
-            "amp_dtype": ["bf16"],
-            "compile_model": [True],
-            "eval_interval": [
-                10,
-                # 100,
-            ],
-            "eval_batches_per_worker": [32],
+            #########################
+            ##### DatasetConfig #####
+            #########################
+            "dataset_path": [DATASETS_DIR],
+            "dataset_name": ["c4"],
 
-
-
-            ################################################
-            ##### Overrides to the default ModelConfig #####
-            ################################################
+            ###########################
+            ####### ModelConfig #######
+            ###########################
+            # this config is automatically created based on "model_name_size"
+            # the values below will override the ladder configs
             "seq_len": [1024],
             "vocab_size": [32_000],
 
+            ###########################
+            ##### OptimizerConfig #####
+            ###########################
+            "optimizer_name": [
+                "adamw",
+                # "muon",
+            ],
+            "lr": ["1e-3"],
+            "weight_decay": ["0.0"],
 
+            "grad_clipping": ["1.0"],
+
+            # Learning Rate scheduling
+            "lr_sched_name": [
+                "cosine",
+                # "linear",
+                # "wsd",
+                # "const",
+            ],
+            "lr_sched_warmup": ["0.1"],
+            "lr_sched_wsd_decay": ["0.9"],
+            "lr_sched_start_ratio": ["0.01"],
+            "lr_sched_end_ratio": ["0.1"],
+
+            # AdamW parameters
+            "adamw_beta1": ["0.9"],
+            "adamw_beta2": ["0.95"],
+            "adamw_eps": ["1e-8"],
+
+            # Muon parameters
+            "muon_momentum": ["0.95"],
+            "muon_scaling_type": ["rms"],
 
             #####################
             ##### QATConfig #####
@@ -94,42 +103,31 @@ if __name__ == "__main__":
                 128,
             ],
 
-
-
-            ###########################
-            ##### OptimizerConfig #####
-            ###########################
-            "optimizer_name": [
-                "adamw",
-                # "muon",
+            ##########################
+            ##### TrainingConfig #####
+            ##########################0
+            "model_name_size": [
+                # "gpt-42m",
+                "llama2-44m",
+                # "llama3-44m",
+                # "qwen3-42m",
             ],
-            "weight_decay": ["0.0"],
-            "grad_clipping": ["1.0"],
-
-            # Learning Rate scheduling
-            "lr_sched_name": ["cosine"],
-            "lr_sched_warmup": ["0.1"],
-            "lr_sched_start_ratio": ["0.01"],
-            "lr_sched_end_ratio": ["0.1"],
-
-            # AdamW parameters
-            "lr": ["1e-3"],
-            "adamw_beta1": ["0.9"],
-            "adamw_beta2": ["0.95"],
-            "adamw_eps": ["1e-8"],
-
-            # Muon parameters
-            "muon_momentum": ["0.95"],
-
-
-
-            #########################
-            ##### DatasetConfig #####
-            #########################
-            "dataset_path": [DATASETS_DIR],
-            "dataset_name": ["c4"],
-
-
+            "seed": [42],
+            "chinchilla_token_ratio": [1],
+            "local_batch_size": [16],
+            "grad_acc_steps": [32],
+            "backend": [
+                # "single",
+                "ddp",
+                # "fsdp2",
+            ],
+            "amp_dtype": ["bf16"],
+            "compile_model": [True],
+            "eval_interval": [
+                10,
+                # 100,
+            ],
+            "eval_batches_per_worker": [32],
 
             #######################
             ##### WandbConfig #####
