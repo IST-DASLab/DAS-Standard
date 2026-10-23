@@ -2,14 +2,12 @@ import torch
 import torch.nn as nn
 from torch.optim import AdamW
 from argparse import Namespace as ArgParseNamespace
-
-from backends import BaseBackend
-from lr_scheduler import LRScheduler
-
 from bitsandbytes.optim import AdamW8bit
 
-from .muon import MuonSingle, MuonDDP, MuonSingleBlock, MuonDDPBlock, MuonFSDP2All2All as MuonFSDP2, MuonFSDP2Block
+from backends import BaseBackend
 
+from .muon import MuonSingle, MuonDDP, MuonSingleBlock, MuonDDPBlock, MuonFSDP2All2All as MuonFSDP2, MuonFSDP2Block
+from .lr_scheduler import LRScheduler
 
 class MultiOptimizer:
     def __init__(self, cfg: ArgParseNamespace, model: nn.Module, backend: BaseBackend):
