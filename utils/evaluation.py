@@ -3,7 +3,7 @@ import torch
 import torch.distributed as dist
 from collections import OrderedDict
 
-from constants import (
+from .constants import (
     TEXT_VAL_LOSS,
     TEXT_VAL_PPL,
     TEXT_FINAL_VAL_LOSS,

@@ -11,7 +11,7 @@ from torch import distributed as dist
 from tqdm.asyncio import tqdm
 
 from config import print_config
-from constants import *
+from utils import *
 
 
 class LoggingManager:
@@ -168,6 +168,32 @@ class LoggingManager:
             if data:
                 log_parts.extend(f"{k}={v}" for k, v in data.items())
             print(f"{message}: " + " | ".join(log_parts))
+
+    def log_all_stats(self, crt_iter, total_step_loss, grad_norm, timer, optimizer):
+        """
+        This function logs all required information at the end of the training loop
+        :param crt_iter: current training step
+        :param total_step_loss: total training loss at the current training step
+        :param grad_norm: norm of the gradient at the current training step
+        :param timer: the timer object containing all time measurements for one training step
+        :param optimizer: the MultiOptimizer
+        """
+        self.update_train_pbar(step_inc=1, loss=f"{total_step_loss:.4f}")
+
+        self.log_dict({
+            TEXT_TRAIN_LOSS: total_step_loss,
+            TEXT_TRAIN_PPL: math.exp(total_step_loss),
+            TEXT_TRAIN_GRAD_NORM: grad_norm,
+        })
+        self.log_dict(timer.get_then_reset())
+        self.log_dict(optimizer.extract_learning_rates())
+        self.log_dict(optimizer.get_optimzier_stats())
+        self.log_memory_usage()
+        self.log_xaxis(
+            iter=crt_iter,
+            tokens=crt_iter * self.cfg.training.local_batch_size * self.cfg.training.grad_acc_steps * self.cfg.model.seq_len,
+        ) # log these values to all panel grids (section) in wandb
+        self.commit(step=crt_iter)
 
     def commit(self, step: int):
         if self.is_master and self.metrics:

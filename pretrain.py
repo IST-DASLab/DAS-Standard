@@ -11,15 +11,13 @@ import math
 from collections import OrderedDict
 
 from backends import get_backend, BaseBackend
-from checkpointer import CheckpointManager
 from config import get_dynamic_arg_parser
-from constants import *
-from data import get_data_readers
-from evaluation import eval_and_log
+from datasets import get_data_readers
+from managers import LoggingManager, TimingManager, CheckpointManager
 from models import get_model
-from managers import LoggingManager, TimingManager
 from optimizers import MultiOptimizer
 from qat import wrap_model_for_qat
+from utils import * # imports eval_and_log and all TEXT_* variables
 
 def main():
     cfg = get_dynamic_arg_parser()
@@ -54,15 +52,14 @@ def main():
     #####
     logger.start_train_pbar(start_iter=start_iter - 1, total_iters=cfg.training.max_iters)
     for crt_iter in range(start_iter, 1 + cfg.training.max_iters):
-        #####
-        ##### Training
-        #####
         model.train()
         total_step_loss = 0.0
-        for acc_step in range(cfg.training.grad_acc_steps):
+
+        for acc_step in range(cfg.training.grad_acc_steps): # gradient accumulation loop
             # all-reduce gradients only at the last grad acc step
             should_sync_grad = (acc_step == cfg.training.grad_acc_steps - 1)
             backend.set_grad_sync(model, enabled=should_sync_grad)
+
             x, y = train_reader.sample_batch()
 
             #####
@@ -113,22 +110,13 @@ def main():
         #####
         ##### Logging
         #####
-        logger.update_train_pbar(step_inc=1, loss=f"{total_step_loss:.4f}")
-
-        logger.log_dict({
-            TEXT_TRAIN_LOSS: total_step_loss,
-            TEXT_TRAIN_PPL: math.exp(total_step_loss),
-            TEXT_TRAIN_GRAD_NORM: grad_norm,
-        })
-        logger.log_dict(timer.get_then_reset())
-        logger.log_dict(optimizer.extract_learning_rates())
-        logger.log_dict(optimizer.get_optimzier_stats())
-        logger.log_memory_usage()
-        logger.log_xaxis(
-            iter=crt_iter,
-            tokens=crt_iter * cfg.training.local_batch_size * cfg.training.grad_acc_steps * cfg.model.seq_len,
-        ) # log these values to all panel grids (section) in wandb
-        logger.commit(step=crt_iter)
+        logger.log_all_stats(
+            crt_iter=crt_iter,
+            total_step_loss=total_step_loss,
+            grad_norm=grad_norm,
+            timer=timer,
+            optimizer=optimizer,
+        )
     # end for crt_iter
 
     logger.finish()
