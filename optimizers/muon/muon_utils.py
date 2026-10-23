@@ -55,10 +55,10 @@ def zeropower_via_newtonschulz5_bmm(G, steps: int):
 def muon_scaling(p, scaling_type):
     R, C = p.shape
     match scaling_type:
-        case 'kj':
-            return max(1, R / C) ** 0.5
         case 'none':
             return 1
+        case 'kj':
+            return max(1, R / C) ** 0.5
         case 'rms':
             return 0.2 * math.sqrt(max(R, C))
         case 'block':

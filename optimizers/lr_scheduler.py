@@ -58,8 +58,11 @@ class LRScheduler:
         return interp(start=end, end=peak, alpha=alpha)
 
     def _get_wsd_lr_w_linear_warmup(self, t, peak):
+        oc = self.cfg.optimizer
         start, end, T, W = self._compute_info(peak)
-        D = int(T * self.cfg.optimizer.lr_sched_wsd_decay)
+        D = int(T * oc.lr_sched_wsd_decay) if 0 <= oc.lr_sched_wsd_decay < 1 else int(oc.lr_sched_wsd_decay)
+
+        assert W <= D
 
         if t < W:  # warmup
             return interp(start=start, end=peak, alpha=t / max(1, W))
