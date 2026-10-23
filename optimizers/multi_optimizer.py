@@ -6,8 +6,6 @@ from argparse import Namespace as ArgParseNamespace
 from backends import BaseBackend
 from lr_scheduler import LRScheduler
 
-# from ista_daslab_optimizers import MicroAdam
-# from experimental_optimizers import MicroAdamTorch, Trion
 from bitsandbytes.optim import AdamW8bit
 
 from .muon import MuonSingle, MuonDDP, MuonSingleBlock, MuonDDPBlock, MuonFSDP2All2All as MuonFSDP2, MuonFSDP2Block
@@ -172,109 +170,6 @@ class MultiOptimizer:
                         scaling_type=oc.muon_scaling_type,
                         weight_decay=oc.weight_decay,
                         momentum=oc.muon_momentum
-                    ),
-                    AdamW(
-                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
-                        lr=oc.lr,
-                        weight_decay=oc.weight_decay,
-                        betas=(
-                            oc.adamw_beta1,
-                            oc.adamw_beta2,
-                        ),
-                        eps=oc.adamw_eps,
-                    )
-                ]
-            case "microadam-paper":
-                # the version that optimizes all layers wih MicroAdam
-                return [
-                    MicroAdam(
-                        params=self.model.parameters(),
-                        lr=oc.lr,
-                        m=oc.microadam_m,
-                        quant_block_size=oc.microadam_q_block,
-                        k_init=oc.microadam_k,
-                        alpha=0, # 0 means sparse update
-                        betas=(
-                            oc.adamw_beta1,
-                            oc.adamw_beta2,
-                        ),
-                        weight_decay=oc.weight_decay,
-                        eps=oc.adamw_eps,
-                    )
-                ]
-            case "microadam-new":
-                # the version that optimizes only the linear layers with MicroAdam
-                # and the other layers (embeds, layer norms) with AdamW
-                # implemented after discussing with Frederik Kunstner
-                return [
-                    MicroAdam(
-                        params=self._get_linear_layers(),
-                        lr=oc.lr,
-                        m=oc.microadam_m,
-                        quant_block_size=oc.microadam_q_block,
-                        k_init=oc.microadam_k,
-                        alpha=0, # 0 means sparse update
-                        betas=(
-                            oc.adamw_beta1,
-                            oc.adamw_beta2,
-                        ),
-                        weight_decay=oc.weight_decay,
-                        eps=oc.adamw_eps,
-                    ),
-                    AdamW(
-                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
-                        lr=oc.lr,
-                        weight_decay=oc.weight_decay,
-                        betas=(
-                            oc.adamw_beta1,
-                            oc.adamw_beta2,
-                        ),
-                        eps=oc.adamw_eps,
-                    )
-                ]
-            case "microadam-torch":
-                 opts = [
-                    MicroAdamTorch(
-                        params=self._get_linear_layers(),
-                        lr=oc.lr,
-                        weight_decay=oc.weight_decay,
-                        betas=(
-                            oc.adamw_beta1,
-                            oc.adamw_beta2,
-                        ),
-                        eps=oc.adamw_eps,
-                        # *
-                        num_grads=oc.microadam_m,
-                        density=oc.microadam_k,
-                        quant_info=oc.microadam_quant_info,
-                        dtype_scales=dict(bf16=torch.bfloat16, fp16=torch.float16)[oc.microadam_dtype_scales],
-                        dtype_values=dict(bf16=torch.bfloat16, fp16=torch.float16)[oc.microadam_dtype_values],
-                        structured=oc.microadam_structured,
-                    ),
-                    AdamW(
-                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
-                        lr=oc.lr,
-                        weight_decay=oc.weight_decay,
-                        betas=(
-                            oc.adamw_beta1,
-                            oc.adamw_beta2,
-                        ),
-                        eps=oc.adamw_eps,
-                    )
-                ]
-                 opts[0].set_param_name_mapping(mapping={p: name for name, p in self.model.named_parameters()})
-                 return opts
-            case "trion":
-                return [
-                    Trion(
-                        params=self._get_linear_layers(),
-                        lr=oc.lr,
-                        weight_decay=oc.weight_decay,
-                        momentum=oc.trion_momentum,
-                        # *
-                        rank=oc.trion_rank,
-                        scaling_type=oc.trion_scaling,
-                        proj_type=oc.trion_proj,
                     ),
                     AdamW(
                         params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),

@@ -1,5 +1,4 @@
 import sys
-import torch
 import inspect
 from typing import Literal
 from simple_parsing import ArgumentParser, Serializable
@@ -46,12 +45,13 @@ class ModelConfig: # initialized via model ladders
 @dataclass
 class OptimizerConfig:
     optimizer_name: str = "adamw" # see the match-case from the function `_create_optimizers_list` from `multi_optimizer.py` for all supported optimizers
+
+    lr: float = 1e-3
     weight_decay: float = 0.0
 
     grad_clipping: float = 1.0 # rescale the global gradient to have this norm. Set to 0 to disable
 
     # Learning Rate scheduling
-    lr: float = 1e-3
     lr_sched_name: Literal["cosine", "linear", "wsd", "const"] = "cosine" # wsd = warmup-stable-decay
     lr_sched_warmup: float = 0.1 # percentage of number of steps at the beginning of training, e.g. first 10% steps we do linear lr warmup
     lr_sched_wsd_decay: float = 0.9  # percentage of number of steps to do decay (0 => W => D => end)
@@ -66,22 +66,6 @@ class OptimizerConfig:
     # Muon parameters
     muon_momentum: float = 0.95
     muon_scaling_type: str = 'rms'
-
-    # MicroAdam parameters
-    microadam_m: int = 10 # number of gradients in the sliding window
-    microadam_k: float = 0.01 # gradient density (sparsity = 1 - k)
-    microadam_quant_info: str = "symm-int4-32" # asymm/symm-int4/fp4-32
-    # microadam_ef_num_bits: int = 4 # 4 or 8
-    microadam_q_block: int = 32 # quantization block size for error feedback
-    microadam_dtype_scales: Literal["bf16", "fp16"] = "bf16"
-    microadam_dtype_values: Literal["bf16", "fp16"] = "bf16"
-    microadam_structured: int = 0
-
-    # Trion parameters
-    trion_momentum: float = 0.95
-    trion_rank: int = 128
-    trion_scaling: Literal["kj", "none", "rms", "dion"] = "kj"
-    trion_proj: Literal["dct", "eye"] = "dct"
 
 
 @dataclass
