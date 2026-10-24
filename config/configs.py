@@ -58,6 +58,7 @@ class OptimizerConfig:
     # Muon parameters
     muon_momentum: float = 0.95
     muon_scaling_type: str = 'rms'
+    muon_num_blocks: int = 0
 
 
 @dataclass

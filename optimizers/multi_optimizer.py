@@ -165,6 +165,7 @@ class MultiOptimizer:
                     block_muon_fn(
                         params=self._get_linear_layers(),
                         lr=oc.lr,
+                        num_blocks=oc.muon_num_blocks,
                         scaling_type=oc.muon_scaling_type,
                         weight_decay=oc.weight_decay,
                         momentum=oc.muon_momentum

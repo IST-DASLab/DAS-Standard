@@ -1,5 +1,6 @@
 import socket
 import random
+import socket
 from datetime import datetime
 from string import Template
 from gridsearcher import GridSearcher, SchedulingConfig, TorchRunConfig
@@ -7,10 +8,18 @@ from gridsearcher import GridSearcher, SchedulingConfig, TorchRunConfig
 random.seed(datetime.now().timestamp())
 
 def main(dist, gpus, params):
-    gs = GridSearcher(script="/nfs/scistore19/alistgrp/imodoran/workplace/DAS-Standard/pretrain.py")
+    hostname = socket.gethostname()
+    if hostname == 'gpu413':
+        script_path = "/localhome/imodoran/workplace/DAS-Standard/pretrain.py"
+        output_dir = "/localhome/imodoran/results/${project}/${run_name}"
+    else:
+        script_path = "/nfs/scistore19/alistgrp/imodoran/workplace/DAS-Standard/pretrain.py"
+        output_dir = "/mnt/beegfs/alistgrp/imodoran/results/${project}/${run_name}"
+
+    gs = GridSearcher(script=script_path)
     gs.run(
         param_name_for_exp_root_folder="output_folder",
-        exp_folder=Template("/mnt/beegfs/alistgrp/imodoran/results/${project}/${run_name}"),
+        exp_folder=Template(output_dir),
         cfg_torchrun=TorchRunConfig(
             launch_blocking=0,
             torchrun=dist,
@@ -27,7 +36,10 @@ def main(dist, gpus, params):
     )
 
 if __name__ == "__main__":
-    DATASETS_DIR = '/localhome/imodoran/datasets/' if socket.gethostname().startswith('gpu') else '/home/imodoran/datasets/'
+    hostname = socket.gethostname()
+    # if hostname == "gpu413":
+    #
+    DATASETS_DIR = '/localhome/imodoran/datasets/' if hostname.startswith('gpu') else '/home/imodoran/datasets/'
 
     gpus = [
         0,
@@ -43,16 +55,18 @@ if __name__ == "__main__":
     # dist = False
     dist = True
 
-    optimizer = "adamw"
+    # optimizer = "adamw"
     # optimizer = "muon"
-    # optimizer = "block_muon"
+    optimizer = "block_muon"
 
     match optimizer:
         case "adamw":
             wandb_group = Template("${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}_sched=${"
                                    "lr_sched_name}")
         case "muon" | "block_muon":
-            wandb_group = Template("${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_wd=${weight_decay}_mu=${muon_momentum}_sched=${lr_sched_name}")
+            wandb_group = Template("qat=${qat_method}-${hadamard_size}_${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_wd=${weight_decay}_mu=${"
+                                   "muon_momentum}_sched=${"
+                                   "lr_sched_name}")
         case _:
             print(f"Unknown optimizer {optimizer}")
             exit(666)
@@ -64,8 +78,8 @@ if __name__ == "__main__":
         "model_name_size": [
             # "gpt-42m",
             # "llama2-44m",
-            # "llama-1b-custom",
-            "llama-4b-custom",
+            "llama-1b-custom",
+            # "llama-4b-custom",
             # "llama-8b-custom",
             # "qwen3-42m",
         ],
@@ -76,13 +90,13 @@ if __name__ == "__main__":
         ],
         # "num_tokens": [0], # lower priority over chinchilla_token_ratio
         "chinchilla_token_ratio": [1],
-        "local_batch_size": [16],
-        "grad_acc_steps": [32],
+        "local_batch_size": [32],
+        "grad_acc_steps": [16],
         # "max_iters": [-1], # not needed, automatically determined
         "backend": [
             # "single",
-            # "ddp",
-            "fsdp2",
+            "ddp",
+            # "fsdp2",
         ],
         "amp_dtype": ["bf16"],
         "compile_model": [True],
@@ -91,13 +105,36 @@ if __name__ == "__main__":
             # 500,
             1000,
         ],
-        "eval_batches_per_worker": [128],
+        "eval_batches_per_worker": [512],
+
+        ### Checkpointing:
+        ### initial run: comment out chkpt_resume_folder and chkpt_resume_step such that they are None in the config
+        ### resuming: provide the root path and specify chkpt_resume_step to load from
+
+        # "chkpt_resume_folder": ["/tmp/DAS-Standard/results/your_project/your_run_name"],
+        # "chkpt_resume_step": [100],
+        "chkpt_max_limit": [2],
+        "chkpt_freq": [1000], # log once at 100 steps
+
 
         ################################################
         ##### Overrides to the default ModelConfig #####
         ################################################
         "seq_len": [1024],
         "vocab_size": [32_000],
+
+        #####################
+        ##### QATConfig #####
+        #####################
+        "qat_method": [
+            # "disabled",
+            "quartet2",
+        ],
+        "hadamard_size": [
+            # 32,
+            # 64,
+            128,
+        ],
 
         ###########################
         ##### OptimizerConfig #####
@@ -115,8 +152,9 @@ if __name__ == "__main__":
             # "const",
         ],
         "lr_sched_warmup": [
-            # "1000",
-            "2000",
+            "0.1",
+            # "1000", # for 1B run
+            # "2000",
         ], # actual number of steps instead of percentage
         # "lr_sched_wsd_decay": ["0.9"], # not used for const
         "lr_sched_start_ratio": ["0.01"],
@@ -143,6 +181,10 @@ if __name__ == "__main__":
         "muon_scaling_type": [
             "rms",
             # "block",
+        ],
+        "muon_num_blocks": [
+            # 0, # uses world size
+            8, # uses this fixed value
         ],
 
         #########################

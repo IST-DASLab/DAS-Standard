@@ -5,7 +5,8 @@ from optimizers.muon.muon_utils import muon_scaling, zeropower_via_newtonschulz5
 
 
 class MuonFSDP2Block(torch.optim.Optimizer):
-    def __init__(self, params, lr, scaling_type, weight_decay, momentum):
+    def __init__(self, params, lr, num_blocks, scaling_type, weight_decay, momentum):
+        # num_blocks is added only for compatibility
         super().__init__(params, dict(lr=lr, weight_decay=weight_decay, momentum=momentum, scaling_type=scaling_type))
 
     @torch.no_grad()
