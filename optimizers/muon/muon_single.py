@@ -1,6 +1,6 @@
 import torch
 
-from .muon_utils import muon_ddp_update, muon_scaling, newton_schulz_factory
+from .muon_utils import muon_scaling, newton_schulz_factory
 
 
 class MuonSingle(torch.optim.Optimizer):
@@ -38,7 +38,6 @@ class MuonSingle(torch.optim.Optimizer):
                 M.lerp_(G, 1 - beta)
                 N = G.lerp_(M, beta)  # N for Nesterov, but it has G's storage
 
-                # update = muon_ddp_update(p.grad, state["momentum_buffer"], beta=group["momentum"])
                 U = newton_schulz_factory(
                     X=N,
                     steps=5,

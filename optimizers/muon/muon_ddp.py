@@ -1,7 +1,7 @@
 import torch
 import torch.distributed as dist
 
-from .muon_utils import muon_ddp_update, muon_scaling, newton_schulz_factory
+from .muon_utils import muon_scaling, newton_schulz_factory
 
 
 class MuonDDP(torch.optim.Optimizer):
