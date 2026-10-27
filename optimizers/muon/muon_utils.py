@@ -86,7 +86,7 @@ def zeropower_via_newtonschulz3_bmm(G, steps: int, coeffs_type: str):
     assert G.ndim >= 2
     X = G.bfloat16()
 
-    R, C = G.shape
+    _, R, C = G.shape
     if R > C:
         X = X.mT
 
