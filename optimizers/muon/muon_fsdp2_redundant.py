@@ -1,12 +1,12 @@
 import torch
 from torch.distributed.tensor import distribute_tensor
 
-from optimizers.muon.muon_utils import zeropower_via_newtonschulz5, muon_scaling
+from optimizers.muon.muon_utils import zeropower_via_newtonschulz5, muon_scaling, newton_schulz_factory
 
 
 class MuonFSDP2Redundant(torch.optim.Optimizer):
-    def __init__(self, params, lr, scaling_type, weight_decay, momentum):
-        super().__init__(params, dict(lr=lr, weight_decay=weight_decay, momentum=momentum, scaling_type=scaling_type))
+    def __init__(self, params, lr, coeffs_type, scaling_type, weight_decay, momentum):
+        super().__init__(params, dict(lr=lr, weight_decay=weight_decay, momentum=momentum, coeffs_type=coeffs_type, scaling_type=scaling_type))
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -31,7 +31,12 @@ class MuonFSDP2Redundant(torch.optim.Optimizer):
 
                 # at this point, all ranks have exactly the same Z matrix
 
-                U = zeropower_via_newtonschulz5(Z, steps=5) # this is the redundancy: all ranks perform exactly the same computation (simple solution)
+                U = newton_schulz_factory(
+                    X=Z,
+                    steps=5,
+                    coeffs_type=group["coeffs_type"],
+                    is_batched=False
+                ) # this is the redundancy: all ranks perform exactly the same computation (simple solution)
 
                 scaling = muon_scaling(U, group["scaling_type"])
                 # U.mul_(coef) # intentionally skip this operation and pack it into the learning rate

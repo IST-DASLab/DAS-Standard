@@ -125,6 +125,7 @@ class MultiOptimizer:
                         eps=oc.adamw_eps),
                 ]
             case "muon":
+                muon_fn = None
                 match self.cfg.training.backend:
                     case "single":
                         muon_fn = MuonSingle
@@ -133,10 +134,13 @@ class MultiOptimizer:
                     case "fsdp2":
                         muon_fn = MuonFSDP2
 
+                assert muon_fn is not None
+
                 return [
                     muon_fn(
                         params=self._get_linear_layers(),
                         lr=oc.lr,
+                        coeff_type=oc.muon_coeff_type,
                         scaling_type=oc.muon_scaling_type,
                         weight_decay=oc.weight_decay,
                         momentum=oc.muon_momentum
@@ -153,6 +157,7 @@ class MultiOptimizer:
                     )
                 ]
             case "block_muon":
+                block_muon_fn = None
                 match self.cfg.training.backend:
                     case "single":
                         block_muon_fn = MuonSingleBlock
@@ -161,11 +166,14 @@ class MultiOptimizer:
                     case "fsdp2":
                         block_muon_fn = MuonFSDP2Block
 
+                assert block_muon_fn is not None
+
                 return [
                     block_muon_fn(
                         params=self._get_linear_layers(),
                         lr=oc.lr,
                         num_blocks=oc.muon_num_blocks,
+                        coeff_type=oc.muon_coeff_type,
                         scaling_type=oc.muon_scaling_type,
                         weight_decay=oc.weight_decay,
                         momentum=oc.muon_momentum

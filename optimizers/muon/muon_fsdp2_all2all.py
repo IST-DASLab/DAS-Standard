@@ -2,13 +2,13 @@ import torch
 import torch.distributed as dist
 from torch.distributed.tensor import distribute_tensor
 
-from optimizers.muon.muon_utils import zeropower_via_newtonschulz5, shard_size_dim0, muon_scaling
+from optimizers.muon.muon_utils import zeropower_via_newtonschulz5, shard_size_dim0, muon_scaling, newton_schulz_factory
 
 
 class MuonFSDP2All2All(torch.optim.Optimizer):
-    def __init__(self, params, lr, scaling_type, weight_decay, momentum):
+    def __init__(self, params, lr, coeffs_type, scaling_type, weight_decay, momentum):
         params = sorted(params, key=lambda p: p.numel(), reverse=True) # sort to have balanced groups
-        super().__init__(params, dict(lr=lr, weight_decay=weight_decay, momentum=momentum, scaling_type=scaling_type))
+        super().__init__(params, dict(lr=lr, weight_decay=weight_decay, momentum=momentum, coeffs_type=coeffs_type, scaling_type=scaling_type))
 
     @torch.no_grad()
     def step(self, closure=None):
@@ -36,8 +36,9 @@ class MuonFSDP2All2All(torch.optim.Optimizer):
                     G = p.grad
                     M = state["M"]
                     M.lerp_(G, 1 - mu)
+                    N = G.lerp_(M, mu)
 
-                    send[i] = G.lerp_(M, mu).to_local().contiguous() # save shard of nesterov momentum in send[i] for this rank
+                    send[i] = N.to_local().contiguous() # save shard of nesterov momentum in send[i] for this rank
 
                 # step 1: all-to-all #1: receive every rank's shard
                 if rank < len(chunk):
@@ -55,7 +56,12 @@ class MuonFSDP2All2All(torch.optim.Optimizer):
                 # step 2: Newton-Schulz computation - at this point, each worker has the full nesterov matrix `Z` to orthogonalize
                 if rank < len(chunk):
                     Z = torch.cat(recv, dim=0)
-                    U = zeropower_via_newtonschulz5(Z, steps=5)
+                    U = newton_schulz_factory(
+                        X=Z,
+                        steps=5,
+                        coeffs_type=group["coeffs_type"],
+                        is_batched=False
+                    )
                     U *= muon_scaling(U, group["scaling_type"])
                     back_send = list(U.to(dtype=send[rank].dtype).split(sizes, dim=0)) # split the result according to the sizes
                 else:
