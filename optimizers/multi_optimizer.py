@@ -140,7 +140,7 @@ class MultiOptimizer:
                     muon_fn(
                         params=self._get_linear_layers(),
                         lr=oc.lr,
-                        coeff_type=oc.muon_coeff_type,
+                        coeffs_type=oc.muon_coeffs_type,
                         scaling_type=oc.muon_scaling_type,
                         weight_decay=oc.weight_decay,
                         momentum=oc.muon_momentum
@@ -173,7 +173,7 @@ class MultiOptimizer:
                         params=self._get_linear_layers(),
                         lr=oc.lr,
                         num_blocks=oc.muon_num_blocks,
-                        coeff_type=oc.muon_coeff_type,
+                        coeffs_type=oc.muon_coeffs_type,
                         scaling_type=oc.muon_scaling_type,
                         weight_decay=oc.weight_decay,
                         momentum=oc.muon_momentum

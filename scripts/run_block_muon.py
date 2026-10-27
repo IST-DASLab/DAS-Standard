@@ -67,7 +67,7 @@ if __name__ == "__main__":
         case "muon" | "block_muon":
             wandb_group = Template(
                 # "qat=${qat_method}-${hadamard_size}_${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_wd=${weight_decay}_mu=${muon_momentum}_sched=${lr_sched_name}"
-                "${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_nB=${muon_num_blocks}_c=${muon_coeff_type}"
+                "${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_nB=${muon_num_blocks}_c=${muon_coeffs_type}"
             )
         case _:
             print(f"Unknown optimizer {optimizer}")
@@ -191,7 +191,7 @@ if __name__ == "__main__":
             # 4,
             # 8, # uses this fixed value
         ],
-        "muon_coeff_type": [
+        "muon_coeffs_type": [
             # "p5-you",
             # "p5-book",
             # "p5-polar",
