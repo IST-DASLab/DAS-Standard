@@ -56,17 +56,19 @@ if __name__ == "__main__":
     dist = True
 
     # optimizer = "adamw"
-    # optimizer = "muon"
-    optimizer = "block_muon"
+    optimizer = "muon"
+    # optimizer = "block_muon"
 
     match optimizer:
         case "adamw":
-            wandb_group = Template("${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}_sched=${"
-                                   "lr_sched_name}")
+            wandb_group = Template(
+                "${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}_sched=${lr_sched_name}"
+            )
         case "muon" | "block_muon":
-            wandb_group = Template("qat=${qat_method}-${hadamard_size}_${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_wd=${weight_decay}_mu=${"
-                                   "muon_momentum}_sched=${"
-                                   "lr_sched_name}")
+            wandb_group = Template(
+                # "qat=${qat_method}-${hadamard_size}_${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_wd=${weight_decay}_mu=${muon_momentum}_sched=${lr_sched_name}"
+                "${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_nB=${muon_num_blocks}_c=${muon_coeffs_type}"
+            )
         case _:
             print(f"Unknown optimizer {optimizer}")
             exit(666)
@@ -77,8 +79,8 @@ if __name__ == "__main__":
         ##########################
         "model_name_size": [
             # "gpt-42m",
-            # "llama2-44m",
-            "llama-1b-custom",
+            "llama2-44m",
+            # "llama-1b-custom",
             # "llama-4b-custom",
             # "llama-8b-custom",
             # "qwen3-42m",
@@ -90,20 +92,20 @@ if __name__ == "__main__":
         ],
         # "num_tokens": [0], # lower priority over chinchilla_token_ratio
         "chinchilla_token_ratio": [1],
-        "local_batch_size": [32],
-        "grad_acc_steps": [16],
+        "local_batch_size": [512],
+        "grad_acc_steps": [1],
         # "max_iters": [-1], # not needed, automatically determined
         "backend": [
-            # "single",
-            "ddp",
+            "single",
+            # "ddp",
             # "fsdp2",
         ],
         "amp_dtype": ["bf16"],
         "compile_model": [True],
         "eval_interval": [
-            # 100,
+            100,
             # 500,
-            1000,
+            # 1000,
         ],
         "eval_batches_per_worker": [512],
 
@@ -127,8 +129,8 @@ if __name__ == "__main__":
         ##### QATConfig #####
         #####################
         "qat_method": [
-            # "disabled",
-            "quartet2",
+            "disabled",
+            # "quartet2",
         ],
         "hadamard_size": [
             # 32,
@@ -184,7 +186,18 @@ if __name__ == "__main__":
         ],
         "muon_num_blocks": [
             # 0, # uses world size
-            8, # uses this fixed value
+            1,
+            # 2,
+            # 4,
+            # 8, # uses this fixed value
+        ],
+        "muon_coeffs_type": [
+            # "p5-you",
+            # "p5-book",
+            # "p5-polar",
+            "p5-kj",
+            # "p3-nv",
+            # "p3-book",
         ],
 
         #########################
