@@ -123,8 +123,8 @@ def muon_scaling(p, scaling_type):
         case _:
             raise RuntimeError(f"Unknown scaling type: {scaling_type}, should be 'kj', 'none', 'rms', 'block' or 'dion'!")
 
-def muon_coeffs(muon_coeffs_type, polar_express_safety_factor=1.01):
-    match muon_coeffs_type.lower():
+def muon_coeffs(muon_coeff_type, polar_express_safety_factor=1.01):
+    match muon_coeff_type.lower():
         case "p5-you":
             # 5th order polynomial by You https://x.com/YouJiacheng/status/1905861218138804534
             # code: https://gist.github.com/YouJiacheng/6f4de2fac9b4edd8bcb2df7058652a7f#file-train_gpt-20250329-txt-L125
@@ -177,7 +177,7 @@ def muon_coeffs(muon_coeffs_type, polar_express_safety_factor=1.01):
                 (1.5, -0.5),
             ] * 5
         case _:
-            raise RuntimeError(f"Unknown muon_coeffs_type: {muon_coeffs_type}")
+            raise RuntimeError(f"Unknown muon_coeff_type: {muon_coeff_type}")
 
 def shard_size_dim0(num_rows: int, world_size: int):
     """

@@ -52,12 +52,12 @@ if __name__ == "__main__":
         7,
     ]
 
-    # dist = False
-    dist = True
+    dist = False
+    # dist = True
 
     # optimizer = "adamw"
-    optimizer = "muon"
-    # optimizer = "block_muon"
+    # optimizer = "muon"
+    optimizer = "block_muon"
 
     match optimizer:
         case "adamw":
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         case "muon" | "block_muon":
             wandb_group = Template(
                 # "qat=${qat_method}-${hadamard_size}_${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_wd=${weight_decay}_mu=${muon_momentum}_sched=${lr_sched_name}"
-                "${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_nB=${muon_num_blocks}_c=${muon_coeffs_type}"
+                "${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_nB=${muon_num_blocks}_c=${muon_coeff_type}"
             )
         case _:
             print(f"Unknown optimizer {optimizer}")
@@ -115,7 +115,7 @@ if __name__ == "__main__":
 
         # "chkpt_resume_folder": ["/tmp/DAS-Standard/results/your_project/your_run_name"],
         # "chkpt_resume_step": [100],
-        "chkpt_max_limit": [2],
+        "chkpt_max_limit": [1],
         "chkpt_freq": [1000], # log once at 100 steps
 
 
@@ -191,7 +191,7 @@ if __name__ == "__main__":
             # 4,
             # 8, # uses this fixed value
         ],
-        "muon_coeffs_type": [
+        "muon_coeff_type": [
             # "p5-you",
             # "p5-book",
             # "p5-polar",

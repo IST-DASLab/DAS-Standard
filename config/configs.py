@@ -59,7 +59,7 @@ class OptimizerConfig:
     muon_momentum: float = 0.95
     muon_scaling_type: str = "rms"
     muon_num_blocks: int = 0
-    muon_coeffs_type: Literal["p5-you", "p5-polar", "p5-book", "p5-kj", "p3-nv", "p3-book"] = "p5-kj"
+    muon_coeff_type: Literal["p5-you", "p5-polar", "p5-book", "p5-kj", "p3-nv", "p3-book"] = "p5-kj"
 
 
 @dataclass
