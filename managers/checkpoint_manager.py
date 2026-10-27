@@ -49,14 +49,14 @@ class CheckpointManager:
 
         print(f"[Checkpointer] Resuming parameter states from step {resume_step} in {self.checkpointer.load_dir}...")
 
-        disk_config, disk_reader = self.checkpointer.load(
+        disk_config, disk_reader_state = self.checkpointer.load(
             step=resume_step,
             model=model,
             multi_optimizer=multi_optimizer,
         )
 
-        if disk_reader is not None:
-            train_reader.load_state_dict(disk_reader.state_dict())
+        if disk_reader_state is not None:
+            train_reader.load_state_dict(disk_reader_state)
 
         self._recompute_optimizer_lrs(multi_optimizer)
 
@@ -168,7 +168,7 @@ class Checkpointer:
             _save_config_json(config=config, path=paths["config_json"])
 
             print(f'Saving pt reader to {paths["reader_pt"]}')
-            torch.save(obj=reader, f=paths["reader_pt"])
+            torch.save(obj=reader.state_dict(), f=paths["reader_pt"])
 
         if self.is_init:
             dist.barrier()
@@ -207,6 +207,6 @@ class Checkpointer:
         config = torch.load(paths["config_pt"], map_location="cpu", weights_only=False)
 
         print(f'Loading pt reader from {paths["reader_pt"]}')
-        reader = torch.load(paths["reader_pt"], map_location="cpu", weights_only=False)
+        reader_state = torch.load(paths["reader_pt"], map_location="cpu", weights_only=False)
 
-        return config, reader
+        return config, reader_state
