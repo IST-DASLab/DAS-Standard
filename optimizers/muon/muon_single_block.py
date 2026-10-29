@@ -42,7 +42,7 @@ class MuonSingleBlock(torch.optim.Optimizer):
                 R, C = G.shape
 
                 M.lerp_(G, 1 - mu)
-                N = G.lerp(M, mu)  # force nesterov
+                N = G.lerp_(M, mu)  # force nesterov
 
                 assert R % B == 0, f"Row dimension must be divisible by world size!"
 
