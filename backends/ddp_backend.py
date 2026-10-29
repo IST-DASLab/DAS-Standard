@@ -24,6 +24,7 @@ class DDPBackend(BaseBackend):
             - grad_acc_steps = 64
             For DDP, the grad acc_steps will be changed form 64 to 8 because we have 8 processes running in parallel
         """
+        assert self.cfg.training.grad_acc_steps % self.world_size == 0
         self.cfg.training.grad_acc_steps //= self.world_size
         if self.is_master:
             print(f"\n=== Using DDP backend ===\n")

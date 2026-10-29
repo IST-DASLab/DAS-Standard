@@ -21,6 +21,8 @@ class FSDP2Backend(BaseBackend):
         )
 
         self.mesh = init_device_mesh(device_type="cuda", mesh_shape=(self.world_size, ))
+
+        assert self.cfg.training.grad_acc_steps % self.world_size == 0
         self.cfg.training.grad_acc_steps //= self.world_size # same as in DDP
 
         if self.is_master:
