@@ -1,7 +1,8 @@
 import torch
+import torch.distributed as dist
 from collections import defaultdict
 
-from optimizers.muon.muon_utils import muon_scaling, zeropower_via_newtonschulz5_bmm, newton_schulz_factory
+from optimizers.muon.muon_utils import muon_scaling, newton_schulz_factory
 
 
 class MuonFSDP2Block(torch.optim.Optimizer):
@@ -48,6 +49,6 @@ class MuonFSDP2Block(torch.optim.Optimizer):
                     is_batched=True
                 )
                 for i, p in enumerate(param_list):
-                    scaling = muon_scaling(p, scaling_type)
+                    scaling = muon_scaling(p, scaling_type, dist.get_world_size())
                     p.mul_(1 - lr * wd)
                     p.to_local().add_(U_stack[i], alpha=-lr * scaling)

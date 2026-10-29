@@ -33,7 +33,7 @@ class MuonSingleBlock(torch.optim.Optimizer):
                 wd = group["weight_decay"]
                 mu = group["momentum"]
                 num_blocks = group["num_blocks"]
-                scaling = muon_scaling(p, group["scaling_type"])
+                scaling = muon_scaling(p, group["scaling_type"], num_blocks)
 
                 G = p.grad
                 M = state["momentum_buffer"]

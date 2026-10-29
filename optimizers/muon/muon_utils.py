@@ -107,7 +107,7 @@ def zeropower_via_newtonschulz3_bmm(G, steps: int, coeffs_type: str):
     return X
 
 
-def muon_scaling(p, scaling_type):
+def muon_scaling(p, scaling_type, num_blocks=None):
     R, C = p.shape
     match scaling_type:
         case 'none':
@@ -117,7 +117,8 @@ def muon_scaling(p, scaling_type):
         case 'rms':
             return 0.2 * math.sqrt(max(R, C))
         case 'block':
-            return 0.2 * math.sqrt(max(R / dist.get_world_size(), C))
+            assert num_blocks is not None
+            return 0.2 * math.sqrt(max(R / num_blocks, C))
         case 'dion':
             return (R / C) ** 0.5
         case _:
