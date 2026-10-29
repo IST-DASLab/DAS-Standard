@@ -105,11 +105,11 @@ class Checkpointer:
 
     def _scan_existing_checkpoints(self):
         """Populate history from disk, so resuming training respects max_limit."""""
-        if not os.path.isdir(self.save_dir):
+        if not self.save_dir.is_dir():
             raise RuntimeError(f"Checkpoint directory {self.save_dir} does not exist.")
 
         for chkpt_folder in os.listdir(self.save_dir):
-            if (self.save_dir / chkpt_folder).isdir() and chkpt_folder.startswith("chkpt-"):
+            if (self.save_dir / chkpt_folder).is_dir() and chkpt_folder.startswith("chkpt-"):
                 step_str = chkpt_folder.split("-")[-1].split(".")[0]
                 step = int(step_str)
 

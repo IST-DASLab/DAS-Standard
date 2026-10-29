@@ -109,8 +109,7 @@ class LoggingManager:
             print("=" * 50)
             print(f"Model summary:")
             print(f"\t                Input Embedding params (PIE): {PIE:_}")
-            if PPE > 0:
-                print(f"\t                  Pos Embedding params (PPE): {PPE:_}")
+            print(f"\t                  Pos Embedding params (PPE): {PPE:_}")
             print(f"\t               Output Embedding params (POE): {POE:_} (tied: {is_tied})")
             print(f"\t                          Linear params (PL): {PL:_}")
             print(f"\t                            Norm params (PN): {PN:_}")
