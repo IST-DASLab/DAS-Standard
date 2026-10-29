@@ -56,15 +56,20 @@ class DataReader:
 
     def _get_data(self):
         if self.data is None:
-            return np.memmap(self.path, dtype=np.uint16, mode="r")
+            self.data = np.memmap(self.path, dtype=np.uint16, mode="r")
         return self.data
 
     def _shuffle_epoch(self, epoch):
-        seed = self.seed + epoch
-        rng = np.random.default_rng(seed)
+        rng = np.random.default_rng(self.seed + epoch)
+
+        num_indices = self.num_seqs - 1
+
+        # Every index fits in uint32 when num_indices <= 2**32.
+        dtype = np.uint32 if num_indices <= 2 ** 32 else np.int64
 
         # we sample sequences of "seq_len" tokens at a time for one batch
-        self.perm = rng.permutation(self.num_seqs - 1)
+        self.perm = np.arange(num_indices, dtype=dtype)
+        rng.shuffle(self.perm)
 
         # generate a new token offset
         self.epoch_token_offset = rng.integers(self.seq_len)
@@ -74,6 +79,7 @@ class DataReader:
 
     def sample_batch(self, device='cuda'):
         data = self._get_data()
+        is_cuda = (device == "cuda")
 
         # sample without replacement
         batch_idx = self.world_size * self.step + self.rank  # at each step we read "world_size" batches and index into it using "rank"
@@ -90,22 +96,40 @@ class DataReader:
 
         self.step += 1
 
-        xy = np.stack([
-            data[i: i + self.seq_len + 1]
-            for i in idxs
-        ]).astype(np.int64)
+        host_batch = torch.empty(
+            (2, self.batch_size, self.seq_len),
+            dtype=torch.long,
+            pin_memory=is_cuda,
+        )
+        host_array = host_batch.numpy()
 
-        x = torch.from_numpy(xy[:, :-1]).contiguous()
-        y = torch.from_numpy(xy[:, 1:]).contiguous()
+        for row, idx in enumerate(idxs):
+            window = data[idx : idx + self.seq_len + 1] # extract a window of size seq_len from the memory map
+            host_array[0, row, :] = window[:-1] # this is x
+            host_array[1, row, :] = window[1:]  # this is y
+        # end for
 
-        if device == 'cuda':
-            x = x.pin_memory().to(device, non_blocking=True)
-            y = y.pin_memory().to(device, non_blocking=True)
-        else:
-            x = x.to(device)
-            y = y.to(device)
+        # perform host-to-device transfer: both returned tensors are contiguous
+        batch = host_batch.to(device, non_blocking=is_cuda)
 
-        return x, y
+        return batch[0], batch[1]
+
+        # xy = np.stack([
+        #     data[i: i + self.seq_len + 1]
+        #     for i in idxs
+        # ]).astype(np.int64)
+        #
+        # x = torch.from_numpy(xy[:, :-1]).contiguous()
+        # y = torch.from_numpy(xy[:, 1:]).contiguous()
+        #
+        # if device == 'cuda':
+        #     x = x.pin_memory().to(device, non_blocking=True)
+        #     y = y.pin_memory().to(device, non_blocking=True)
+        # else:
+        #     x = x.to(device)
+        #     y = y.to(device)
+        #
+        # return x, y
 
     def state_dict(self):
         return {

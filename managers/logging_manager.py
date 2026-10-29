@@ -11,6 +11,7 @@ from torch import distributed as dist
 from tqdm.asyncio import tqdm
 
 from config import print_config
+from models import round_param_count
 from utils import *
 
 
@@ -92,38 +93,42 @@ class LoggingManager:
 
             print_config(cfg)
 
-            params_inp_embed = model.token_embed.weight.numel()
-            params_pos_embed = model.pos_embed.weight.numel() if hasattr(model, "pos_embed") else 0
-            params_out_embed = model.lm_head.weight.numel()
-            params_linear = sum(p.numel() for p in model.blocks.parameters() if p.ndim == 2)
-            params_layer_norm = sum(p.numel() for p in model.parameters() if p.ndim == 1)
-            params_all = sum(p.numel() for p in model.parameters())
+            PIE = model.token_embed.weight.numel()
+            PPE = model.pos_embed.weight.numel() if hasattr(model, "pos_embed") else 0
+            POE = 0 if is_tied else model.lm_head.weight.numel()
+            PL = sum(p.numel() for p in model.blocks.parameters() if p.ndim == 2)
+            PN = sum(p.numel() for p in model.parameters() if p.ndim == 1)
+            PA = sum(p.numel() for p in model.parameters())
 
-            T = (params_linear + params_layer_norm) * CTR * 20
+            TP = PL + PN
+            RTP = round_param_count(TP)
+            T = RTP * CTR * 20
 
             print("Model:")
             print(str(model))
             print("=" * 50)
             print(f"Model summary:")
-            print(f"\t Input Embedding params: {params_inp_embed:_} (tied: {is_tied})")
-            if params_pos_embed > 0:
-                print(f"\t   Pos Embedding params: {params_pos_embed:_}")
-            print(f"\tOutput Embedding params: {params_out_embed:_} (tied: {is_tied})")
-            print(f"\t          Linear params: {params_linear:_}")
-            print(f"\t     Layer norms params: {params_layer_norm:_}")
-            print(f"\t             All params: {params_all:_}")
+            print(f"\t                Input Embedding params (PIE): {PIE:_}")
+            if PPE > 0:
+                print(f"\t                  Pos Embedding params (PPE): {PPE:_}")
+            print(f"\t               Output Embedding params (POE): {POE:_} (tied: {is_tied})")
+            print(f"\t                          Linear params (PL): {PL:_}")
+            print(f"\t                            Norm params (PN): {PN:_}")
+            print(f"\t All params (PIE + PPE + POE + PL + PN = PA): {PA:_}")
+
             print("=" * 50)
+
             print(f"Total tokens & training steps:")
-            print(f"\t               Linear params (P): {params_linear:_}")
-            print(f"\t                 Norm params (N): {params_layer_norm:_}")
-            print(f"\t Total params for tokens (P + N): {params_linear + params_layer_norm:_}")
+            print(f"\t     Token Params (PL + PN = TP): {TP:_}")
+            print(f"\t      Rounded Token Params (RTP): {RTP:_}")
             print(f"\t    Chinchilla Token Ratio (CTR): {CTR * 20}x")
-            print(f"\t      Tokens (T = CTR * (P + N)): {T:_}")
+            print(f"\t          Tokens (CTR * RTP = T): {T:_}")
             print(f"\t             Sequence Length (S): {S}")
             print(f"\t           Device Batch Size (B): {B}")
             print(f"\t              Grad Acc Steps (A): {A}")
             print(f"\t                  World Size (W): {world_size}")
             print(f"\t     Steps (T / (B * S * A * W)): {math.ceil(T / (B * S * A * world_size)):_}")
+
             print("=" * 50)
 
     #####
@@ -178,6 +183,8 @@ class LoggingManager:
         :param timer: the timer object containing all time measurements for one training step
         :param optimizer: the MultiOptimizer
         """
+        W = dist.get_world_size() if dist.is_initialized() else 1
+
         self.update_train_pbar(step_inc=1, loss=f"{total_step_loss:.4f}")
 
         self.log_dict({
@@ -187,11 +194,11 @@ class LoggingManager:
         })
         self.log_dict(timer.get_then_reset())
         self.log_dict(optimizer.extract_learning_rates())
-        self.log_dict(optimizer.get_optimzier_stats())
+        self.log_dict(optimizer.get_optimizer_stats())
         self.log_memory_usage()
         self.log_xaxis(
             iter=crt_iter,
-            tokens=crt_iter * self.cfg.training.local_batch_size * self.cfg.training.grad_acc_steps * self.cfg.model.seq_len,
+            tokens=crt_iter * self.cfg.model.seq_len * self.cfg.training.local_batch_size * self.cfg.training.grad_acc_steps * W,
         ) # log these values to all panel grids (section) in wandb
         self.commit(step=crt_iter)
 

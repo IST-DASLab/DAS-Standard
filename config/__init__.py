@@ -1,2 +1,2 @@
-from .config_utils import model_config_factory, print_config
+from .config_utils import model_config_factory, print_config, compute_iters_and_tokens_inplace
 from .configs import get_dynamic_arg_parser

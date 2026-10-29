@@ -4,11 +4,11 @@ from torch import nn as nn
 
 
 class GPTFeedForward(nn.Module):
-    @staticmethod
-    def get_param_count(cfg: ArgParseNamespace):
-        E = cfg.model.embed_size
-        exp_factor = cfg.model.gpt_mlp_exp_factor
-        return 2 * E * (E * exp_factor)
+    # @staticmethod
+    # def get_param_count(cfg: ArgParseNamespace):
+    #     E = cfg.model.embed_size
+    #     exp_factor = cfg.model.gpt_mlp_exp_factor
+    #     return 2 * E * (E * exp_factor)
 
     def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
@@ -33,10 +33,10 @@ class GPTFeedForward(nn.Module):
 
 class LlamaFeedForward(nn.Module):
     @staticmethod
-    def get_param_count(cfg: ArgParseNamespace):
-        E = cfg.model.embed_size
-        Hdim = cfg.model.llama_mlp_size
-        return 3 * E * Hdim
+    # def get_param_count(cfg: ArgParseNamespace):
+    #     E = cfg.model.embed_size
+    #     Hdim = cfg.model.llama_mlp_size
+    #     return 3 * E * Hdim
 
     def __init__(self, cfg: ArgParseNamespace):
         super().__init__()

@@ -77,7 +77,7 @@ class MultiOptimizer:
             lrs[f"lrs/{opt_name}"] = opt.param_groups[0]["lr"]
         return lrs
 
-    def get_optimzier_stats(self):
+    def get_optimizer_stats(self):
         stats = {}
         for opt in self.optimizers:
             if hasattr(opt, "logging_data"):

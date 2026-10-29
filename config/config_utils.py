@@ -2,6 +2,8 @@ import math
 from dataclasses import is_dataclass, asdict
 from argparse import Namespace as ArgParseNamespace
 
+from models import count_transformer_block_params, round_param_count
+
 from .ladder_gpt import *
 from .ladder_llama2 import *
 from .ladder_llama3 import *
@@ -62,38 +64,33 @@ def model_config_factory(model_name_size):
         "llama-8b-custom": config_llama_8b_custom, # checked manually
     }[model_name_size.lower()]()
 
-def compute_num_iters_and_tokens(cfg, attn_fn, mlp_fn):
+def compute_iters_and_tokens_inplace(cfg, model, world_size):
     """
-    This function computes the number of iterations based on some number of
-    parameters for the model (can be full model size of
-    chinchilla token ratio and batch size / grad acc steps / seq len.
+    This function computes the number of iterations based on the model size and
+    chinchilla optimal token count and writes number of tokens and iterations
+    back to the config.
 
     We only count the number of linear layers in transformer blocks (Attn & MLP)
+
+    Example:
+        model ==> num params x chinchilla ratio => total tokens => total iters
     """
-    L = cfg.model.num_layers
     S = cfg.model.seq_len
-    # V = cfg.model.vocab_size
-    E = cfg.model.embed_size
     B = cfg.training.local_batch_size
     A = cfg.training.grad_acc_steps
     CTR = cfg.training.chinchilla_token_ratio
-    # is_tied = cfg.model.tie_embeds
+    W = world_size
 
-    ##### Do not count token embedding and lm-head towards total number of parameters
-    ### linear params in attention (includes norms for qk-norm)
-    params_attn = L * attn_fn(cfg)
-    ### linear params in MLP (includes norms for qk-norm)
-    params_mlp = L * mlp_fn(cfg)
-    ### norms in the model blocks (2 norms per block of size E) + one norm at the end of the model (before lm-head)
-    params_norm = L * E * 2 + 1
+    block_params = count_transformer_block_params(model, vocab_size=cfg.model.vocab_size)
+    block_params_rounded = round_param_count(block_params)
 
-    params_total = params_attn + params_mlp + params_norm
+    num_tokens = block_params_rounded * CTR * 20
+    iterations = math.ceil(num_tokens / (B * S * A * W))
 
-    num_tokens = params_total * CTR * 20
-    iterations = math.ceil(num_tokens / (B * S * A))
+    cfg.training.max_iters = iterations
+    cfg.training.num_tokens = num_tokens
 
-    return iterations, num_tokens
-
+    print(f"Config update: training.max_iters={iterations}; training.num_tokens={num_tokens}")
 
 def print_config(cfg: ArgParseNamespace):
     """

@@ -28,6 +28,6 @@ def get_data_readers(cfg):
         batch_size=cfg.training.local_batch_size,
         seq_len=cfg.model.seq_len,
         seed=cfg.training.seed,
-        auto_shard=False)
+        auto_shard=True)
 
     return train_reader, val_reader

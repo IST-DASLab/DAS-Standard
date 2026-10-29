@@ -174,31 +174,6 @@ def get_dynamic_arg_parser():
 
 
 def preprocess(cfg: ArgParseNamespace):
-    from .config_utils import compute_num_iters_and_tokens
-    attn_params_fn = None
-    mlp_params_fn = None
-    model_name_size = cfg.training.model_name_size
-
-    #####
-    ##### Set functions to compute params count
-    #####
-    if "gpt" in model_name_size:
-        attn_params_fn = get_MHSA_param_count
-        mlp_params_fn = GPTFeedForward.get_param_count
-    elif ("llama" in model_name_size) or ("qwen" in model_name_size):
-        if "mhsa" in cfg.model.attn_type:
-            attn_params_fn = get_MHSA_param_count
-        elif "gqa" in cfg.model.attn_type:
-            attn_params_fn = get_GQA_param_count
-        else:
-            raise RuntimeError(f"Invalid attn_type for attn_params_fn!")
-        mlp_params_fn = LlamaFeedForward.get_param_count
-
-    #####
-    ##### Compute number of iterations & num tokens based on model size (only Linears from transformer blocks)
-    #####
-    cfg.training.max_iters, cfg.training.num_tokens = compute_num_iters_and_tokens(cfg, attn_fn=attn_params_fn, mlp_fn=mlp_params_fn)
-
     #####
     ##### Check model size
     #####

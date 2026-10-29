@@ -4,35 +4,52 @@ import os
 os.environ["TORCH_CPP_LOG_LEVEL"] = "ERROR"
 os.environ["TORCH_LOGS"] = "-all"
 
-import warnings
+# import warnings
 # warnings.filterwarnings("ignore")
 
-import math
+import torch
+import torch.distributed as dist
 from collections import OrderedDict
 
 from backends import get_backend, BaseBackend
-from config import get_dynamic_arg_parser
+from config import get_dynamic_arg_parser, compute_iters_and_tokens_inplace
 from datasets import get_data_readers
 from managers import LoggingManager, TimingManager, CheckpointManager
-from models import get_model
+from models import get_model, count_transformer_block_params
 from optimizers import MultiOptimizer
 from qat import wrap_model_for_qat
 from utils import * # imports eval_and_log and all TEXT_* variables
 
 def main():
+    #####
+    ##### Config & Backend
+    #####
     cfg = get_dynamic_arg_parser()
     backend: BaseBackend = get_backend(cfg) # must be created first
 
+    #####
+    ##### Logging & Timing
+    #####
     logger = LoggingManager(cfg)
     timer = TimingManager()
 
+    #####
+    ##### Model
+    #####
     raw_model = get_model(cfg)
     wrap_model_for_qat(raw_model, cfg, except_modules=None)
-    logger.log_config_and_model(raw_model, backend.world_size)  # use raw model before wrapping
+    compute_iters_and_tokens_inplace(cfg, raw_model, backend.world_size) # call before logging config
+    logger.log_config_and_model(raw_model, backend.world_size) # use raw model before wrapping
 
+    #####
+    ##### Model & Optimizer
+    #####
     model = backend.wrap_model_then_compile(raw_model) # wrap the model first, so the params are now DTensors
     optimizer = MultiOptimizer(cfg, model, backend) # build optimizer: params are now DTensors
 
+    #####
+    ##### Data Readers
+    #####
     train_reader, val_reader = get_data_readers(cfg)
     logger.log_console(f"Dataset tokens", data=OrderedDict(train=f"{train_reader.num_toks:_}", val=f"{val_reader.num_toks:_}"))
 
@@ -53,7 +70,7 @@ def main():
     logger.start_train_pbar(start_iter=start_iter - 1, total_iters=cfg.training.max_iters)
     for crt_iter in range(start_iter, 1 + cfg.training.max_iters):
         model.train()
-        total_step_loss = 0.0
+        total_step_loss = torch.zeros((), device=backend.get_device(), dtype=torch.float32)
 
         for acc_step in range(cfg.training.grad_acc_steps): # gradient accumulation loop
             # all-reduce gradients only at the last grad acc step
@@ -79,8 +96,15 @@ def main():
                 with backend.get_amp_context():
                     scaled_loss.backward()
 
-            total_step_loss += scaled_loss.item()
+            total_step_loss += scaled_loss.detach().float()
         # end for acc_step
+
+        #####
+        ##### Sync training loss
+        #####
+        if backend.world_size > 1:
+            dist.all_reduce(total_step_loss, op=dist.ReduceOp.SUM)
+            total_step_loss /= backend.world_size
 
         #####
         ##### Gradient clipping
@@ -112,7 +136,7 @@ def main():
         #####
         logger.log_all_stats(
             crt_iter=crt_iter,
-            total_step_loss=total_step_loss,
+            total_step_loss=total_step_loss.item(),
             grad_norm=grad_norm,
             timer=timer,
             optimizer=optimizer,

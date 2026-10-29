@@ -152,13 +152,13 @@ class Attention(nn.Module):
         return out
 
 class MultiHeadSelfAttention(nn.Module):
-    @staticmethod
-    def get_param_count(cfg: ArgParseNamespace):
-        E = cfg.model.embed_size
-        qk_norm = cfg.model.qk_norm
-        params_linear = 4 * E * E
-        params_norm = 2 * E if qk_norm else 0 # 2E for Q and K norms (only weight, no bias)
-        return params_linear + params_norm
+    # @staticmethod
+    # def get_param_count(cfg: ArgParseNamespace):
+    #     E = cfg.model.embed_size
+    #     qk_norm = cfg.model.qk_norm
+    #     params_linear = 4 * E * E
+    #     params_norm = 2 * E if qk_norm else 0 # 2E for Q and K norms (only weight, no bias)
+    #     return params_linear + params_norm
 
     def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
@@ -226,19 +226,19 @@ class MultiHeadSelfAttention(nn.Module):
 
 
 class GroupedQueryAttention(nn.Module):
-    @staticmethod
-    def get_param_count(cfg: ArgParseNamespace):
-        E = cfg.model.embed_size
-        Nh = cfg.model.num_heads
-        H = E // Nh # head size
-        Nkvg = cfg.model.attn_gqa_kvg
-
-        qk_norm = cfg.model.qk_norm
-
-        params_linear = 2 * (E * E + E * (Nkvg * H))
-        params_norm = 2 * E if qk_norm else 0 # 2E for Q and K norms (only weight, no bias)
-
-        return params_linear + params_norm
+    # @staticmethod
+    # def get_param_count(cfg: ArgParseNamespace):
+    #     E = cfg.model.embed_size
+    #     Nh = cfg.model.num_heads
+    #     H = E // Nh # head size
+    #     Nkvg = cfg.model.attn_gqa_kvg
+    #
+    #     qk_norm = cfg.model.qk_norm
+    #
+    #     params_linear = 2 * (E * E + E * (Nkvg * H))
+    #     params_norm = 2 * E if qk_norm else 0 # 2E for Q and K norms (only weight, no bias)
+    #
+    #     return params_linear + params_norm
 
     def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
