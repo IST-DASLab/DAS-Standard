@@ -105,26 +105,23 @@ class Checkpointer:
 
     def _scan_existing_checkpoints(self):
         """Populate history from disk, so resuming training respects max_limit."""""
-        if self.load_dir is None:
-            return
+        if not os.path.isdir(self.save_dir):
+            raise RuntimeError(f"Checkpoint directory {self.save_dir} does not exist.")
 
-        if not os.path.isdir(self.load_dir):
-            raise RuntimeError(f"Checkpoint directory {self.load_dir} does not exist.")
-
-        for f in os.listdir(self.load_dir):
-            if f.startswith("config-") and f.endswith(".pt"):
-                step_str = f.split("-")[-1].split(".")[0]
+        for chkpt_folder in os.listdir(self.save_dir):
+            if (self.save_dir / chkpt_folder).isdir() and chkpt_folder.startswith("chkpt-"):
+                step_str = chkpt_folder.split("-")[-1].split(".")[0]
                 step = int(step_str)
 
                 self.history[step] = {
                     # files
-                    "config_pt": self.load_dir / f"chkpt-{step_str}" / f"config-{step_str}.pt",
-                    "config_json": self.load_dir / f"chkpt-{step_str}" / f"config-{step_str}.json",
-                    "reader_pt": self.load_dir / f"chkpt-{step_str}" / f"reader-{step_str}.pt",
+                    "config_pt": self.save_dir / f"chkpt-{step_str}" / f"config-{step_str}.pt",
+                    "config_json": self.save_dir / f"chkpt-{step_str}" / f"config-{step_str}.json",
+                    "reader_pt": self.save_dir / f"chkpt-{step_str}" / f"reader-{step_str}.pt",
 
                     # folders
-                    "model": self.load_dir / f"chkpt-{step_str}" / f"model-{step_str}",
-                    "optimizer": self.load_dir / f"chkpt-{step_str}" / f"optimizer-{step_str}",
+                    "model": self.save_dir / f"chkpt-{step_str}" / f"model-{step_str}",
+                    "optimizer": self.save_dir / f"chkpt-{step_str}" / f"optimizer-{step_str}",
                 }
 
     def _trim_chkpts(self):
