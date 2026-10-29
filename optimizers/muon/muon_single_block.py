@@ -54,9 +54,8 @@ class MuonSingleBlock(torch.optim.Optimizer):
                     coeffs_type=group["coeffs_type"],
                     is_batched=True,
                 )
-                U_2d = U_3d.view(R, C)
 
                 p.mul_(1 - lr * wd)
-                p.add_(U_2d.reshape(p.shape), alpha=-lr * scaling)
+                p.add_(U_3d.reshape(p.shape), alpha=-lr * scaling)
 
         return loss
