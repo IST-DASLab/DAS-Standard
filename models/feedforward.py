@@ -32,7 +32,7 @@ class GPTFeedForward(nn.Module):
 
 
 class LlamaFeedForward(nn.Module):
-    @staticmethod
+    # @staticmethod
     # def get_param_count(cfg: ArgParseNamespace):
     #     E = cfg.model.embed_size
     #     Hdim = cfg.model.llama_mlp_size
