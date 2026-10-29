@@ -7,7 +7,8 @@ from optimizers.muon.muon_utils import muon_scaling, newton_schulz_factory
 
 class MuonFSDP2Block(torch.optim.Optimizer):
     def __init__(self, params, lr, num_blocks, coeffs_type, scaling_type, weight_decay, momentum):
-        # num_blocks is added only for interface compatibility
+        # num_blocks is added only for interface compatibility with MuonBlock optimizers for other backends
+        # we intentionally ignore it because the num_blocks is given by world size
         super().__init__(params, dict(lr=lr, weight_decay=weight_decay, momentum=momentum, coeffs_type=coeffs_type, scaling_type=scaling_type))
 
     @torch.no_grad()

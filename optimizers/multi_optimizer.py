@@ -19,9 +19,23 @@ class MultiOptimizer:
 
         self.optim_iter = 0
         self.optimizers = self._create_optimizers_list()
+        # self._check()
         self._set_lr_init()
 
         self.zero_grad(set_to_none=True)
+
+    # def _check(self):
+    #     len_set_all_params = len(set(self.model.parameters()))
+    #     len_set_optimizers = len(set(
+    #         p
+    #         for opt in self.optimizers
+    #         for group in opt.param_groups
+    #         for p in group["params"]
+    #     ))
+    #
+    #     print(f"{len_set_all_params=}; {len_set_optimizers=}")
+    #     if self.cfg.wandb.group.startswith("test"):
+    #         exit(666)
 
     def _unwrap_model(self):
         model = self.model
@@ -33,23 +47,14 @@ class MultiOptimizer:
             model = model.module
         return model
 
-    def _get_input_embedding(self):
-        return [self._unwrap_model().token_embed.weight]
-
-    def _get_pos_embedding(self):
-        return [self._unwrap_model().pos_embed.weight] if hasattr(self.model, "pos_embed") else []
-
-    def _get_output_embedding(self):
-        return [self._unwrap_model().lm_head.weight]
-
-    def _get_layer_norms(self):
-        return [p for p in self._unwrap_model().parameters() if p.ndim == 1]
-
     def _get_linear_layers(self):
-        return [p for p in self._unwrap_model().blocks.parameters() if p.ndim == 2]
+        return [p for p in self._unwrap_model().blocks.parameters() if p.ndim == 2 and p.requires_grad]
 
-    def _get_all_params(self):
-        return self.model.parameters()
+    def _separate_params_into_2d_linear_vs_others(self):
+        linear_params = self._get_linear_layers()
+        linear_ids = {id(p) for p in linear_params}
+        other_params = [p for p in self.model.parameters() if id(p) not in linear_ids and p.requires_grad]
+        return linear_params, other_params
 
     def _set_lr_init(self):
         """
@@ -103,7 +108,7 @@ class MultiOptimizer:
             case "adamw8b":
                 return [
                     AdamW8bit(
-                        params=self._get_all_params(),
+                        params=self.model.parameters(),
                         lr=oc.lr,
                         weight_decay=oc.weight_decay,
                         betas=(
@@ -115,7 +120,7 @@ class MultiOptimizer:
             case "adamw":
                 return [
                     AdamW(
-                        params=self._get_all_params(),
+                        params=self.model.parameters(),
                         lr=oc.lr,
                         weight_decay=oc.weight_decay,
                         betas=(
@@ -136,9 +141,10 @@ class MultiOptimizer:
 
                 assert muon_fn is not None
 
+                muon_params, adamw_params = self._separate_params_into_2d_linear_vs_others()
                 return [
                     muon_fn(
-                        params=self._get_linear_layers(),
+                        params=muon_params,
                         lr=oc.lr,
                         coeffs_type=oc.muon_coeffs_type,
                         scaling_type=oc.muon_scaling_type,
@@ -146,7 +152,7 @@ class MultiOptimizer:
                         momentum=oc.muon_momentum
                     ),
                     AdamW(
-                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
+                        params=adamw_params,
                         lr=oc.lr,
                         weight_decay=oc.weight_decay,
                         betas=(
@@ -168,9 +174,10 @@ class MultiOptimizer:
 
                 assert block_muon_fn is not None
 
+                muon_params, adamw_params = self._separate_params_into_2d_linear_vs_others()
                 return [
                     block_muon_fn(
-                        params=self._get_linear_layers(),
+                        params=muon_params,
                         lr=oc.lr,
                         num_blocks=oc.muon_num_blocks,
                         coeffs_type=oc.muon_coeffs_type,
@@ -179,7 +186,7 @@ class MultiOptimizer:
                         momentum=oc.muon_momentum
                     ),
                     AdamW(
-                        params=self._get_input_embedding() + self._get_pos_embedding() + self._get_output_embedding() + self._get_layer_norms(),
+                        params=adamw_params,
                         lr=oc.lr,
                         weight_decay=oc.weight_decay,
                         betas=(

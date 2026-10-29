@@ -37,7 +37,7 @@ class MuonSingleBlock(torch.optim.Optimizer):
 
                 G = p.grad
                 M = state["momentum_buffer"]
-                B = dist.get_world_size() if num_blocks == 0 else num_blocks
+                B = 1 if num_blocks == 0 else num_blocks
 
                 R, C = G.shape
 
