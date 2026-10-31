@@ -151,10 +151,10 @@ class Checkpointer:
 
         model_sd, optim_sd = get_state_dict(model=model, optimizers=tuple(multi_optimizer.optimizers))
 
-        print(f'Saving model to {paths["model"]}')
+        if self.is_master: print(f'Saving model to {paths["model"]}')
         dcp.save({"model": model_sd}, checkpoint_id=paths["model"])
 
-        print(f'Saving optimizer to {paths["optimizer"]}')
+        if self.is_master: print(f'Saving optimizer to {paths["optimizer"]}')
         dcp.save({"optimizer": optim_sd}, checkpoint_id=paths["optimizer"])
 
         if self.is_master:
