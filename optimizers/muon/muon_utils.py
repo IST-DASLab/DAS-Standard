@@ -119,6 +119,9 @@ def muon_scaling(p, scaling_type, num_blocks=None):
         case 'block':
             assert num_blocks is not None
             return 0.2 * math.sqrt(max(R / num_blocks, C))
+        case 'sqrt':
+            assert num_blocks is not None
+            return 0.2 * math.sqrt(max(R, C)) / math.sqrt(num_blocks)
         case 'dion':
             return (R / C) ** 0.5
         case _:
