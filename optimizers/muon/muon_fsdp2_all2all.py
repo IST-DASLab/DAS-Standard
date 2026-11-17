@@ -26,8 +26,10 @@ class MuonFSDP2All2All(torch.optim.Optimizer):
             for base in range(0, len(params), world_size): # inc base by WS
                 chunk = params[base : base + world_size] # select a chunk of `world_size` params (or less if len(params) is not divisible by world_size)
 
+                shard_dtype = chunk[0].dtype
+
                 # sharded momentum update: send[i] stores the shard of chunk[i]'s update
-                send = [torch.empty(0, device=device) for _ in range(world_size)] # create WS placeholders
+                send = [torch.empty(0, device=device, dtype=shard_dtype) for _ in range(world_size)] # create WS placeholders
                 for i, p in enumerate(chunk):
                     state = self.state[p]
                     if len(state) == 0:
@@ -49,7 +51,7 @@ class MuonFSDP2All2All(torch.optim.Optimizer):
                         for s in sizes
                     ]
                 else:
-                    recv = [torch.empty(0, device=device) for _ in range(world_size)]
+                    recv = [torch.empty(0, device=device, dtype=shard_dtype) for _ in range(world_size)]
 
                 dist.all_to_all(output_tensor_list=recv, input_tensor_list=send) # idle ranks will still participate, even though they have zero size
 
@@ -65,10 +67,10 @@ class MuonFSDP2All2All(torch.optim.Optimizer):
                     U *= muon_scaling(U, group["scaling_type"])
                     back_send = list(U.to(dtype=send[rank].dtype).split(sizes, dim=0)) # split the result according to the sizes
                 else:
-                    back_send = [torch.empty(0, device=device) for _ in range(world_size)]
+                    back_send = [torch.empty(0, device=device, dtype=shard_dtype) for _ in range(world_size)]
 
                 # step 3: all-to-all #2 - send back the results
-                back_recv = [torch.empty_like(s) for s in send]
+                back_recv = [torch.empty_like(s) for s in send] # inherits dtype from send
                 dist.all_to_all(output_tensor_list=back_recv, input_tensor_list=back_send)
 
                 for p, u in zip(chunk, back_recv):
