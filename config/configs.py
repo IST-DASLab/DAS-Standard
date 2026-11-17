@@ -17,7 +17,7 @@ class DatasetConfig:
 
 @dataclass
 class ModelConfig: # initialized via model ladders
-    dtype: Literal["bf16", "fp16", "fp32"] = "fp32"
+    # dtype: Literal["bf16", "fp32"] = "fp32"
     attn_type: Literal["mhsa", "mhsa-flash", "gqa", "gqa-flash"] = "mhsa"
     attn_gqa_kvg: int = 8
     qk_norm: bool = False
@@ -63,6 +63,19 @@ class OptimizerConfig:
 
 
 @dataclass
+class PrecisionConfig:
+    # dtype for trainable parameters (initialization & storage)
+    storage_dtype: Literal["fp32", "bf16"] = "fp32"
+
+    # Single/DDP: autocast target
+    # FSDP2: unsharded parameter and all gather (param_dtype in MixedPrecisionPolicy)
+    compute_dtype: Literal["fp32", "bf16"] = "bf16"
+
+    # used only by FSDP2 for gradient reduction and unsynchronized grad accumulation (reduce_dtype in MixedPrecisionPolicy)
+    fsdp_reduce_dtype: Literal["fp32", "bf16"] = "fp32"
+
+
+@dataclass
 class QATConfig:
     qat_method: Literal["quartet2", "disabled"] = "disabled"
     hadamard_size: int = 128
@@ -78,7 +91,6 @@ class TrainingConfig: # mainly set by user
     grad_acc_steps: int = 8
     max_iters: int = -1 # will be automatically determined based on number of tokens, seq len, device batch size and number of workers
     backend: Literal["single", "ddp", "fsdp2"] = "ddp"
-    amp_dtype: Literal["bf16", "fp16", "fp32"] = "bf16"
     compile_model: bool = False
     eval_interval: int = 200
     eval_batches_per_worker: int = 32 # this is per worker. For 8 GPUs, the evaluation is done on 32x8 = 256 batches
@@ -103,6 +115,7 @@ class GlobalConfig(Serializable):
     dataset:       DatasetConfig       = field(default_factory=DatasetConfig)
     model:         ModelConfig         = field(default_factory=ModelConfig)
     optimizer:     OptimizerConfig     = field(default_factory=OptimizerConfig)
+    precision:     PrecisionConfig     = field(default_factory=PrecisionConfig)
     qat:           QATConfig           = field(default_factory=QATConfig)
     training:      TrainingConfig      = field(default_factory=TrainingConfig)
     wandb:         WandbConfig         = field(default_factory=WandbConfig)

@@ -8,6 +8,7 @@ from torch.distributed import init_device_mesh
 from torch.distributed.fsdp import MixedPrecisionPolicy, fully_shard
 
 from backends.base_backend import BaseBackend
+from utils import get_dtype
 
 
 class FSDP2Backend(BaseBackend):
@@ -31,13 +32,18 @@ class FSDP2Backend(BaseBackend):
     def wrap_model_then_compile(self, model):
         model = model.to(self.device) # TODO: use meta-device for large models
 
-        policy = MixedPrecisionPolicy(
-            param_dtype=dict(bf16=torch.bfloat16, fp16=torch.float16, fp32=torch.float32)[self.cfg.model.dtype],
-            reduce_dtype=torch.float32,
+        linear_policy = MixedPrecisionPolicy(
+            # param_dtype specifies the dtype for the unsharded parameter and hence the dtype for forward/backward computation and the parameter all-gather.
+            param_dtype=get_dtype(self.cfg.precision.compute_dtype),
+
+            # reduce_dtype specifies the dtype for gradient reduction (i.e. reduce-scatter or all-reduce)
+            reduce_dtype=get_dtype(self.cfg.precision.fsdp_reduce_dtype),
         )
+
         for block in model.blocks:
-            fully_shard(block, mesh=self.mesh, mp_policy=policy)
-        fully_shard(model, mesh=self.mesh, mp_policy=policy)
+            fully_shard(block, mesh=self.mesh, mp_policy=linear_policy)
+
+        fully_shard(model, mesh=self.mesh, mp_policy=linear_policy)
 
         if self.cfg.training.compile_model:
             model = torch.compile(model)
@@ -46,6 +52,9 @@ class FSDP2Backend(BaseBackend):
 
     def get_amp_context(self):
         """
+        This is a no-op for the FSDP2 backend because the MixedPrecisionPolicy governs the dtypes:
+        1) param_dtype: dtype for forward/backward and parameters all-gather
+        2) reduce_dtype: dtype for gradient reduction (reduce-scatter or all-reduce)
         MixedPrecisionPolicy used in `wrap_model_then_compile` already runs compute in bf16 and reduces grads in fp32, so autocast is redundant.
         """
         return nullcontext()

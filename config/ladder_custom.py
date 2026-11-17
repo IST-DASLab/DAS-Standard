@@ -5,7 +5,7 @@ def config_llama_1b_custom():
     # mlp_size=8192 is off-formula; that's the published value).
     # This is a combination of hyper-params from Llama2-1b and Llama3-1b
     return ModelConfig(
-        dtype="bf16",
+        # dtype="bf16",
         attn_type="gqa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
@@ -25,7 +25,7 @@ def config_llama_1b_custom():
 def config_llama_2b_custom():
     # 1.98B non-embedding / 2.18B total.
     return ModelConfig(
-        dtype="bf16",
+        # dtype="bf16",
         attn_type="gqa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
@@ -46,7 +46,7 @@ def config_llama_4b_custom():
     # 4.15B params
     # config inspired from config_llama3_7200m
     return ModelConfig(
-        dtype="bf16",
+        # dtype="bf16",
         attn_type="gqa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,
@@ -67,7 +67,7 @@ def config_llama_8b_custom():
     # 8.04B params
     # config inspired from config_llama3_7200m
     return ModelConfig(
-        dtype="bf16",
+        # dtype="bf16",
         attn_type="gqa-flash",
         attn_gqa_kvg=8,
         qk_norm=False,

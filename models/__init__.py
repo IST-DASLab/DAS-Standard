@@ -18,7 +18,7 @@ def get_model(cfg: ArgParseNamespace):
     else:
         raise NotImplementedError
 
-    return model.to(dtype=dict(bf16=torch.bfloat16, fp16=torch.float16, fp32=torch.float32)[cfg.model.dtype])
+    return model # .to(dtype=dict(bf16=torch.bfloat16, fp16=torch.float16, fp32=torch.float32)[cfg.model.dtype])
 
 def round_param_count(count):
     if count >= 1_000_000_000:

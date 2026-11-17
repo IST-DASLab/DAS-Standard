@@ -83,20 +83,20 @@ def main():
             ##### Forward pass
             #####
             with timer.record(TEXT_ELAPSED_FORWARD):
-                with backend.get_amp_context():
-                    unscaled_loss = model(x, y)
+                with backend.get_amp_context(): # no-op for FSDP2 backend
+                    raw_loss = model(x, y)
 
-            scaled_loss = unscaled_loss / cfg.training.grad_acc_steps
+            avg_loss = raw_loss / cfg.training.grad_acc_steps
 
             #####
             ##### Backward pass
             #####
             # TODO: use grad scaler for fp16
             with timer.record(TEXT_ELAPSED_BACKWARD):
-                with backend.get_amp_context():
-                    scaled_loss.backward()
+                # with backend.get_amp_context(): # removed when introduced PrecisionConfig
+                avg_loss.backward()
 
-            total_step_loss += scaled_loss.detach().float()
+            total_step_loss += avg_loss.detach().float()
         # end for acc_step
 
         #####
