@@ -32,7 +32,7 @@ class FSDP2Backend(BaseBackend):
     def wrap_model_then_compile(self, model):
         model = model.to(self.device) # TODO: use meta-device for large models
 
-        linear_policy = MixedPrecisionPolicy(
+        policy = MixedPrecisionPolicy(
             # param_dtype specifies the dtype for the unsharded parameter and hence the dtype for forward/backward computation and the parameter all-gather.
             param_dtype=get_dtype(self.cfg.precision.compute_dtype),
 
@@ -41,9 +41,9 @@ class FSDP2Backend(BaseBackend):
         )
 
         for block in model.blocks:
-            fully_shard(block, mesh=self.mesh, mp_policy=linear_policy)
+            fully_shard(block, mesh=self.mesh, mp_policy=policy)
 
-        fully_shard(model, mesh=self.mesh, mp_policy=linear_policy)
+        fully_shard(model, mesh=self.mesh, mp_policy=policy)
 
         if self.cfg.training.compile_model:
             model = torch.compile(model)
