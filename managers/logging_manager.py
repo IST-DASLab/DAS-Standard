@@ -120,7 +120,7 @@ class LoggingManager:
             print(f"Total tokens & training steps:")
             print(f"\t     Token Params (PL + PN = TP): {TP:_}")
             print(f"\t      Rounded Token Params (RTP): {RTP:_}")
-            print(f"\t    Chinchilla Token Ratio (CTR): {CTR * 20}x")
+            print(f"\t    Chinchilla Token Ratio (CTR): {CTR} x 20 = {CTR * 20}xRTP")
             print(f"\t          Tokens (CTR * RTP = T): {T:_}")
             print(f"\t             Sequence Length (S): {S}")
             print(f"\t           Device Batch Size (B): {B}")
