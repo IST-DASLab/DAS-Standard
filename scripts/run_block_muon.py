@@ -114,7 +114,11 @@ if __name__ == "__main__":
             # "ddp",
             "fsdp2",
         ],
-        "amp_dtype": ["bf16"],
+
+        "storage_dtype": ["fp32"],
+        "compute_dtype": ["bf16"],
+        "fsdp_reduce_dtype": ["fp32"],
+
         "compile_model": [True],
         "eval_interval": [
             # 100,

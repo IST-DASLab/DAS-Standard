@@ -37,7 +37,11 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 torchrun --nproc-per-node=8 pretrain.py \
     --local_batch_size 64 \
     --grad_acc_steps 8 \
     --backend ddp \
-    --amp_dtype bf16 \
+
+    --storage_dtype bf16 \
+    --compute_dtype bf16 \
+    --fsdp_reduce_dtype bf16 \
+
     --compile_model \
     --eval_interval 100 \
     --eval_batches_per_worker 32 \

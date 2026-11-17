@@ -76,7 +76,11 @@ if __name__ == "__main__":
                 # "ddp",
                 # "fsdp2",
             ],
-            "amp_dtype": ["bf16"],
+
+            "storage_dtype": ["bf16"],
+            "compute_dtype": ["bf16"],
+            "fsdp_reduce_dtype": ["bf16"],
+
             "compile_model": [True],
             "eval_interval": [50],
             "eval_batches_per_worker": [32],
