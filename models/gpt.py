@@ -8,7 +8,7 @@ from argparse import Namespace as ArgParseNamespace
 from models.attention import Attention # MultiHeadSelfAttention
 from models.feedforward import GPTFeedForward
 from models.norm import KarpathyLayerNorm
-from models.rope import precompute_rope
+from utils import get_dtype
 
 
 class GPTBlock(nn.Module):
@@ -16,8 +16,10 @@ class GPTBlock(nn.Module):
         super().__init__()
         self.attn = Attention(cfg)
         self.mlp = GPTFeedForward(cfg)
-        self.norm1 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
-        self.norm2 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias)
+
+        dtype = get_dtype(cfg.precision.storage_dtype)
+        self.norm1 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias, dtype=dtype)
+        self.norm2 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias, dtype=dtype)
 
     def forward(self, x, mask):
         x = x + self.attn(self.norm1(x), mask, cos=None, sin=None)
@@ -34,15 +36,15 @@ class GPT(nn.Module):
         V = cfg.model.vocab_size
         L = cfg.model.num_layers
         S = cfg.model.seq_len
-        # drp = cfg.model.dropout
         bias = cfg.model.bias
+        dtype = get_dtype(cfg.precision.storage_dtype)
 
-        self.token_embed = nn.Embedding(V, E)
-        self.pos_embed = nn.Embedding(S, E)
+        self.token_embed = nn.Embedding(V, E, dtype=dtype)
+        self.pos_embed = nn.Embedding(S, E, dtype=dtype)
         # self.dropout = nn.Dropout(drp)
         self.blocks = nn.ModuleList([GPTBlock(cfg) for _ in range(L)])
-        self.norm = KarpathyLayerNorm(E, bias=bias)
-        self.lm_head = nn.Linear(in_features=E, out_features=V, bias=bias)
+        self.norm = KarpathyLayerNorm(E, bias=bias, dtype=dtype)
+        self.lm_head = nn.Linear(in_features=E, out_features=V, bias=bias, dtype=dtype)
 
         if cfg.model.tie_embeds:
             self.token_embed.weight = self.lm_head.weight

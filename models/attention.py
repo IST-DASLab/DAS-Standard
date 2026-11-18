@@ -1,12 +1,13 @@
 import math
 
-import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from argparse import Namespace as ArgParseNamespace
 
 from models.norm import RMSNorm
 from models.rope import apply_rope
+from utils import get_dtype
+
 
 # def attn_factory(cfg: ArgParseNamespace):
 #     attn_type = cfg.model.attn_type
@@ -47,8 +48,8 @@ class Attention(nn.Module):
         Nkvg = cfg.model.attn_gqa_kvg
         H = E // Nh # head size
         bias = cfg.model.bias
-        # drp = cfg.model.dropout
         qk_norm = cfg.model.qk_norm
+        dtype = get_dtype(cfg.precision.storage_dtype)
 
         self.is_mhsa = 'mhsa' in cfg.model.attn_type
         self.is_gqa = 'gqa' in cfg.model.attn_type
@@ -63,16 +64,16 @@ class Attention(nn.Module):
         else:
             raise NotImplementedError(f"Unknown attention type: {cfg.model.attn_type}")
 
-        self.Wq = nn.Linear(in_features=E, out_features=E, bias=bias)
-        self.Wk = nn.Linear(in_features=E, out_features=out_kv, bias=bias)
-        self.Wv = nn.Linear(in_features=E, out_features=out_kv, bias=bias)
-        self.Wo = nn.Linear(in_features=E, out_features=E, bias=bias)
+        self.Wq = nn.Linear(in_features=E, out_features=E,      bias=bias, dtype=dtype)
+        self.Wk = nn.Linear(in_features=E, out_features=out_kv, bias=bias, dtype=dtype)
+        self.Wv = nn.Linear(in_features=E, out_features=out_kv, bias=bias, dtype=dtype)
+        self.Wo = nn.Linear(in_features=E, out_features=E,      bias=bias, dtype=dtype)
         # self.dropout_attn = nn.Dropout(p=drp)
         # self.dropout_out = nn.Dropout(p=drp)
 
         if qk_norm:
-            self.q_norm = RMSNorm(ndim=H, bias=False)
-            self.k_norm = RMSNorm(ndim=H, bias=False)
+            self.q_norm = RMSNorm(ndim=H, bias=False, dtype=dtype)
+            self.k_norm = RMSNorm(ndim=H, bias=False, dtype=dtype)
 
     def _compute_pre_attn(self, x, cos, sin):
         B, T, E = x.shape
@@ -152,13 +153,13 @@ class Attention(nn.Module):
         return out
 
 class MultiHeadSelfAttention(nn.Module):
-    @staticmethod
-    def get_param_count(cfg: ArgParseNamespace):
-        E = cfg.model.embed_size
-        qk_norm = cfg.model.qk_norm
-        params_linear = 4 * E * E
-        params_norm = 2 * E if qk_norm else 0 # 2E for Q and K norms (only weight, no bias)
-        return params_linear + params_norm
+    # @staticmethod
+    # def get_param_count(cfg: ArgParseNamespace):
+    #     E = cfg.model.embed_size
+    #     qk_norm = cfg.model.qk_norm
+    #     params_linear = 4 * E * E
+    #     params_norm = 2 * E if qk_norm else 0 # 2E for Q and K norms (only weight, no bias)
+    #     return params_linear + params_norm
 
     def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
@@ -168,19 +169,19 @@ class MultiHeadSelfAttention(nn.Module):
         Nh = cfg.model.num_heads
         H = E // Nh # head size
         bias = cfg.model.bias
-        # drp = cfg.model.dropout
         qk_norm = cfg.model.qk_norm
+        dtype = get_dtype(cfg.precision.storage_dtype)
 
-        self.Wq = nn.Linear(in_features=E, out_features=E, bias=bias)
-        self.Wk = nn.Linear(in_features=E, out_features=E, bias=bias)
-        self.Wv = nn.Linear(in_features=E, out_features=E, bias=bias)
-        self.Wo = nn.Linear(in_features=E, out_features=E, bias=bias)
+        self.Wq = nn.Linear(in_features=E, out_features=E, bias=bias, dtype=dtype)
+        self.Wk = nn.Linear(in_features=E, out_features=E, bias=bias, dtype=dtype)
+        self.Wv = nn.Linear(in_features=E, out_features=E, bias=bias, dtype=dtype)
+        self.Wo = nn.Linear(in_features=E, out_features=E, bias=bias, dtype=dtype)
         # self.dropout_attn = nn.Dropout(p=drp)
         # self.dropout_out = nn.Dropout(p=drp)
 
         if qk_norm:
-            self.q_norm = RMSNorm(ndim=H, bias=False)
-            self.k_norm = RMSNorm(ndim=H, bias=False)
+            self.q_norm = RMSNorm(ndim=H, bias=False, dtype=dtype)
+            self.k_norm = RMSNorm(ndim=H, bias=False, dtype=dtype)
 
     def forward(self, x, mask, cos, sin):
         assert mask is not None, "Found mask=None in MHSA!"
@@ -226,19 +227,19 @@ class MultiHeadSelfAttention(nn.Module):
 
 
 class GroupedQueryAttention(nn.Module):
-    @staticmethod
-    def get_param_count(cfg: ArgParseNamespace):
-        E = cfg.model.embed_size
-        Nh = cfg.model.num_heads
-        H = E // Nh # head size
-        Nkvg = cfg.model.attn_gqa_kvg
-
-        qk_norm = cfg.model.qk_norm
-
-        params_linear = 2 * (E * E + E * (Nkvg * H))
-        params_norm = 2 * E if qk_norm else 0 # 2E for Q and K norms (only weight, no bias)
-
-        return params_linear + params_norm
+    # @staticmethod
+    # def get_param_count(cfg: ArgParseNamespace):
+    #     E = cfg.model.embed_size
+    #     Nh = cfg.model.num_heads
+    #     H = E // Nh # head size
+    #     Nkvg = cfg.model.attn_gqa_kvg
+    #
+    #     qk_norm = cfg.model.qk_norm
+    #
+    #     params_linear = 2 * (E * E + E * (Nkvg * H))
+    #     params_norm = 2 * E if qk_norm else 0 # 2E for Q and K norms (only weight, no bias)
+    #
+    #     return params_linear + params_norm
 
     def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
@@ -249,22 +250,22 @@ class GroupedQueryAttention(nn.Module):
         H = E // Nh # head size
         bias = cfg.model.bias
         Nkvg = cfg.model.attn_gqa_kvg
-        # drp = cfg.model.dropout
         qk_norm = cfg.model.qk_norm
+        dtype = get_dtype(cfg.precision.storage_dtype)
 
         assert E % Nh == 0, "Embedding size must be a multiple of Nh"
         assert Nh % Nkvg == 0, "Number of heads must be a multiple of number KV-groups"
 
-        self.Wq = nn.Linear(in_features=E, out_features=E, bias=bias)
-        self.Wk = nn.Linear(in_features=E, out_features=Nkvg * H, bias=bias)
-        self.Wv = nn.Linear(in_features=E, out_features=Nkvg * H, bias=bias)
-        self.Wo = nn.Linear(in_features=E, out_features=E, bias=bias)
+        self.Wq = nn.Linear(in_features=E, out_features=E,        bias=bias, dtype=dtype)
+        self.Wk = nn.Linear(in_features=E, out_features=Nkvg * H, bias=bias, dtype=dtype)
+        self.Wv = nn.Linear(in_features=E, out_features=Nkvg * H, bias=bias, dtype=dtype)
+        self.Wo = nn.Linear(in_features=E, out_features=E,        bias=bias, dtype=dtype)
         # self.dropout_attn = nn.Dropout(p=drp)
         # self.dropout_out = nn.Dropout(p=drp)
 
         if qk_norm:
-            self.q_norm = RMSNorm(ndim=H, bias=False)
-            self.k_norm = RMSNorm(ndim=H, bias=False)
+            self.q_norm = RMSNorm(ndim=H, bias=False, dtype=dtype)
+            self.k_norm = RMSNorm(ndim=H, bias=False, dtype=dtype)
 
     def forward(self, x, mask, cos, sin):
         assert mask is not None, "Found mask=None in GQA!"

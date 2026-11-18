@@ -49,14 +49,14 @@ class CheckpointManager:
 
         print(f"[Checkpointer] Resuming parameter states from step {resume_step} in {self.checkpointer.load_dir}...")
 
-        disk_config, disk_reader = self.checkpointer.load(
+        disk_config, disk_reader_state = self.checkpointer.load(
             step=resume_step,
             model=model,
             multi_optimizer=multi_optimizer,
         )
 
-        if disk_reader is not None:
-            train_reader.load_state_dict(disk_reader.state_dict())
+        if disk_reader_state is not None:
+            train_reader.load_state_dict(disk_reader_state)
 
         self._recompute_optimizer_lrs(multi_optimizer)
 
@@ -105,26 +105,23 @@ class Checkpointer:
 
     def _scan_existing_checkpoints(self):
         """Populate history from disk, so resuming training respects max_limit."""""
-        if self.load_dir is None:
-            return
+        if not self.save_dir.is_dir():
+            raise RuntimeError(f"Checkpoint directory {self.save_dir} does not exist.")
 
-        if not os.path.isdir(self.load_dir):
-            raise RuntimeError(f"Checkpoint directory {self.load_dir} does not exist.")
-
-        for f in os.listdir(self.load_dir):
-            if f.startswith("config-") and f.endswith(".pt"):
-                step_str = f.split("-")[-1].split(".")[0]
+        for chkpt_folder in os.listdir(self.save_dir):
+            if (self.save_dir / chkpt_folder).is_dir() and chkpt_folder.startswith("chkpt-"):
+                step_str = chkpt_folder.split("-")[-1].split(".")[0]
                 step = int(step_str)
 
                 self.history[step] = {
                     # files
-                    "config_pt": self.load_dir / f"chkpt-{step_str}" / f"config-{step_str}.pt",
-                    "config_json": self.load_dir / f"chkpt-{step_str}" / f"config-{step_str}.json",
-                    "reader_pt": self.load_dir / f"chkpt-{step_str}" / f"reader-{step_str}.pt",
+                    "config_pt": self.save_dir / f"chkpt-{step_str}" / f"config-{step_str}.pt",
+                    "config_json": self.save_dir / f"chkpt-{step_str}" / f"config-{step_str}.json",
+                    "reader_pt": self.save_dir / f"chkpt-{step_str}" / f"reader-{step_str}.pt",
 
                     # folders
-                    "model": self.load_dir / f"chkpt-{step_str}" / f"model-{step_str}",
-                    "optimizer": self.load_dir / f"chkpt-{step_str}" / f"optimizer-{step_str}",
+                    "model": self.save_dir / f"chkpt-{step_str}" / f"model-{step_str}",
+                    "optimizer": self.save_dir / f"chkpt-{step_str}" / f"optimizer-{step_str}",
                 }
 
     def _trim_chkpts(self):
@@ -154,10 +151,10 @@ class Checkpointer:
 
         model_sd, optim_sd = get_state_dict(model=model, optimizers=tuple(multi_optimizer.optimizers))
 
-        print(f'Saving model to {paths["model"]}')
+        if self.is_master: print(f'Saving model to {paths["model"]}')
         dcp.save({"model": model_sd}, checkpoint_id=paths["model"])
 
-        print(f'Saving optimizer to {paths["optimizer"]}')
+        if self.is_master: print(f'Saving optimizer to {paths["optimizer"]}')
         dcp.save({"optimizer": optim_sd}, checkpoint_id=paths["optimizer"])
 
         if self.is_master:
@@ -168,7 +165,7 @@ class Checkpointer:
             _save_config_json(config=config, path=paths["config_json"])
 
             print(f'Saving pt reader to {paths["reader_pt"]}')
-            torch.save(obj=reader, f=paths["reader_pt"])
+            torch.save(obj=reader.state_dict(), f=paths["reader_pt"])
 
         if self.is_init:
             dist.barrier()
@@ -207,6 +204,6 @@ class Checkpointer:
         config = torch.load(paths["config_pt"], map_location="cpu", weights_only=False)
 
         print(f'Loading pt reader from {paths["reader_pt"]}')
-        reader = torch.load(paths["reader_pt"], map_location="cpu", weights_only=False)
+        reader_state = torch.load(paths["reader_pt"], map_location="cpu", weights_only=False)
 
-        return config, reader
+        return config, reader_state

@@ -1,9 +1,9 @@
 import random
 from argparse import Namespace as ArgParseNamespace
-
-import numpy as np
 import torch
+import numpy as np
 from torch.distributed.tensor import DTensor
+from utils import get_dtype
 
 
 class BaseBackend:
@@ -29,14 +29,7 @@ class BaseBackend:
         torch.backends.cudnn.allow_tf32 = True
 
     def get_amp_context(self):
-        return torch.amp.autocast(
-            device_type="cuda",
-            dtype={
-                'fp32': torch.float32,
-                'bf16': torch.bfloat16,
-                'fp16': torch.float16,
-            }[self.cfg.training.amp_dtype]
-        )
+        return torch.amp.autocast(device_type="cuda", dtype=get_dtype(self.cfg.precision.compute_dtype))
 
     @property
     def is_master(self):

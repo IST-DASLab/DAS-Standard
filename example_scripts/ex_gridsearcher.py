@@ -73,7 +73,11 @@ if __name__ == "__main__":
                 "ddp",
                 # "fsdp2",
             ],
-            "amp_dtype": ["bf16"],
+
+            "storage_dtype": ["bf16"],
+            "compute_dtype": ["bf16"],
+            "fsdp_reduce_dtype": ["bf16"],
+
             "compile_model": [True],
             "eval_interval": [100],
             "eval_batches_per_worker": [32], # all workers perform eval using this many batches, with "local_batch_size" in each batch

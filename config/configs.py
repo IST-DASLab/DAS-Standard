@@ -17,7 +17,7 @@ class DatasetConfig:
 
 @dataclass
 class ModelConfig: # initialized via model ladders
-    dtype: Literal["bf16", "fp16", "fp32"] = "fp32"
+    # dtype: Literal["bf16", "fp32"] = "fp32"
     attn_type: Literal["mhsa", "mhsa-flash", "gqa", "gqa-flash"] = "mhsa"
     attn_gqa_kvg: int = 8
     qk_norm: bool = False
@@ -57,7 +57,22 @@ class OptimizerConfig:
 
     # Muon parameters
     muon_momentum: float = 0.95
-    muon_scaling_type: str = 'rms'
+    muon_scaling_type: str = "rms"
+    muon_num_blocks: int = 0
+    muon_coeffs_type: Literal["p5-you", "p5-polar", "p5-book", "p5-kj", "p3-nv", "p3-book"] = "p5-kj"
+
+
+@dataclass
+class PrecisionConfig:
+    # dtype for trainable parameters (initialization & storage)
+    storage_dtype: Literal["fp32", "bf16"] = "fp32"
+
+    # Single/DDP: autocast target
+    # FSDP2: unsharded parameter and all gather (param_dtype in MixedPrecisionPolicy)
+    compute_dtype: Literal["fp32", "bf16"] = "bf16"
+
+    # used only by FSDP2 for gradient reduction and unsynchronized grad accumulation (reduce_dtype in MixedPrecisionPolicy)
+    fsdp_reduce_dtype: Literal["fp32", "bf16"] = "fp32"
 
 
 @dataclass
@@ -76,7 +91,6 @@ class TrainingConfig: # mainly set by user
     grad_acc_steps: int = 8
     max_iters: int = -1 # will be automatically determined based on number of tokens, seq len, device batch size and number of workers
     backend: Literal["single", "ddp", "fsdp2"] = "ddp"
-    amp_dtype: Literal["bf16", "fp16", "fp32"] = "bf16"
     compile_model: bool = False
     eval_interval: int = 200
     eval_batches_per_worker: int = 32 # this is per worker. For 8 GPUs, the evaluation is done on 32x8 = 256 batches
@@ -101,6 +115,7 @@ class GlobalConfig(Serializable):
     dataset:       DatasetConfig       = field(default_factory=DatasetConfig)
     model:         ModelConfig         = field(default_factory=ModelConfig)
     optimizer:     OptimizerConfig     = field(default_factory=OptimizerConfig)
+    precision:     PrecisionConfig     = field(default_factory=PrecisionConfig)
     qat:           QATConfig           = field(default_factory=QATConfig)
     training:      TrainingConfig      = field(default_factory=TrainingConfig)
     wandb:         WandbConfig         = field(default_factory=WandbConfig)
@@ -172,31 +187,6 @@ def get_dynamic_arg_parser():
 
 
 def preprocess(cfg: ArgParseNamespace):
-    from .config_utils import compute_num_iters_and_tokens
-    attn_params_fn = None
-    mlp_params_fn = None
-    model_name_size = cfg.training.model_name_size
-
-    #####
-    ##### Set functions to compute params count
-    #####
-    if "gpt" in model_name_size:
-        attn_params_fn = get_MHSA_param_count
-        mlp_params_fn = GPTFeedForward.get_param_count
-    elif ("llama" in model_name_size) or ("qwen" in model_name_size):
-        if "mhsa" in cfg.model.attn_type:
-            attn_params_fn = get_MHSA_param_count
-        elif "gqa" in cfg.model.attn_type:
-            attn_params_fn = get_GQA_param_count
-        else:
-            raise RuntimeError(f"Invalid attn_type for attn_params_fn!")
-        mlp_params_fn = LlamaFeedForward.get_param_count
-
-    #####
-    ##### Compute number of iterations & num tokens based on model size (only Linears from transformer blocks)
-    #####
-    cfg.training.max_iters, cfg.training.num_tokens = compute_num_iters_and_tokens(cfg, attn_fn=attn_params_fn, mlp_fn=mlp_params_fn)
-
     #####
     ##### Check model size
     #####

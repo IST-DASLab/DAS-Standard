@@ -2,13 +2,15 @@ from argparse import Namespace as ArgParseNamespace
 import torch
 from torch import nn as nn
 
+from utils import get_dtype
+
 
 class GPTFeedForward(nn.Module):
-    @staticmethod
-    def get_param_count(cfg: ArgParseNamespace):
-        E = cfg.model.embed_size
-        exp_factor = cfg.model.gpt_mlp_exp_factor
-        return 2 * E * (E * exp_factor)
+    # @staticmethod
+    # def get_param_count(cfg: ArgParseNamespace):
+    #     E = cfg.model.embed_size
+    #     exp_factor = cfg.model.gpt_mlp_exp_factor
+    #     return 2 * E * (E * exp_factor)
 
     def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
@@ -17,9 +19,9 @@ class GPTFeedForward(nn.Module):
         E = cfg.model.embed_size
         E_expanded = E * cfg.model.gpt_mlp_exp_factor
         bias = cfg.model.bias
-
-        self.fc = nn.Linear(in_features=E, out_features=E_expanded, bias=bias)
-        self.Wo = nn.Linear(in_features=E_expanded, out_features=E, bias=bias)
+        dtype = get_dtype(cfg.precision.storage_dtype)
+        self.fc = nn.Linear(in_features=E, out_features=E_expanded, bias=bias, dtype=dtype)
+        self.Wo = nn.Linear(in_features=E_expanded, out_features=E, bias=bias, dtype=dtype)
         # self.dropout = nn.Dropout(cfg.model.dropout)
         self.activation = nn.GELU()
 
@@ -32,18 +34,18 @@ class GPTFeedForward(nn.Module):
 
 
 class LlamaFeedForward(nn.Module):
-    @staticmethod
-    def get_param_count(cfg: ArgParseNamespace):
-        E = cfg.model.embed_size
-        Hdim = cfg.model.llama_mlp_size
-        return 3 * E * Hdim
+    # @staticmethod
+    # def get_param_count(cfg: ArgParseNamespace):
+    #     E = cfg.model.embed_size
+    #     Hdim = cfg.model.llama_mlp_size
+    #     return 3 * E * Hdim
 
     def __init__(self, cfg: ArgParseNamespace):
         super().__init__()
 
         E = cfg.model.embed_size
         Hdim = cfg.model.llama_mlp_size
-        dtype = dict(bf16=torch.bfloat16, fp16=torch.float16, fp32=torch.float32)[cfg.model.dtype]
+        dtype = get_dtype(cfg.precision.storage_dtype)
 
         self.fc1 = nn.Linear(in_features=E, out_features=Hdim, dtype=dtype, bias=False)
         self.fc2 = nn.Linear(in_features=E, out_features=Hdim, dtype=dtype, bias=False)

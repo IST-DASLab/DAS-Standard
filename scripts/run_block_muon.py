@@ -1,16 +1,26 @@
 import socket
 import random
+import socket
 from datetime import datetime
 from string import Template
-from gridsearcher import GridSearcher, SchedulingConfig, TorchRunConfig
+from gridsearcher import GridSearcher, SchedulingConfig, TorchRunConfig, wait_for_resources
 
 random.seed(datetime.now().timestamp())
 
 def main(dist, gpus, params):
-    gs = GridSearcher(script="/nfs/scistore19/alistgrp/imodoran/workplace/DAS-Standard/pretrain.py")
+    hostname = socket.gethostname()
+    if hostname == 'gpu413':
+        script_path = "/localhome/imodoran/workplace/DAS-Standard/pretrain.py"
+        output_dir = "/localhome/imodoran/results/${project}/${run_name}"
+    else:
+        script_path = "/nfs/scistore19/alistgrp/imodoran/workplace/DAS-Standard/pretrain.py"
+        output_dir = "/mnt/beegfs/alistgrp/imodoran/results/${project}/${run_name}"
+
+    gs = GridSearcher(script=script_path)
     gs.run(
+        # debug=True,
         param_name_for_exp_root_folder="output_folder",
-        exp_folder=Template("/mnt/beegfs/alistgrp/imodoran/results/${project}/${run_name}"),
+        exp_folder=Template(output_dir),
         cfg_torchrun=TorchRunConfig(
             launch_blocking=0,
             torchrun=dist,
@@ -27,7 +37,11 @@ def main(dist, gpus, params):
     )
 
 if __name__ == "__main__":
-    DATASETS_DIR = '/localhome/imodoran/datasets/' if socket.gethostname().startswith('gpu') else '/home/imodoran/datasets/'
+    wait_for_resources()
+    hostname = socket.gethostname()
+    # if hostname == "gpu413":
+    #
+    DATASETS_DIR = '/localhome/imodoran/datasets/' if hostname.startswith('gpu') or hostname.startswith('das10') else '/home/imodoran/datasets/'
 
     gpus = [
         0,
@@ -43,16 +57,25 @@ if __name__ == "__main__":
     # dist = False
     dist = True
 
-    optimizer = "adamw"
-    # optimizer = "muon"
+    # optimizer = "adamw"
+    optimizer = "muon"
     # optimizer = "block_muon"
 
     match optimizer:
         case "adamw":
-            wandb_group = Template("${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}_sched=${"
-                                   "lr_sched_name}")
-        case "muon" | "block_muon":
-            wandb_group = Template("${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_wd=${weight_decay}_mu=${muon_momentum}_sched=${lr_sched_name}")
+            wandb_group = Template(
+                "${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}_sched=${lr_sched_name}"
+            )
+        case "muon":
+            wandb_group = Template(
+                # "qat=${qat_method}-${hadamard_size}_${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_wd=${weight_decay}_mu=${muon_momentum}_sched=${lr_sched_name}"
+                "${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_c=${muon_coeffs_type}_sched=${lr_sched_name}"
+            )
+        case "block_muon":
+            wandb_group = Template(
+                # "qat=${qat_method}-${hadamard_size}_${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_wd=${weight_decay}_mu=${muon_momentum}_sched=${lr_sched_name}"
+                "${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_nB=${muon_num_blocks}_c=${muon_coeffs_type}_sched=${lr_sched_name}"
+            )
         case _:
             print(f"Unknown optimizer {optimizer}")
             exit(666)
@@ -64,8 +87,10 @@ if __name__ == "__main__":
         "model_name_size": [
             # "gpt-42m",
             # "llama2-44m",
+            # "llama2-134m",
             # "llama-1b-custom",
-            "llama-4b-custom",
+            "llama-2b-custom",
+            # "llama-4b-custom",
             # "llama-8b-custom",
             # "qwen3-42m",
         ],
@@ -76,28 +101,65 @@ if __name__ == "__main__":
         ],
         # "num_tokens": [0], # lower priority over chinchilla_token_ratio
         "chinchilla_token_ratio": [1],
-        "local_batch_size": [16],
-        "grad_acc_steps": [32],
+
+        # "local_batch_size": [256], "grad_acc_steps": [2], # single gpu for 44m
+        # "local_batch_size": [128], "grad_acc_steps": [4], # single gpu for 134m
+        # "local_batch_size": [64], "grad_acc_steps": [8],
+        "local_batch_size": [32], "grad_acc_steps": [16],  # fsdp for 1B
+        # "local_batch_size": [16], "grad_acc_steps": 32,  # fsdp for 4B
+
         # "max_iters": [-1], # not needed, automatically determined
         "backend": [
             # "single",
             # "ddp",
             "fsdp2",
         ],
-        "amp_dtype": ["bf16"],
+
+        "storage_dtype": ["fp32"],
+        "compute_dtype": ["bf16"],
+        "fsdp_reduce_dtype": ["fp32"],
+
         "compile_model": [True],
         "eval_interval": [
             # 100,
+            # 300,
             # 500,
-            1000,
+            # 1000,
+            2000,
         ],
-        "eval_batches_per_worker": [128],
+        "eval_batches_per_worker": [512],
+
+        ### Checkpointing:
+        ### initial run: comment out chkpt_resume_folder and chkpt_resume_step such that they are None in the config
+        ### resuming: provide the root path and specify chkpt_resume_step to load from
+
+        # "chkpt_resume_folder": ["/tmp/DAS-Standard/results/your_project/your_run_name"],
+        # "chkpt_resume_step": [100],
+        "chkpt_max_limit": [0],
+        "chkpt_freq": [
+            # 5000,
+            7500,
+        ],
+
 
         ################################################
         ##### Overrides to the default ModelConfig #####
         ################################################
         "seq_len": [1024],
         "vocab_size": [32_000],
+
+        #####################
+        ##### QATConfig #####
+        #####################
+        "qat_method": [
+            "disabled",
+            # "quartet2",
+        ],
+        "hadamard_size": [
+            # 32,
+            # 64,
+            128,
+        ],
 
         ###########################
         ##### OptimizerConfig #####
@@ -115,8 +177,10 @@ if __name__ == "__main__":
             # "const",
         ],
         "lr_sched_warmup": [
-            # "1000",
-            "2000",
+            "0.1",
+            # "1000", # for 1B run
+            # "2000",
+            # "3000",
         ], # actual number of steps instead of percentage
         # "lr_sched_wsd_decay": ["0.9"], # not used for const
         "lr_sched_start_ratio": ["0.01"],
@@ -128,11 +192,22 @@ if __name__ == "__main__":
             # "2e-3",
             # "3e-3",
             # "4e-3",
-
             # "5e-3",
             # "6e-3",
             # "7e-3",
             # "8e-3",
+            # "9e-3",
+
+            # "1e-2",
+            # "2e-2",
+            # "3e-2",
+            # "4e-2",
+            # "5e-2",
+
+            # "6e-2",
+            # "7e-2",
+            # "8e-2",
+            # "9e-2",
         ],
         "adamw_beta1": ["0.9"],
         "adamw_beta2": ["0.95"],
@@ -143,6 +218,22 @@ if __name__ == "__main__":
         "muon_scaling_type": [
             "rms",
             # "block",
+            # "sqrt",
+        ],
+        "muon_num_blocks": [
+            0, # uses world size
+            # 1,
+            # 2,
+            # 4,
+            # 8, # uses this fixed value
+        ],
+        "muon_coeffs_type": [
+            # "p5-kj",
+            "p5-polar",
+            # "p5-book",
+            # "p5-you",
+            # "p3-nv",
+            # "p3-book",
         ],
 
         #########################
@@ -155,7 +246,7 @@ if __name__ == "__main__":
         ##### WandbConfig #####
         #######################
         "entity": ["ionutmodo"],
-        "project": ["ionut_block_muon"],
+        "project": ["ionut_block_muon_reviewed"],
         "group": [wandb_group], # moved out
         "job_type": [
             Template("lr=${lr}"), # AdamW

@@ -5,22 +5,22 @@ from torch.nn import functional as F
 
 class KarpathyLayerNorm(nn.Module):
     """ LayerNorm but with an optional bias. PyTorch doesn't support simply bias=False """
-    def __init__(self, ndim: int, bias: bool, eps: float = 1e-5):
+    def __init__(self, ndim: int, bias: bool, dtype: torch.dtype, eps: float = 1e-5):
         super().__init__()
         self.eps = eps
-        self.weight = nn.Parameter(torch.ones(ndim))
-        self.bias = nn.Parameter(torch.zeros(ndim)) if bias else None
+        self.weight = nn.Parameter(torch.ones(ndim, dtype=dtype))
+        self.bias = nn.Parameter(torch.zeros(ndim, dtype=dtype)) if bias else None
 
     def forward(self, x):
         return F.layer_norm(x, self.weight.shape, self.weight, self.bias, eps=self.eps)
 
 
 class LayerNorm(nn.Module):
-    def __init__(self, ndim: int, eps: float = 1e-5):
+    def __init__(self, ndim: int, dtype: torch.dtype, eps: float = 1e-5):
         super().__init__()
         self.eps = eps
-        self.weight = nn.Parameter(torch.ones(ndim))
-        self.bias = nn.Parameter(torch.zeros(ndim))
+        self.weight = nn.Parameter(torch.ones(ndim, dtype=dtype))
+        self.bias = nn.Parameter(torch.zeros(ndim, dtype=dtype))
 
     def forward(self, x):
         mean = x.mean(dim=-1, keepdim=True)
@@ -33,13 +33,13 @@ class RMSNorm(nn.Module):
     """
         Root Mean Square Layer Normalization: https://arxiv.org/pdf/1910.07467
     """
-    def __init__(self, ndim: int, bias: bool=False, eps: float = 1e-5, qwen3_compatible: bool=False):
+    def __init__(self, ndim: int, dtype: torch.dtype, bias: bool=False, eps: float = 1e-5, qwen3_compatible: bool=False):
         super().__init__()
         self.ndim = ndim
         self.eps = eps
         self.qwen3_compatible = qwen3_compatible
-        self.weight = nn.Parameter(torch.ones(ndim, dtype=torch.float))
-        self.bias = nn.Parameter(torch.zeros(ndim)) if bias else None
+        self.weight = nn.Parameter(torch.ones(ndim, dtype=dtype))
+        self.bias = nn.Parameter(torch.zeros(ndim, dtype=dtype)) if bias else None
 
     def forward(self, x):
         input_dtype = x.dtype
