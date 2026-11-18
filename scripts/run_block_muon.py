@@ -58,23 +58,23 @@ if __name__ == "__main__":
     dist = True
 
     # optimizer = "adamw"
-    optimizer = "muon"
-    # optimizer = "block_muon"
+    # optimizer = "muon"
+    optimizer = "block_muon"
 
     match optimizer:
         case "adamw":
             wandb_group = Template(
-                "${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}_sched=${lr_sched_name}"
+                "pc=${storage_dtype}-${compute_dtype}-${fsdp_reduce_dtype}_${model_name_size}_${optimizer_name}_wd=${weight_decay}_b=${adamw_beta1}-${adamw_beta2}_e=${adamw_eps}_sched=${lr_sched_name}"
             )
         case "muon":
             wandb_group = Template(
                 # "qat=${qat_method}-${hadamard_size}_${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_wd=${weight_decay}_mu=${muon_momentum}_sched=${lr_sched_name}"
-                "${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_c=${muon_coeffs_type}_sched=${lr_sched_name}"
+                "pc=${storage_dtype}-${compute_dtype}-${fsdp_reduce_dtype}_${model_name_size}_${optimizer_name}_wd=${weight_decay}-${weight_decay_non_linear}_s=${muon_scaling_type}_c=${muon_coeffs_type}_sched=${lr_sched_name}"
             )
         case "block_muon":
             wandb_group = Template(
                 # "qat=${qat_method}-${hadamard_size}_${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_wd=${weight_decay}_mu=${muon_momentum}_sched=${lr_sched_name}"
-                "${model_name_size}_${optimizer_name}_s=${muon_scaling_type}_nB=${muon_num_blocks}_c=${muon_coeffs_type}_sched=${lr_sched_name}"
+                "pc=${storage_dtype}-${compute_dtype}-${fsdp_reduce_dtype}_${model_name_size}_${optimizer_name}_wd=${weight_decay}-${weight_decay_non_linear}_s=${muon_scaling_type}_nB=${muon_num_blocks}_c=${muon_coeffs_type}_sched=${lr_sched_name}"
             )
         case _:
             print(f"Unknown optimizer {optimizer}")
@@ -88,8 +88,8 @@ if __name__ == "__main__":
             # "gpt-42m",
             # "llama2-44m",
             # "llama2-134m",
-            # "llama-1b-custom",
-            "llama-2b-custom",
+            "llama-1b-custom",
+            # "llama-2b-custom",
             # "llama-4b-custom",
             # "llama-8b-custom",
             # "qwen3-42m",
@@ -115,17 +115,13 @@ if __name__ == "__main__":
             "fsdp2",
         ],
 
-        "storage_dtype": ["fp32"],
-        "compute_dtype": ["bf16"],
-        "fsdp_reduce_dtype": ["fp32"],
-
         "compile_model": [True],
         "eval_interval": [
             # 100,
             # 300,
             # 500,
-            # 1000,
-            2000,
+            1000,
+            # 2000,
         ],
         "eval_batches_per_worker": [512],
 
@@ -137,16 +133,22 @@ if __name__ == "__main__":
         # "chkpt_resume_step": [100],
         "chkpt_max_limit": [0],
         "chkpt_freq": [
-            # 5000,
-            7500,
+            5000,
+            # 7500,
         ],
-
 
         ################################################
         ##### Overrides to the default ModelConfig #####
         ################################################
         "seq_len": [1024],
         "vocab_size": [32_000],
+
+        ###########################
+        ##### PrecisionConfig #####
+        ###########################
+        "storage_dtype": ["fp32"],
+        "compute_dtype": ["bf16"],
+        "fsdp_reduce_dtype": ["fp32"],
 
         #####################
         ##### QATConfig #####
@@ -168,6 +170,10 @@ if __name__ == "__main__":
         "weight_decay": [
             "1e-1",
             # "1e-2",
+        ],
+        "weight_decay_non_linear": [
+            # Template("${weight_decay}"),
+            "0",
         ],
         "grad_clipping": ["1.0"],
 
@@ -197,17 +203,6 @@ if __name__ == "__main__":
             # "7e-3",
             # "8e-3",
             # "9e-3",
-
-            # "1e-2",
-            # "2e-2",
-            # "3e-2",
-            # "4e-2",
-            # "5e-2",
-
-            # "6e-2",
-            # "7e-2",
-            # "8e-2",
-            # "9e-2",
         ],
         "adamw_beta1": ["0.9"],
         "adamw_beta2": ["0.95"],
@@ -216,8 +211,8 @@ if __name__ == "__main__":
         # Muon parameters
         "muon_momentum": ["0.95"],
         "muon_scaling_type": [
-            "rms",
-            # "block",
+            # "rms",
+            "block",
             # "sqrt",
         ],
         "muon_num_blocks": [

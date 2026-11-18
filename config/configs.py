@@ -39,7 +39,8 @@ class OptimizerConfig:
     optimizer_name: str = "adamw" # see the match-case from the function `_create_optimizers_list` from `multi_optimizer.py` for all supported optimizers
 
     lr: float = 1e-3
-    weight_decay: float = 0.0
+    weight_decay: float = 0.0 # mainly for linear layers (Muon args)
+    weight_decay_non_linear: float = 0.0 # for non-linear layers: embeddings (input/output) and normalizations
 
     grad_clipping: float = 1.0 # rescale the global gradient to have this norm. Set to 0 to disable
 

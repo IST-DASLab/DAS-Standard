@@ -1,3 +1,5 @@
+from functools import partial
+
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
@@ -105,10 +107,14 @@ class MultiOptimizer:
         oc = self.cfg.optimizer # oc = optimizer config
 
         match oc.optimizer_name:
-            case "adamw8b":
+            case "adamw8b" | "adamw":
+                adamw_fn = {"adamw8b": AdamW8bit, "adamw": AdamW}[oc.optimizer_name]
+
+                linear_params, non_linear_params = self._separate_params_into_2d_linear_vs_others()
+
                 return [
-                    AdamW8bit(
-                        params=self.model.parameters(),
+                    adamw_fn(
+                        params=linear_params,
                         lr=oc.lr,
                         weight_decay=oc.weight_decay,
                         betas=(
@@ -116,13 +122,10 @@ class MultiOptimizer:
                             oc.adamw_beta2,
                         ),
                         eps=oc.adamw_eps),
-                ]
-            case "adamw":
-                return [
-                    AdamW(
-                        params=self.model.parameters(),
+                    adamw_fn(
+                        params=non_linear_params,
                         lr=oc.lr,
-                        weight_decay=oc.weight_decay,
+                        weight_decay=oc.weight_decay_non_linear,
                         betas=(
                             oc.adamw_beta1,
                             oc.adamw_beta2,
@@ -154,7 +157,7 @@ class MultiOptimizer:
                     AdamW(
                         params=adamw_params,
                         lr=oc.lr,
-                        weight_decay=oc.weight_decay,
+                        weight_decay=oc.weight_decay_non_linear, # do not decay embeddings and norms
                         betas=(
                             oc.adamw_beta1,
                             oc.adamw_beta2,
@@ -183,12 +186,12 @@ class MultiOptimizer:
                         coeffs_type=oc.muon_coeffs_type,
                         scaling_type=oc.muon_scaling_type,
                         weight_decay=oc.weight_decay,
-                        momentum=oc.muon_momentum
+                        momentum=oc.muon_momentum,
                     ),
                     AdamW(
                         params=adamw_params,
                         lr=oc.lr,
-                        weight_decay=oc.weight_decay,
+                        weight_decay=oc.weight_decay_non_linear, # do not decay embeddings and norms
                         betas=(
                             oc.adamw_beta1,
                             oc.adamw_beta2,
