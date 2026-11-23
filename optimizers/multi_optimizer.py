@@ -58,6 +58,12 @@ class MultiOptimizer:
         other_params = [p for p in self.model.parameters() if id(p) not in linear_ids and p.requires_grad]
         return linear_params, other_params
 
+    def _separate_params_into_2d_linear_with_lmhead_vs_others(self):
+        linear_and_lmhead_params = self._get_linear_layers() + [self._unwrap_model().lm_head.parameters()]
+        linear_and_lmhead_ids = {id(p) for p in linear_and_lmhead_params}
+        other_params = [p for p in self.model.parameters() if id(p) not in linear_and_lmhead_ids and p.requires_grad]
+        return linear_and_lmhead_params, other_params
+
     def _set_lr_init(self):
         """
         This function is called after creating the variable self.optimizers and creates the variable "lr_init".
@@ -191,7 +197,43 @@ class MultiOptimizer:
                     AdamW(
                         params=adamw_params,
                         lr=oc.lr,
-                        weight_decay=oc.weight_decay_non_linear, # do not decay embeddings and norms
+                        weight_decay=oc.weight_decay_non_linear,  # do not decay embeddings and norms
+                        betas=(
+                            oc.adamw_beta1,
+                            oc.adamw_beta2,
+                        ),
+                        eps=oc.adamw_eps,
+                    )
+                ]
+            case "block_muon_head":
+                assert not self.cfg.model.tie_embeds, "BlockMuon must be used for models with separate input embeddings and lm-head, found tied embeddings!"
+
+                block_muon_fn = None
+                match self.cfg.training.backend:
+                    case "single":
+                        block_muon_fn = MuonSingleBlock
+                    case "ddp":
+                        block_muon_fn = MuonDDPBlock
+                    case "fsdp2":
+                        block_muon_fn = MuonFSDP2Block
+
+                assert block_muon_fn is not None
+
+                muon_params, adamw_params = self._separate_params_into_2d_linear_with_lmhead_vs_others() # muon_params includes lm-head !!!
+                return [
+                    block_muon_fn(
+                        params=muon_params,
+                        lr=oc.lr,
+                        num_blocks=oc.muon_num_blocks,
+                        coeffs_type=oc.muon_coeffs_type,
+                        scaling_type=oc.muon_scaling_type,
+                        weight_decay=oc.weight_decay,
+                        momentum=oc.muon_momentum,
+                    ),
+                    AdamW(
+                        params=adamw_params,
+                        lr=oc.lr,
+                        weight_decay=oc.weight_decay_non_linear,  # do not decay embeddings and norms
                         betas=(
                             oc.adamw_beta1,
                             oc.adamw_beta2,
