@@ -1,8 +1,14 @@
 from huggingface_hub import list_repo_files, hf_hub_download
 import os
+import argparse
 
-repo_id = "ISTA-DASLab/C4-tokenized-llama2"
-local_dir = "/tmp/DAS-Standard/datasets/"
+parser = argparse.ArgumentParser()
+parser.add_argument("--local_dir", type=str, default="/tmp/ISTA-DASLab/datasets/c4", required=True)
+parser.add_argument("--repo_id", type=str, default="ISTA-DASLab/C4-tokenized-llama2", required=True)
+args = parser.parse_args()
+
+repo_id = args.repo_id
+local_dir = args.local_dir
 os.makedirs(local_dir, exist_ok=True)
 
 # List all files in the repo
@@ -21,6 +27,7 @@ for f in chunk_files:
         local_dir_use_symlinks=False
     )
     print(f"Downloaded {f} -> {local_path}")
+
 
 ##### after download, run "cat chunk_* > train.bin" in linux
 
