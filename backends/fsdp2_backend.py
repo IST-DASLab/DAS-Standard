@@ -4,6 +4,7 @@ from contextlib import nullcontext
 
 import torch
 from torch import distributed as dist
+from torch.distributed.tensor import Shard
 from torch.distributed import init_device_mesh
 from torch.distributed.fsdp import MixedPrecisionPolicy, fully_shard
 
@@ -30,6 +31,14 @@ class FSDP2Backend(BaseBackend):
             print(f"\n=== Using FSDP2 backend ===\n")
 
     def wrap_model_then_compile(self, model):
+        def shard_by_largest_dim(p):
+            if p.ndim == 2:
+                R, C = p.shape
+                if R >= C:
+                    return Shard(0)
+                return Shard(1)
+            return None
+
         model = model.to(self.device) # TODO: use meta-device for large models
 
         policy = MixedPrecisionPolicy(
@@ -41,9 +50,9 @@ class FSDP2Backend(BaseBackend):
         )
 
         for block in model.blocks:
-            fully_shard(block, mesh=self.mesh, mp_policy=policy)
+            fully_shard(block, mesh=self.mesh, mp_policy=policy, shard_placement_fn=shard_by_largest_dim)
 
-        fully_shard(model, mesh=self.mesh, mp_policy=policy)
+        fully_shard(model, mesh=self.mesh, mp_policy=policy, shard_placement_fn=shard_by_largest_dim)
 
         if self.cfg.training.compile_model:
             model = torch.compile(model)
