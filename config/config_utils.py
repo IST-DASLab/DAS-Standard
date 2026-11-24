@@ -91,7 +91,7 @@ def compute_iters_and_tokens_inplace(cfg, model, world_size):
     cfg.training.max_iters = iterations
     cfg.training.num_tokens = num_tokens
 
-    print(f"Config update: training.max_iters={iterations}; training.num_tokens={num_tokens}")
+    # print(f"Config update: training.max_iters={iterations}; training.num_tokens={num_tokens}")
 
 def print_config(cfg: ArgParseNamespace):
     """
