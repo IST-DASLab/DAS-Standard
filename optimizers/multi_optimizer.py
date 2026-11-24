@@ -59,7 +59,7 @@ class MultiOptimizer:
         return linear_params, other_params
 
     def _separate_params_into_2d_linear_with_lmhead_vs_others(self):
-        linear_and_lmhead_params = self._get_linear_layers() + [self._unwrap_model().lm_head.parameters()]
+        linear_and_lmhead_params = self._get_linear_layers() + [self._unwrap_model().lm_head.weight]
         linear_and_lmhead_ids = {id(p) for p in linear_and_lmhead_params}
         other_params = [p for p in self.model.parameters() if id(p) not in linear_and_lmhead_ids and p.requires_grad]
         return linear_and_lmhead_params, other_params
