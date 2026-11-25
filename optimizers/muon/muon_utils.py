@@ -117,8 +117,10 @@ def muon_scaling(p, scaling_type, num_blocks=None):
         case 'rms':
             return 0.2 * math.sqrt(max(R, C))
         case 'block':
-            assert num_blocks is not None
-            return 0.2 * math.sqrt(max(R / num_blocks, C))
+            # assert num_blocks is not None
+            assert isinstance(p, DTensor)
+            shardR, shardC = p.to_local().shape
+            return 0.2 * math.sqrt(max(shardR, shardC)) # similar to rms, but uses shapes of the shard
         case 'sqrt':
             assert num_blocks is not None
             return 0.2 * math.sqrt(max(R, C)) / math.sqrt(num_blocks)
