@@ -21,6 +21,8 @@ conda activate "$DATA/envs/das-standard"
 
 rdzv_host=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 
+nvidia-smi
+
 srun --ntasks="$SLURM_JOB_NUM_NODES" --gpu-bind=none \
     torchrun \
     --nnodes="$SLURM_JOB_NUM_NODES" \
