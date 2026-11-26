@@ -28,7 +28,7 @@ class ModelConfig: # initialized via model ladders
     embed_size: int = 1024
     seq_len: int = 1024
     # dropout: float = 0.0
-    bias: bool = False
+    # bias: bool = False
     tie_embeds: bool = False
     gpt_mlp_exp_factor: int = 4
     llama_mlp_size: int = 11_008

@@ -18,8 +18,8 @@ class GPTBlock(nn.Module):
         self.mlp = GPTFeedForward(cfg)
 
         dtype = get_dtype(cfg.precision.storage_dtype)
-        self.norm1 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias, dtype=dtype)
-        self.norm2 = KarpathyLayerNorm(cfg.model.embed_size, bias=cfg.model.bias, dtype=dtype)
+        self.norm1 = KarpathyLayerNorm(cfg.model.embed_size, bias=False, dtype=dtype)
+        self.norm2 = KarpathyLayerNorm(cfg.model.embed_size, bias=False, dtype=dtype)
 
     def forward(self, x, mask):
         x = x + self.attn(self.norm1(x), mask, cos=None, sin=None)
@@ -36,15 +36,15 @@ class GPT(nn.Module):
         V = cfg.model.vocab_size
         L = cfg.model.num_layers
         S = cfg.model.seq_len
-        bias = cfg.model.bias
+        # bias = cfg.model.bias
         dtype = get_dtype(cfg.precision.storage_dtype)
 
         self.token_embed = nn.Embedding(V, E, dtype=dtype)
         self.pos_embed = nn.Embedding(S, E, dtype=dtype)
         # self.dropout = nn.Dropout(drp)
         self.blocks = nn.ModuleList([GPTBlock(cfg) for _ in range(L)])
-        self.norm = KarpathyLayerNorm(E, bias=bias, dtype=dtype)
-        self.lm_head = nn.Linear(in_features=E, out_features=V, bias=bias, dtype=dtype)
+        self.norm = KarpathyLayerNorm(E, bias=False, dtype=dtype)
+        self.lm_head = nn.Linear(in_features=E, out_features=V, bias=False, dtype=dtype)
 
         if cfg.model.tie_embeds:
             self.token_embed.weight = self.lm_head.weight

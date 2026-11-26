@@ -45,7 +45,7 @@ class Llama(nn.Module):
         S = cfg.model.seq_len
         dtype = get_dtype(cfg.precision.storage_dtype)
 
-        assert not cfg.model.bias, "Llama model needs bias=False, but found bias=True"
+        # assert not cfg.model.bias, "Llama model needs bias=False, but found bias=True"
 
         self.token_embed = nn.Embedding(V, E, dtype=dtype)
         self.blocks = nn.ModuleList([LlamaBlock(cfg) for _ in range(L)])

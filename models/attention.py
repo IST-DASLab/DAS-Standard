@@ -47,7 +47,7 @@ class Attention(nn.Module):
         Nh = cfg.model.num_heads
         Nkvg = cfg.model.attn_gqa_kvg
         H = E // Nh # head size
-        bias = cfg.model.bias
+        # bias = cfg.model.bias
         qk_norm = cfg.model.qk_norm
         dtype = get_dtype(cfg.precision.storage_dtype)
 
@@ -64,10 +64,10 @@ class Attention(nn.Module):
         else:
             raise NotImplementedError(f"Unknown attention type: {cfg.model.attn_type}")
 
-        self.Wq = nn.Linear(in_features=E, out_features=E,      bias=bias, dtype=dtype)
-        self.Wk = nn.Linear(in_features=E, out_features=out_kv, bias=bias, dtype=dtype)
-        self.Wv = nn.Linear(in_features=E, out_features=out_kv, bias=bias, dtype=dtype)
-        self.Wo = nn.Linear(in_features=E, out_features=E,      bias=bias, dtype=dtype)
+        self.Wq = nn.Linear(in_features=E, out_features=E,      bias=False, dtype=dtype)
+        self.Wk = nn.Linear(in_features=E, out_features=out_kv, bias=False, dtype=dtype)
+        self.Wv = nn.Linear(in_features=E, out_features=out_kv, bias=False, dtype=dtype)
+        self.Wo = nn.Linear(in_features=E, out_features=E,      bias=False, dtype=dtype)
         # self.dropout_attn = nn.Dropout(p=drp)
         # self.dropout_out = nn.Dropout(p=drp)
 
@@ -168,14 +168,14 @@ class MultiHeadSelfAttention(nn.Module):
         E = cfg.model.embed_size
         Nh = cfg.model.num_heads
         H = E // Nh # head size
-        bias = cfg.model.bias
+        # bias = cfg.model.bias
         qk_norm = cfg.model.qk_norm
         dtype = get_dtype(cfg.precision.storage_dtype)
 
-        self.Wq = nn.Linear(in_features=E, out_features=E, bias=bias, dtype=dtype)
-        self.Wk = nn.Linear(in_features=E, out_features=E, bias=bias, dtype=dtype)
-        self.Wv = nn.Linear(in_features=E, out_features=E, bias=bias, dtype=dtype)
-        self.Wo = nn.Linear(in_features=E, out_features=E, bias=bias, dtype=dtype)
+        self.Wq = nn.Linear(in_features=E, out_features=E, bias=False, dtype=dtype)
+        self.Wk = nn.Linear(in_features=E, out_features=E, bias=False, dtype=dtype)
+        self.Wv = nn.Linear(in_features=E, out_features=E, bias=False, dtype=dtype)
+        self.Wo = nn.Linear(in_features=E, out_features=E, bias=False, dtype=dtype)
         # self.dropout_attn = nn.Dropout(p=drp)
         # self.dropout_out = nn.Dropout(p=drp)
 
@@ -248,7 +248,7 @@ class GroupedQueryAttention(nn.Module):
         E = cfg.model.embed_size
         Nh = cfg.model.num_heads
         H = E // Nh # head size
-        bias = cfg.model.bias
+        # bias = cfg.model.bias
         Nkvg = cfg.model.attn_gqa_kvg
         qk_norm = cfg.model.qk_norm
         dtype = get_dtype(cfg.precision.storage_dtype)
@@ -256,10 +256,10 @@ class GroupedQueryAttention(nn.Module):
         assert E % Nh == 0, "Embedding size must be a multiple of Nh"
         assert Nh % Nkvg == 0, "Number of heads must be a multiple of number KV-groups"
 
-        self.Wq = nn.Linear(in_features=E, out_features=E,        bias=bias, dtype=dtype)
-        self.Wk = nn.Linear(in_features=E, out_features=Nkvg * H, bias=bias, dtype=dtype)
-        self.Wv = nn.Linear(in_features=E, out_features=Nkvg * H, bias=bias, dtype=dtype)
-        self.Wo = nn.Linear(in_features=E, out_features=E,        bias=bias, dtype=dtype)
+        self.Wq = nn.Linear(in_features=E, out_features=E,        bias=False, dtype=dtype)
+        self.Wk = nn.Linear(in_features=E, out_features=Nkvg * H, bias=False, dtype=dtype)
+        self.Wv = nn.Linear(in_features=E, out_features=Nkvg * H, bias=False, dtype=dtype)
+        self.Wo = nn.Linear(in_features=E, out_features=E,        bias=False, dtype=dtype)
         # self.dropout_attn = nn.Dropout(p=drp)
         # self.dropout_out = nn.Dropout(p=drp)
 

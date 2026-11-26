@@ -18,10 +18,10 @@ class GPTFeedForward(nn.Module):
 
         E = cfg.model.embed_size
         E_expanded = E * cfg.model.gpt_mlp_exp_factor
-        bias = cfg.model.bias
+        # bias = cfg.model.bias
         dtype = get_dtype(cfg.precision.storage_dtype)
-        self.fc = nn.Linear(in_features=E, out_features=E_expanded, bias=bias, dtype=dtype)
-        self.Wo = nn.Linear(in_features=E_expanded, out_features=E, bias=bias, dtype=dtype)
+        self.fc = nn.Linear(in_features=E, out_features=E_expanded, bias=False, dtype=dtype)
+        self.Wo = nn.Linear(in_features=E_expanded, out_features=E, bias=False, dtype=dtype)
         # self.dropout = nn.Dropout(cfg.model.dropout)
         self.activation = nn.GELU()
 
